@@ -185,7 +185,7 @@
 npm run dev                 # http://localhost:3000
 npm test                    # unit tests (totals, GST, formatting, pagination, dates)
 SUPABASE_SERVICE_ROLE_KEY=… node scripts/e2e.mjs https://invoice-generator-flax-pi.vercel.app
-                            # 12 end-to-end checks on a real project, then deletes its test data
+                            # 13 end-to-end checks on a real project; deletes and verifies its test data
 node scripts/visual-diff.mjs public/dev-reference.png http://localhost:3000
                             # compares /dev/sample with the reference image</pre>
   <h3>Deploy (Vercel)</h3>
@@ -203,7 +203,7 @@ npx supabase db push --linked   # apply new files in supabase/migrations</pre>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
     <tr><td>2026-10-27</td><td>Replaced the placeholder side images with the real artwork ("Blue and Grayscale Draped Fabric Panels"): cropped out of its white margins and scaled to the 214 × 1220 column at 2× (428 × 2440 JPEG). The blue/grey split lands at 750px as in the template. The image carries its own corner brackets, so the CSS brackets were removed.</td></tr>
-    <tr><td>2026-10-27</td><td><b>Went live.</b> Created the Supabase project (Mumbai), applied migrations, created the owner user, disabled sign-ups, set auth URLs. Deployed to Vercel at invoice-generator-flax-pi.vercel.app. Upgraded Next.js 15.5.4 → 15.5.28 (Vercel blocks the vulnerable version). Added <code>token_hash</code> support to <code>/auth/callback</code>, a site-URL fallback for magic links, India-time default dates and invoice-number year (migration 0002), and <code>scripts/e2e.mjs</code>: 12/12 checks pass locally and in production.</td></tr>
+    <tr><td>2026-10-27</td><td><b>Went live.</b> Created the Supabase project (Mumbai), applied migrations, created the owner user, disabled sign-ups, set auth URLs. Deployed to Vercel at invoice-generator-flax-pi.vercel.app. Upgraded Next.js 15.5.4 → 15.5.28 (Vercel blocks the vulnerable version). Added <code>token_hash</code> support to <code>/auth/callback</code>, a site-URL fallback for magic links, India-time default dates and invoice-number year (migration 0002), and <code>scripts/e2e.mjs</code>: 12/12 checks pass locally and in production. Later the same day: the test now works with any starting invoice number and verifies its own cleanup (13 checks), after one run inherited a leftover counter from an earlier run.</td></tr>
     <tr><td>2026-10-27</td><td>Initial build: schema and RLS, magic-link login with an allowlist, settings, clients, invoice editor with live preview, multi-page template, discount and GST, history with search, filters and status, duplicate, PDF export to Storage, visual-diff script, unit tests. Template measured from the reference screenshot (2.78% pixel diff). Dropped react-hook-form from the plan; plain React state drives the live preview.</td></tr>
   </table></div>
 </section>

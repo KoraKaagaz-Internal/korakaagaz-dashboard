@@ -104,7 +104,8 @@ try {
   await page.waitForFunction(() => /\/invoices\/[0-9a-f-]{36}\/edit$/.test(location.pathname), { timeout: 60000 });
   const invoiceId = page.url().split("/").at(-2);
   const heading = await page.$eval("h1", (el) => el.textContent);
-  check("save invoice with auto number", /KK-\d{4}-001/.test(heading), heading);
+  const firstNo = Number(heading.match(/-(\d{3,})$/)?.[1]);
+  check("save invoice with auto number", /KK-\d{4}-\d{3,}$/.test(heading), heading);
 
   // 6. PDF
   const pdf = await page.evaluate(async (id) => {
@@ -127,7 +128,12 @@ try {
 
   // 8. Duplicate
   await (await button("Duplicate")).click();
-  await page.waitForFunction(() => /\/invoices\/[0-9a-f-]{36}\/edit$/.test(location.pathname) && document.querySelector("h1")?.textContent?.includes("-002"), { timeout: 60000 });
+  const nextNo = String(firstNo + 1).padStart(3, "0");
+  await page.waitForFunction(
+    (n) => /\/invoices\/[0-9a-f-]{36}\/edit$/.test(location.pathname) && document.querySelector("h1")?.textContent?.endsWith(`-${n}`),
+    { timeout: 60000 },
+    nextNo,
+  );
   check("duplicate creates next number", true, await page.$eval("h1", (el) => el.textContent));
 
   // 9. Search + filters
@@ -151,11 +157,16 @@ try {
   if (userId) {
     const files = await (await admin(`/rest/v1/invoices?owner_id=eq.${userId}&select=pdf_path`)).json();
     const paths = files.map((f) => f.pdf_path).filter(Boolean);
-    if (paths.length) await admin("/storage/v1/object/invoices", { method: "DELETE", body: JSON.stringify({ prefixes: paths }) });
-    await admin(`/rest/v1/invoices?owner_id=eq.${userId}`, { method: "DELETE" });
-    await admin(`/rest/v1/clients?owner_id=eq.${userId}`, { method: "DELETE" });
-    await admin(`/rest/v1/settings?owner_id=eq.${userId}`, { method: "DELETE" });
-    console.log("cleaned up test data");
+    const steps = [
+      paths.length && admin("/storage/v1/object/invoices", { method: "DELETE", body: JSON.stringify({ prefixes: paths }) }),
+      admin(`/rest/v1/invoices?owner_id=eq.${userId}`, { method: "DELETE" }),
+      admin(`/rest/v1/clients?owner_id=eq.${userId}`, { method: "DELETE" }),
+      admin(`/rest/v1/settings?owner_id=eq.${userId}`, { method: "DELETE" }),
+    ];
+    const statuses = [];
+    for (const step of steps) if (step) statuses.push((await step).status);
+    const left = await (await admin(`/rest/v1/invoices?owner_id=eq.${userId}&select=id`)).json();
+    check("cleanup removed test data", statuses.every((st) => st < 300) && left.length === 0, `statuses ${statuses.join(",")}`);
   }
 }
 
