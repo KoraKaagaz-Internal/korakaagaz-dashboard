@@ -361,51 +361,8 @@
 .kk-photo img {
   display: block;
   width: 100%;
+  height: 100%;
   object-fit: cover;
-}
-.kk-photo .kk-photo-top {
-  height: 750px;
-}
-.kk-photo .kk-photo-bottom {
-  height: 470px;
-}
-.kk-brackets {
-  position: absolute;
-  left: 49px;
-  top: 248px;
-  width: 112px;
-  height: 112px;
-  pointer-events: none;
-}
-.kk-brackets i {
-  position: absolute;
-  width: 28px;
-  height: 28px;
-  border: 0 solid rgba(255, 255, 255, 0.92);
-}
-.kk-brackets i:nth-child(1) {
-  left: 0;
-  top: 0;
-  border-left-width: 2px;
-  border-top-width: 2px;
-}
-.kk-brackets i:nth-child(2) {
-  right: 0;
-  top: 0;
-  border-right-width: 2px;
-  border-top-width: 2px;
-}
-.kk-brackets i:nth-child(3) {
-  left: 0;
-  bottom: 0;
-  border-left-width: 2px;
-  border-bottom-width: 2px;
-}
-.kk-brackets i:nth-child(4) {
-  right: 0;
-  bottom: 0;
-  border-right-width: 2px;
-  border-bottom-width: 2px;
 }
 
 .kk-continued-note {

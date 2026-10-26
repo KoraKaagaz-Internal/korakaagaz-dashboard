@@ -80,16 +80,9 @@ export function InvoiceTemplate({ invoice, payment, logoSrc }: InvoiceTemplatePr
               </div>
 
               <div className="kk-photo" aria-hidden>
+                {/* Blue + grey panels with the corner brackets baked in. */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="kk-photo-top" src="/brand/fabric-blue.png" alt="" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="kk-photo-bottom" src="/brand/fabric-white.png" alt="" />
-                <div className="kk-brackets">
-                  <i />
-                  <i />
-                  <i />
-                  <i />
-                </div>
+                <img src="/brand/fabric-panel.jpg" alt="" />
               </div>
             </>
           )}

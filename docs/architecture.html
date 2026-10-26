@@ -93,7 +93,7 @@
     <li><b>Users:</b> one owner. Sign-in is limited to the emails in <code>ALLOWED_EMAILS</code>, and every table uses row-level security keyed on <code>auth.uid()</code>.</li>
     <li><b>Template fidelity:</b> the invoice is a fixed 852 × 1278 px page (2:3). The browser preview, the print page and the PDF all render the same React component, so they match exactly.</li>
   </ul>
-  <div class="callout"><b>Open item:</b> the fonts (DM Serif Display and Inter) and the two fabric images are stand-ins measured and cropped from the reference screenshot. Swap in the Figma exports (<code>public/brand/</code>) and font names, then re-run <code>scripts/visual-diff.mjs</code>. Current diff against the screenshot: <b>2.78%</b> of pixels, mostly anti-aliasing plus the added "Invoice no." field.</div>
+  <div class="callout"><b>Open item:</b> the fonts (DM Serif Display and Inter) are stand-ins until the Figma font names are confirmed. The side image is the real artwork (<code>public/brand/fabric-panel.jpg</code>, corner brackets baked in). Diff against the reference screenshot: <b>3.2%</b> of pixels in the content area (anti-aliasing, the added "Invoice no." field and dummy sample data). The photo column differs only because the new artwork replaces the screenshot crop.</div>
 </section>
 
 <section id="map">
@@ -202,6 +202,7 @@ npx supabase db push --linked   # apply new files in supabase/migrations</pre>
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-10-27</td><td>Replaced the placeholder side images with the real artwork ("Blue and Grayscale Draped Fabric Panels"): cropped out of its white margins and scaled to the 214 × 1220 column at 2× (428 × 2440 JPEG). The blue/grey split lands at 750px as in the template. The image carries its own corner brackets, so the CSS brackets were removed.</td></tr>
     <tr><td>2026-10-27</td><td><b>Went live.</b> Created the Supabase project (Mumbai), applied migrations, created the owner user, disabled sign-ups, set auth URLs. Deployed to Vercel at invoice-generator-flax-pi.vercel.app. Upgraded Next.js 15.5.4 → 15.5.28 (Vercel blocks the vulnerable version). Added <code>token_hash</code> support to <code>/auth/callback</code>, a site-URL fallback for magic links, India-time default dates and invoice-number year (migration 0002), and <code>scripts/e2e.mjs</code>: 12/12 checks pass locally and in production.</td></tr>
     <tr><td>2026-10-27</td><td>Initial build: schema and RLS, magic-link login with an allowlist, settings, clients, invoice editor with live preview, multi-page template, discount and GST, history with search, filters and status, duplicate, PDF export to Storage, visual-diff script, unit tests. Template measured from the reference screenshot (2.78% pixel diff). Dropped react-hook-form from the plan; plain React state drives the live preview.</td></tr>
   </table></div>
@@ -307,7 +308,7 @@ npx supabase db push --linked   # apply new files in supabase/migrations</pre>
     ["scripts/e2e.mjs", "End-to-end checks against a real project (sign-in, settings, client, invoice, PDF, paid, duplicate, search); cleans up after itself"],
     ["scripts/visual-diff.mjs", "Screenshot /dev/sample and pixel-diff it against the design image"],
     ["src/lib/*.test.ts", "Vitest unit tests"],
-    ["public/brand/", "Fabric images (placeholders cropped from the screenshot; replace with Figma exports)"],
+    ["public/brand/fabric-panel.jpg", "Side artwork: blue and grey fabric panels with corner brackets (428 × 2440, shown at 214 × 1220)"],
   ];
   const tbody = document.querySelector("#codeTable tbody"), search = document.getElementById("codeSearch");
   function renderCode() {
