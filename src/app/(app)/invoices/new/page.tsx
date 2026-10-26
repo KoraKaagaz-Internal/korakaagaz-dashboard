@@ -4,7 +4,7 @@ import { InvoiceEditor } from "../InvoiceEditor";
 
 export default async function NewInvoicePage() {
   const [settings, clients] = await Promise.all([getSettings(), listClients()]);
-  const preview = `${settings.invoice_prefix}-${new Date().getFullYear()}-${String(settings.next_number).padStart(3, "0")}`;
+  const preview = `${settings.invoice_prefix}-${todayIso().slice(0, 4)}-${String(settings.next_number).padStart(3, "0")}`;
   return (
     <InvoiceEditor
       clients={clients}

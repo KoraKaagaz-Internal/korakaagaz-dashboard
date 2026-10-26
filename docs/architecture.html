@@ -86,9 +86,10 @@
 <section id="overview">
   <span class="pill">Last updated 2026-10-27</span>
   <h1>Invoice Generator</h1>
+  <p><b>Live:</b> <a href="https://invoice-generator-flax-pi.vercel.app">invoice-generator-flax-pi.vercel.app</a> · Supabase project <code>invoice-generator</code> (ref <code>komdaeylldwknhwcjevv</code>, Mumbai) · Vercel project <code>invoice-generator</code></p>
   <p>A private web app for <b>Kora Kaagaz</b> that creates invoices matching the brand template, exports them as PDFs, and keeps a searchable history with paid/unpaid tracking and saved clients.</p>
   <ul>
-    <li><b>Stack:</b> Next.js 15 (App Router, TypeScript, Tailwind 4) on Vercel · Supabase (Postgres, magic-link auth, Storage) · Puppeteer + <code>@sparticuz/chromium</code> for PDFs.</li>
+    <li><b>Stack:</b> Next.js 15.5.28 (App Router, TypeScript, Tailwind 4) on Vercel · Supabase (Postgres, magic-link auth, Storage) · Puppeteer + <code>@sparticuz/chromium</code> for PDFs.</li>
     <li><b>Users:</b> one owner. Sign-in is limited to the emails in <code>ALLOWED_EMAILS</code>, and every table uses row-level security keyed on <code>auth.uid()</code>.</li>
     <li><b>Template fidelity:</b> the invoice is a fixed 852 × 1278 px page (2:3). The browser preview, the print page and the PDF all render the same React component, so they match exactly.</li>
   </ul>
@@ -171,7 +172,8 @@
 
 <section id="run">
   <h2>Run and deploy</h2>
-  <h3>One-time setup</h3>
+  <h3>One-time setup (already done for production)</h3>
+  <p class="muted">Done on 2026-10-27 with the Supabase CLI and Management API: project created, migrations pushed, owner user created, sign-ups disabled, Site URL and redirect URLs set. Vercel env vars set, and the anon key is stored as public config (RLS protects the data).</p>
   <pre>1. Create a Supabase project → SQL editor → run supabase/migrations/0001_init.sql
 2. Auth → Providers → Email: enabled.  Auth → Settings: disable "Allow new users to sign up"
    after your first sign-in (or create your user under Auth → Users first).
@@ -181,22 +183,26 @@
   <h3>Local</h3>
   <pre>npm install
 npm run dev                 # http://localhost:3000
-npm test                    # unit tests (totals, GST, formatting, pagination)
+npm test                    # unit tests (totals, GST, formatting, pagination, dates)
+SUPABASE_SERVICE_ROLE_KEY=… node scripts/e2e.mjs https://invoice-generator-flax-pi.vercel.app
+                            # 12 end-to-end checks on a real project, then deletes its test data
 node scripts/visual-diff.mjs public/dev-reference.png http://localhost:3000
                             # compares /dev/sample with the reference image</pre>
   <h3>Deploy (Vercel)</h3>
   <pre>vercel link
 vercel env add NEXT_PUBLIC_SUPABASE_URL
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
+vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY --type config
 vercel env add ALLOWED_EMAILS
 vercel env add NEXT_PUBLIC_SITE_URL      # https://&lt;your-app&gt;.vercel.app
-vercel --prod</pre>
+vercel deploy --prod
+npx supabase db push --linked   # apply new files in supabase/migrations</pre>
 </section>
 
 <section id="changelog">
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-10-27</td><td><b>Went live.</b> Created the Supabase project (Mumbai), applied migrations, created the owner user, disabled sign-ups, set auth URLs. Deployed to Vercel at invoice-generator-flax-pi.vercel.app. Upgraded Next.js 15.5.4 → 15.5.28 (Vercel blocks the vulnerable version). Added <code>token_hash</code> support to <code>/auth/callback</code>, a site-URL fallback for magic links, India-time default dates and invoice-number year (migration 0002), and <code>scripts/e2e.mjs</code>: 12/12 checks pass locally and in production.</td></tr>
     <tr><td>2026-10-27</td><td>Initial build: schema and RLS, magic-link login with an allowlist, settings, clients, invoice editor with live preview, multi-page template, discount and GST, history with search, filters and status, duplicate, PDF export to Storage, visual-diff script, unit tests. Template measured from the reference screenshot (2.78% pixel diff). Dropped react-hook-form from the plan; plain React state drives the live preview.</td></tr>
   </table></div>
 </section>
@@ -257,7 +263,7 @@ vercel --prod</pre>
     "Sign in": [
       "Enter your email on <code>/login</code>.",
       "If it's in <code>ALLOWED_EMAILS</code>, Supabase emails a magic link. Any other email silently gets nothing.",
-      "The link opens <code>/auth/callback</code>, which sets the session cookie and redirects to <code>/invoices</code>.",
+      "The link opens <code>/auth/callback</code> (with <code>?code=</code> or <code>?token_hash=</code>), which sets the session cookie and redirects to <code>/invoices</code>.",
       "From then on, middleware keeps the session fresh. <b>Sign out</b> clears it.",
     ],
   };
@@ -297,6 +303,8 @@ vercel --prod</pre>
     ["src/app/dev/sample/page.tsx", "Dev-only reference invoice (?items=15, ?gst=cgst_sgst, ?overlay=1)"],
     ["src/lib/sample.ts", "Reference invoice data (SuperDMC, ₹15,000)"],
     ["supabase/migrations/0001_init.sql", "Schema, RLS, invoice-number function, storage bucket and policies"],
+    ["supabase/migrations/0002_ist_invoice_year.sql", "Invoice-number year uses India time"],
+    ["scripts/e2e.mjs", "End-to-end checks against a real project (sign-in, settings, client, invoice, PDF, paid, duplicate, search); cleans up after itself"],
     ["scripts/visual-diff.mjs", "Screenshot /dev/sample and pixel-diff it against the design image"],
     ["src/lib/*.test.ts", "Vitest unit tests"],
     ["public/brand/", "Fabric images (placeholders cropped from the screenshot; replace with Figma exports)"],

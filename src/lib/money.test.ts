@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeTotals, formatAmount, formatInvoiceDate, lineAmount } from "./money";
+import { computeTotals, formatAmount, formatInvoiceDate, lineAmount, todayIso } from "./money";
 
 const base = { discount_type: "none" as const, discount_value: 0, gst_mode: "none" as const, gst_rate: 0 };
 
@@ -55,5 +55,12 @@ describe("formatInvoiceDate", () => {
     expect(formatInvoiceDate("2026-01-01")).toBe("1st Jan, 2026");
     expect(formatInvoiceDate("2026-01-12")).toBe("12th Jan, 2026");
     expect(formatInvoiceDate("2026-03-23")).toBe("23rd Mar, 2026");
+  });
+});
+
+describe("todayIso", () => {
+  it("returns an ISO date in the given time zone", () => {
+    expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(todayIso("Asia/Kolkata")).toBe(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }));
   });
 });

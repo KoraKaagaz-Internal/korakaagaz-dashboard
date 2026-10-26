@@ -48,3 +48,6 @@ next-env.d.ts
 
 # visual diff output
 /.visual/
+
+# supabase cli local state
+/supabase/.temp/

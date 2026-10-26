@@ -80,8 +80,7 @@ export function formatInvoiceDate(iso: string | null | undefined): string {
   return `${d}${suffix} ${months[m - 1]}, ${y}`;
 }
 
-export function todayIso(): string {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 10);
+/** Today's date in India (servers run on UTC, which is a day behind before 05:30 IST). */
+export function todayIso(timeZone = "Asia/Kolkata"): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone });
 }

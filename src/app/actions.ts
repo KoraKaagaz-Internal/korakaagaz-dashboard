@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getSettings, getInvoice, paymentSnapshot, requireOwner } from "@/lib/data";
@@ -18,10 +19,16 @@ export async function sendMagicLink(_: unknown, formData: FormData): Promise<{ o
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` },
+    options: { emailRedirectTo: `${await siteUrl()}/auth/callback` },
   });
   if (error) return { ok: false, message: error.message };
   return { ok: true, message };
+}
+
+async function siteUrl() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  const h = await headers();
+  return `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
 }
 
 export async function signOut() {
