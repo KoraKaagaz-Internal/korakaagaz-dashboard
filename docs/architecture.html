@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invoice Generator Architecture</title>
+<style>
+  :root {
+    --bg: #f6f6f8; --card: #fff; --ink: #1a1a2d; --muted: #5d5d70; --line: #e2e2ea;
+    --navy: #081788; --navy-soft: #e8eaf8; --ok: #16794a; --warn: #a15c00;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101018; --card: #191924; --ink: #ececf4; --muted: #a0a0b4; --line: #2c2c3c;
+      --navy: #8c9cff; --navy-soft: #23284a; --ok: #5fd39a; --warn: #f0b35a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101018; --card: #191924; --ink: #ececf4; --muted: #a0a0b4; --line: #2c2c3c;
+    --navy: #8c9cff; --navy-soft: #23284a; --ok: #5fd39a; --warn: #f0b35a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 Inter, system-ui, sans-serif; }
+  header.top { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line); }
+  header.top .in { max-width: 1100px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  header.top strong { font-family: Georgia, serif; color: var(--navy); letter-spacing: .02em; margin-right: 8px; }
+  header.top a { color: var(--muted); text-decoration: none; font-size: 13px; padding: 4px 8px; border-radius: 6px; }
+  header.top a:hover { background: var(--navy-soft); color: var(--ink); }
+  #theme { margin-left: auto; border: 1px solid var(--line); background: transparent; color: var(--ink); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 80px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 18px; }
+  h1 { font-family: Georgia, serif; font-size: 34px; margin: 4px 0 6px; }
+  h2 { margin: 0 0 12px; font-size: 19px; }
+  h3 { margin: 16px 0 6px; font-size: 15px; }
+  p, li { color: var(--ink); }
+  .muted { color: var(--muted); }
+  code, .mono { font-family: var(--mono); font-size: 12.5px; background: var(--navy-soft); padding: 1px 5px; border-radius: 4px; }
+  pre { background: var(--navy-soft); padding: 12px; border-radius: 8px; overflow-x: auto; font: 12.5px/1.5 var(--mono); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .tablewrap { overflow-x: auto; }
+  .pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px; background: var(--navy-soft); color: var(--navy); }
+  .callout { border-left: 3px solid var(--warn); padding: 8px 12px; background: color-mix(in srgb, var(--warn) 10%, transparent); border-radius: 6px; }
+
+  /* system map */
+  .map { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 760px) { .map { grid-template-columns: 1fr; } }
+  .map svg { width: 100%; height: auto; }
+  .node rect { fill: var(--card); stroke: var(--line); stroke-width: 1.5; rx: 10; cursor: pointer; transition: .15s; }
+  .node text { fill: var(--ink); font-size: 13px; pointer-events: none; }
+  .node text.sub { fill: var(--muted); font-size: 11px; }
+  .node:hover rect, .node.active rect { stroke: var(--navy); fill: var(--navy-soft); }
+  .edge { stroke: var(--muted); stroke-width: 1.4; fill: none; marker-end: url(#arrow); }
+  #arrow path { fill: var(--muted); }
+  .detail { border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-height: 200px; }
+
+  /* flows */
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tabs button, .step-ctl button { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+  .tabs button.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+  ol.steps { list-style: none; padding: 0; margin: 0; counter-reset: s; }
+  ol.steps li { counter-increment: s; padding: 8px 10px 8px 40px; position: relative; border-radius: 8px; opacity: .45; transition: .15s; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 10px; top: 8px; width: 20px; height: 20px; border-radius: 50%; background: var(--line); font-size: 12px; text-align: center; line-height: 20px; }
+  ol.steps li.on { opacity: 1; background: var(--navy-soft); }
+  ol.steps li.on::before { background: var(--navy); color: #fff; }
+  ol.steps li.done { opacity: .85; }
+  .step-ctl { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+
+  input[type=search] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; margin-bottom: 10px; }
+  dl.gloss dt { font-weight: 600; margin-top: 10px; }
+  dl.gloss dd { margin: 2px 0 0; color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <strong>KORA KAAGAZ · Invoices</strong>
+  <a href="#overview">Overview</a><a href="#map">System map</a><a href="#flows">Flows</a><a href="#roles">Roles</a>
+  <a href="#data">Data</a><a href="#limits">Limits</a><a href="#code">Code map</a><a href="#run">Run</a>
+  <a href="#changelog">Change log</a><a href="#glossary">Glossary</a>
+  <button id="theme" type="button" aria-label="Toggle theme">◐</button>
+</div></header>
+
+<main>
+<section id="overview">
+  <span class="pill">Last updated 2026-10-27</span>
+  <h1>Invoice Generator</h1>
+  <p>A private web app for <b>Kora Kaagaz</b> that creates invoices matching the brand template, exports them as PDFs, and keeps a searchable history with paid/unpaid tracking and saved clients.</p>
+  <ul>
+    <li><b>Stack:</b> Next.js 15 (App Router, TypeScript, Tailwind 4) on Vercel · Supabase (Postgres, magic-link auth, Storage) · Puppeteer + <code>@sparticuz/chromium</code> for PDFs.</li>
+    <li><b>Users:</b> one owner. Sign-in is limited to the emails in <code>ALLOWED_EMAILS</code>, and every table uses row-level security keyed on <code>auth.uid()</code>.</li>
+    <li><b>Template fidelity:</b> the invoice is a fixed 852 × 1278 px page (2:3). The browser preview, the print page and the PDF all render the same React component, so they match exactly.</li>
+  </ul>
+  <div class="callout"><b>Open item:</b> the fonts (DM Serif Display and Inter) and the two fabric images are stand-ins measured and cropped from the reference screenshot. Swap in the Figma exports (<code>public/brand/</code>) and font names, then re-run <code>scripts/visual-diff.mjs</code>. Current diff against the screenshot: <b>2.78%</b> of pixels, mostly anti-aliasing plus the added "Invoice no." field.</div>
+</section>
+
+<section id="map">
+  <h2>System map</h2>
+  <p class="muted">Click a box for details.</p>
+  <div class="map">
+    <svg viewBox="0 0 560 360" role="img" aria-label="System map">
+      <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <path class="edge" d="M110,70 L200,70"/>
+      <path class="edge" d="M320,70 L420,70"/>
+      <path class="edge" d="M260,95 L260,150"/>
+      <path class="edge" d="M320,175 L420,175"/>
+      <path class="edge" d="M260,200 L260,255"/>
+      <path class="edge" d="M320,280 L420,280"/>
+      <path class="edge" d="M480,200 L480,255"/>
+      <g class="node" data-k="browser"><rect x="10" y="45" width="100" height="50"/><text x="60" y="68" text-anchor="middle">Browser</text><text class="sub" x="60" y="84" text-anchor="middle">you</text></g>
+      <g class="node" data-k="middleware"><rect x="200" y="45" width="120" height="50"/><text x="260" y="68" text-anchor="middle">Middleware</text><text class="sub" x="260" y="84" text-anchor="middle">session check</text></g>
+      <g class="node" data-k="auth"><rect x="420" y="45" width="120" height="50"/><text x="480" y="68" text-anchor="middle">Supabase Auth</text><text class="sub" x="480" y="84" text-anchor="middle">magic link</text></g>
+      <g class="node" data-k="pages"><rect x="200" y="150" width="120" height="50"/><text x="260" y="173" text-anchor="middle">Pages + actions</text><text class="sub" x="260" y="189" text-anchor="middle">Next.js server</text></g>
+      <g class="node" data-k="db"><rect x="420" y="150" width="120" height="50"/><text x="480" y="173" text-anchor="middle">Postgres</text><text class="sub" x="480" y="189" text-anchor="middle">RLS tables</text></g>
+      <g class="node" data-k="pdf"><rect x="200" y="255" width="120" height="50"/><text x="260" y="278" text-anchor="middle">PDF route</text><text class="sub" x="260" y="294" text-anchor="middle">headless Chromium</text></g>
+      <g class="node" data-k="storage"><rect x="420" y="255" width="120" height="50"/><text x="480" y="278" text-anchor="middle">Storage</text><text class="sub" x="480" y="294" text-anchor="middle">invoices bucket</text></g>
+    </svg>
+    <div class="detail" id="detail"><p class="muted">Select a component.</p></div>
+  </div>
+</section>
+
+<section id="flows">
+  <h2>Main flows</h2>
+  <div class="tabs" id="flowTabs"></div>
+  <ol class="steps" id="flowSteps"></ol>
+  <div class="step-ctl"><button id="prev" type="button">← Back</button><button id="next" type="button">Next →</button><span class="muted" id="stepInfo"></span></div>
+</section>
+
+<section id="roles">
+  <h2>Roles and permissions</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Who</th><th>Can</th><th>How it's enforced</th></tr>
+    <tr><td>Owner (allowed email)</td><td>Everything: settings, clients, invoices, PDFs</td><td><code>ALLOWED_EMAILS</code> check before sending a magic link and on every request (<code>getUser</code>), plus RLS <code>owner_id = auth.uid()</code></td></tr>
+    <tr><td>Anyone else</td><td>Sees only the login page. Requesting a link gets the same "on its way" message, so the form doesn't reveal which email is allowed</td><td>Middleware redirects to <code>/login</code>. Turn off public sign-ups in Supabase Auth settings</td></tr>
+    <tr><td>Headless Chromium (PDF)</td><td>Loads <code>/print/[id]</code> as the owner</td><td>The PDF route forwards the owner's session cookies to the browser it launches</td></tr>
+  </table></div>
+</section>
+
+<section id="data">
+  <h2>Data and privacy</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Table</th><th>Holds</th><th>Notes</th></tr>
+    <tr><td><code>settings</code></td><td>Business name, UPI, bank, IFSC, PAN, GSTIN, contact, numbering, defaults</td><td>One row per owner. <code>next_number</code> is the invoice counter</td></tr>
+    <tr><td><code>clients</code></td><td>Name, address, GSTIN, email, phone</td><td>Deleting a client keeps past invoices intact (<code>on delete set null</code>)</td></tr>
+    <tr><td><code>invoices</code></td><td>Number, dates, currency, terms, discount, GST, stored totals, status, <code>pdf_path</code></td><td><b>Snapshots:</b> <code>client_snapshot</code> and <code>payment_snapshot</code> freeze details at creation, so editing Settings never rewrites old invoices ("Use current payment details" updates them on purpose)</td></tr>
+    <tr><td><code>invoice_items</code></td><td>Position, title, description, qty, unit price, amount</td><td>Replaced in full on every save</td></tr>
+    <tr><td>Storage <code>invoices/&lt;owner&gt;/&lt;number&gt;.pdf</code></td><td>Latest generated PDF</td><td>Private bucket, owner-folder policies</td></tr>
+  </table></div>
+  <h3>Sensitive data</h3>
+  <p>Bank account, PAN and client details live only in your Supabase project. Keys sit in <code>.env.local</code> (git-ignored) and Vercel environment variables. Nothing is sent to third parties.</p>
+  <h3>Totals</h3>
+  <p><code>subtotal = Σ qty × unit price</code> → discount (flat or %, capped at subtotal) → GST on the discounted amount (CGST+SGST split evenly, or IGST) → <code>total</code>. Amounts are rounded to paise and shown with Indian grouping (<code>1,50,000</code>). Computed in <code>src/lib/money.ts</code>, used by both the preview and the server, and stored on the invoice.</p>
+</section>
+
+<section id="limits">
+  <h2>Limits and cost</h2>
+  <ul>
+    <li><b>Supabase free tier:</b> 500 MB database and 1 GB storage. One PDF is about 0.6 MB with the placeholder images, so roughly 1,500 PDFs. Free projects pause after a week with no activity.</li>
+    <li><b>Vercel Hobby:</b> free. The PDF function is allowed up to 60 s; a cold start of Chromium takes about 3–6 s.</li>
+    <li><b>Pagination:</b> pages are planned ahead from estimated row heights (<code>src/lib/paginate.ts</code>). Very long single descriptions (more than about a page) get clipped. Split them into several items.</li>
+    <li><b>Client name:</b> one line. Names over 16 characters drop to 28px; very long names get an ellipsis.</li>
+  </ul>
+</section>
+
+<section id="code">
+  <h2>Code map</h2>
+  <input type="search" id="codeSearch" placeholder="Filter files… (e.g. pdf, totals, auth)" />
+  <div class="tablewrap"><table id="codeTable"><thead><tr><th>Path</th><th>What it does</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section id="run">
+  <h2>Run and deploy</h2>
+  <h3>One-time setup</h3>
+  <pre>1. Create a Supabase project → SQL editor → run supabase/migrations/0001_init.sql
+2. Auth → Providers → Email: enabled.  Auth → Settings: disable "Allow new users to sign up"
+   after your first sign-in (or create your user under Auth → Users first).
+3. Auth → URL configuration: Site URL = your Vercel URL; add http://localhost:3000/auth/callback
+   and https://&lt;your-app&gt;/auth/callback to Redirect URLs.
+4. cp .env.example .env.local and fill in the four values.</pre>
+  <h3>Local</h3>
+  <pre>npm install
+npm run dev                 # http://localhost:3000
+npm test                    # unit tests (totals, GST, formatting, pagination)
+node scripts/visual-diff.mjs public/dev-reference.png http://localhost:3000
+                            # compares /dev/sample with the reference image</pre>
+  <h3>Deploy (Vercel)</h3>
+  <pre>vercel link
+vercel env add NEXT_PUBLIC_SUPABASE_URL
+vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
+vercel env add ALLOWED_EMAILS
+vercel env add NEXT_PUBLIC_SITE_URL      # https://&lt;your-app&gt;.vercel.app
+vercel --prod</pre>
+</section>
+
+<section id="changelog">
+  <h2>Change log</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-10-27</td><td>Initial build: schema and RLS, magic-link login with an allowlist, settings, clients, invoice editor with live preview, multi-page template, discount and GST, history with search, filters and status, duplicate, PDF export to Storage, visual-diff script, unit tests. Template measured from the reference screenshot (2.78% pixel diff). Dropped react-hook-form from the plan; plain React state drives the live preview.</td></tr>
+  </table></div>
+</section>
+
+<section id="glossary">
+  <h2>Glossary</h2>
+  <dl class="gloss">
+    <dt>RLS (row-level security)</dt><dd>Postgres rules that make every query return only your rows, even if a bug sends the wrong query.</dd>
+    <dt>Snapshot</dt><dd>A copy of the client and payment details stored on the invoice, so history doesn't change when you edit a client or Settings.</dd>
+    <dt>Magic link</dt><dd>Passwordless sign-in: Supabase emails you a one-time link.</dd>
+    <dt>CGST / SGST / IGST</dt><dd>Indian GST. Same-state sales split the rate into Central and State halves; inter-state sales use Integrated GST at the full rate.</dd>
+    <dt>Server action</dt><dd>A Next.js function that runs on the server and is called straight from a form or button (<code>src/app/actions.ts</code>).</dd>
+    <dt>Print page</dt><dd><code>/print/[id]</code>: the invoice with no app chrome, which headless Chromium turns into the PDF.</dd>
+    <dt>Visual diff</dt><dd>A pixel-by-pixel comparison of the rendered template against the design image (pixelmatch).</dd>
+  </dl>
+</section>
+</main>
+
+<script>
+  const NODES = {
+    browser: ["Browser", "The app UI: invoice list, editor with live preview, clients, settings. Built from React Server Components plus a few client components (editor, row actions, forms)."],
+    middleware: ["Middleware", "<code>src/middleware.ts</code> refreshes the Supabase session cookie and redirects signed-out visitors to <code>/login</code>. <code>/dev/*</code> is open only in development."],
+    auth: ["Supabase Auth", "Magic-link email login. <code>sendMagicLink</code> sends a link only to emails in <code>ALLOWED_EMAILS</code>. <code>/auth/callback</code> trades the code for a session."],
+    pages: ["Pages and server actions", "Server components read data through <code>src/lib/data.ts</code>. Mutations go through <code>src/app/actions.ts</code>, which validates with zod, recomputes totals on the server and revalidates pages."],
+    db: ["Postgres", "Tables <code>settings</code>, <code>clients</code>, <code>invoices</code>, <code>invoice_items</code>, all with owner-only RLS. <code>next_invoice_number()</code> locks the settings row, so two saves can never get the same number."],
+    pdf: ["PDF route", "<code>/api/invoices/[id]/pdf</code> launches Chromium (<code>@sparticuz/chromium</code> on Vercel, full Puppeteer locally), forwards your cookies, opens <code>/print/[id]</code> and prints at 852 × 1278 px."],
+    storage: ["Storage", "A private <code>invoices</code> bucket. Each download also overwrites <code>&lt;owner&gt;/&lt;number&gt;.pdf</code> and records <code>pdf_path</code> on the invoice."],
+  };
+  const detail = document.getElementById("detail");
+  document.querySelectorAll(".node").forEach((n) => n.addEventListener("click", () => {
+    document.querySelectorAll(".node").forEach((x) => x.classList.remove("active"));
+    n.classList.add("active");
+    const [t, d] = NODES[n.dataset.k];
+    detail.innerHTML = `<h3 style="margin-top:0">${t}</h3><p>${d}</p>`;
+  }));
+
+  const FLOWS = {
+    "Create invoice": [
+      "Open <b>New invoice</b>. Defaults (currency, terms, GST) come from Settings, and the number preview shows the next value.",
+      "Pick a saved client or type details (or add a new client inline). The client's details are copied onto the invoice.",
+      "Add line items, discount and GST. The right-hand preview re-renders the exact template on every keystroke.",
+      "<b>Save</b> → <code>saveInvoice</code> validates, recomputes totals on the server, reserves a number with <code>next_invoice_number()</code> and stores the payment-details snapshot.",
+      "Items are inserted with their positions, <code>/invoices</code> is revalidated, and you land on the edit page.",
+    ],
+    "Download PDF": [
+      "Click <b>PDF</b> in history, or <b>Save and download PDF</b>.",
+      "The route checks the session and loads the invoice (RLS limits it to your rows).",
+      "Chromium starts, receives your session cookies and opens <code>/print/[id]</code>.",
+      "Pages print at 852 × 1278 px with backgrounds on; fonts load before printing.",
+      "The PDF is saved to Storage at <code>&lt;owner&gt;/&lt;number&gt;.pdf</code> and streamed back as a download.",
+    ],
+    "Track payment": [
+      "History lists invoices newest first and shows outstanding and paid totals for each currency.",
+      "Filter by text (number or client name), status and a date range. The filters live in the URL, so you can bookmark them.",
+      "<b>Mark sent</b>, then <b>Mark paid</b> (records <code>paid_at</code>). <b>Mark unpaid</b> reverses it.",
+      "<b>Duplicate</b> copies the client, items and tax settings into a new draft dated today with the next number.",
+    ],
+    "Sign in": [
+      "Enter your email on <code>/login</code>.",
+      "If it's in <code>ALLOWED_EMAILS</code>, Supabase emails a magic link. Any other email silently gets nothing.",
+      "The link opens <code>/auth/callback</code>, which sets the session cookie and redirects to <code>/invoices</code>.",
+      "From then on, middleware keeps the session fresh. <b>Sign out</b> clears it.",
+    ],
+  };
+  const tabs = document.getElementById("flowTabs"), steps = document.getElementById("flowSteps"), info = document.getElementById("stepInfo");
+  let flow = Object.keys(FLOWS)[0], idx = 0;
+  function render() {
+    tabs.innerHTML = ""; Object.keys(FLOWS).forEach((k) => {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = k; if (k === flow) b.className = "on";
+      b.onclick = () => { flow = k; idx = 0; render(); }; tabs.appendChild(b);
+    });
+    steps.innerHTML = FLOWS[flow].map((s, i) => `<li class="${i === idx ? "on" : i < idx ? "done" : ""}">${s}</li>`).join("");
+    info.textContent = `Step ${idx + 1} of ${FLOWS[flow].length}`;
+  }
+  document.getElementById("prev").onclick = () => { idx = Math.max(0, idx - 1); render(); };
+  document.getElementById("next").onclick = () => { idx = Math.min(FLOWS[flow].length - 1, idx + 1); render(); };
+  render();
+
+  const CODE = [
+    ["src/components/invoice/InvoiceTemplate.tsx", "The invoice template: header, meta, item table, totals, payment details, photo column; multi-page"],
+    ["src/styles/invoice.css", "All template measurements and colours (CSS variables); 852 × 1278 px page"],
+    ["src/lib/paginate.ts", "Estimates row heights and splits items across pages; totals always on the last page"],
+    ["src/lib/money.ts", "Totals, discount, CGST/SGST/IGST, Indian number formatting, template date format"],
+    ["src/lib/types.ts", "Shared types: Settings, Client, InvoiceDraft, Invoice, snapshots"],
+    ["src/lib/data.ts", "Server-only reads: settings, clients, invoices (with search and filters), owner guard"],
+    ["src/app/actions.ts", "Server actions: auth, settings, clients, save/duplicate/delete invoice, status, refresh payment details"],
+    ["src/app/(app)/invoices/InvoiceEditor.tsx", "Editor form with live scaled preview, line items, client picker, totals"],
+    ["src/app/(app)/invoices/page.tsx", "History: search, filters, per-currency outstanding and paid totals"],
+    ["src/app/(app)/invoices/InvoiceRowActions.tsx", "Row buttons: open, PDF, duplicate, mark sent/paid/unpaid, delete"],
+    ["src/app/(app)/clients/*", "Saved clients list and inline edit"],
+    ["src/app/(app)/settings/*", "Business, bank, UPI, contact, numbering and tax defaults"],
+    ["src/app/print/[id]/page.tsx", "Bare print page used for PDFs"],
+    ["src/app/api/invoices/[id]/pdf/route.ts", "PDF endpoint: render, upload to Storage, download"],
+    ["src/lib/pdf.ts", "Chromium launcher (serverless or local) and cookie-forwarding PDF render"],
+    ["src/middleware.ts", "Session refresh and sign-in redirect"],
+    ["src/lib/supabase/server.ts · client.ts", "Supabase clients; ALLOWED_EMAILS check"],
+    ["src/app/login/* · src/app/auth/callback/route.ts", "Magic-link login and callback"],
+    ["src/app/dev/sample/page.tsx", "Dev-only reference invoice (?items=15, ?gst=cgst_sgst, ?overlay=1)"],
+    ["src/lib/sample.ts", "Reference invoice data (SuperDMC, ₹15,000)"],
+    ["supabase/migrations/0001_init.sql", "Schema, RLS, invoice-number function, storage bucket and policies"],
+    ["scripts/visual-diff.mjs", "Screenshot /dev/sample and pixel-diff it against the design image"],
+    ["src/lib/*.test.ts", "Vitest unit tests"],
+    ["public/brand/", "Fabric images (placeholders cropped from the screenshot; replace with Figma exports)"],
+  ];
+  const tbody = document.querySelector("#codeTable tbody"), search = document.getElementById("codeSearch");
+  function renderCode() {
+    const q = search.value.toLowerCase();
+    tbody.innerHTML = CODE.filter(([p, d]) => (p + d).toLowerCase().includes(q))
+      .map(([p, d]) => `<tr><td class="mono" style="background:none">${p}</td><td>${d}</td></tr>`).join("") || `<tr><td colspan="2" class="muted">No matches</td></tr>`;
+  }
+  search.addEventListener("input", renderCode); renderCode();
+
+  document.getElementById("theme").onclick = () => {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+  };
+</script>
+</body>
+</html>

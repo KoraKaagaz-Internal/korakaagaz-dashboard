@@ -1,0 +1,426 @@
+/*
+ * Kora Kaagaz invoice template.
+ * Canvas is a fixed 852 x 1278 px page (2:3, measured from the reference).
+ * Every position below is in page pixels; PDFs are printed at exactly this size.
+ * Replace the measured values with Figma specs when available.
+ */
+.kk-invoice {
+  --kk-page-w: 852px;
+  --kk-page-h: 1278px;
+  --kk-navy: #081788;
+  --kk-ink: #1a1a2d;
+  --kk-heading: #141414;
+  --kk-muted: #3a3a4a;
+  --kk-rule: #b4b4b4;
+  --kk-rule-strong: #9a9a9a;
+  --kk-left: 54px;
+  --kk-content-w: 544px; /* 54 -> 598 */
+  --kk-photo-x: 638px;
+  --kk-serif: var(--font-serif), "DM Serif Display", Georgia, serif;
+  --kk-sans: var(--font-sans), Inter, system-ui, sans-serif;
+
+  font-family: var(--kk-sans);
+  color: var(--kk-ink);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 0;
+}
+
+.kk-page {
+  position: relative;
+  width: var(--kk-page-w);
+  height: var(--kk-page-h);
+  background: #fff;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.kk-page + .kk-page {
+  margin-top: 24px;
+}
+@media print {
+  .kk-page + .kk-page {
+    margin-top: 0;
+  }
+  .kk-page {
+    break-after: page;
+  }
+  .kk-page:last-child {
+    break-after: auto;
+  }
+  /* Chromium prints box-shadow as a solid band; drop it in PDFs. */
+  .kk-invoice .kk-photo {
+    box-shadow: none;
+  }
+}
+
+/* ---------- Header (page 1) ---------- */
+.kk-logo {
+  position: absolute;
+  left: 51px;
+  top: 41px;
+  margin: 0;
+  font-family: var(--kk-serif);
+  font-weight: 400;
+  font-size: 50px;
+  line-height: 39px;
+  letter-spacing: -0.3px;
+  color: var(--kk-navy);
+  text-transform: uppercase;
+}
+.kk-logo img {
+  display: block;
+  width: 187px;
+  height: auto;
+}
+
+.kk-title {
+  position: absolute;
+  left: 48px;
+  top: 214px;
+  margin: 0;
+  font-family: var(--kk-serif);
+  font-weight: 400;
+  font-size: 150px;
+  line-height: 160px;
+  letter-spacing: 0.2px;
+  color: var(--kk-heading);
+}
+
+.kk-label {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--kk-ink);
+}
+.kk-label::after {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 1.5px;
+  margin-top: 9px;
+  background: var(--kk-ink);
+}
+.kk-value {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--kk-ink);
+}
+
+.kk-billed {
+  position: absolute;
+  left: var(--kk-left);
+  top: 392px;
+  width: 280px;
+}
+.kk-client-name {
+  margin-top: 23px;
+  font-size: 37px;
+  line-height: 44px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+  color: var(--kk-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kk-client-name.is-long {
+  font-size: 28px;
+}
+.kk-client-extra {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--kk-muted);
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kk-meta-divider {
+  position: absolute;
+  left: 344px;
+  top: 395px;
+  width: 1px;
+  height: 122px;
+  background: var(--kk-rule-strong);
+}
+.kk-meta {
+  position: absolute;
+  top: 393px;
+}
+.kk-meta.c1 {
+  left: 383px;
+}
+.kk-meta.c2 {
+  left: 532px;
+}
+.kk-meta.r2 {
+  top: 469px;
+}
+.kk-meta .kk-sub {
+  font-size: 10px;
+  line-height: 13px;
+  color: var(--kk-muted);
+}
+
+/* ---------- Items table ---------- */
+.kk-body {
+  position: absolute;
+  left: var(--kk-left);
+  width: var(--kk-content-w);
+  top: 550px;
+  bottom: 58px; /* footer rule sits at 1220 */
+  display: flex;
+  flex-direction: column;
+}
+.kk-page.is-continued .kk-body {
+  top: 52px;
+}
+
+.kk-thead {
+  display: grid;
+  grid-template-columns: 52px 240px 52px 80px 120px;
+  align-items: center;
+  height: 46px;
+  border-top: 1px solid var(--kk-rule);
+  border-bottom: 1px solid var(--kk-rule);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kk-ink);
+}
+.kk-row {
+  display: grid;
+  grid-template-columns: 52px 240px 52px 80px 120px;
+  padding: 15px 0 18px;
+  font-size: 14px;
+  line-height: 16px;
+}
+.kk-num {
+  text-align: right;
+}
+.kk-thead .kk-num:last-child,
+.kk-row .kk-num:last-child {
+  padding-right: 2px;
+}
+.kk-item-title {
+  padding-right: 44px;
+}
+.kk-item-desc {
+  margin-top: 4px;
+  padding-right: 54px;
+  font-size: 11.3px;
+  line-height: 13.4px;
+  color: var(--kk-ink);
+  white-space: pre-line;
+}
+.kk-items {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---------- Totals ---------- */
+.kk-totals {
+  flex: none;
+  border-top: 1px solid var(--kk-rule);
+  padding-left: 297px; /* 351 - 54 */
+  padding-top: 21px;
+  padding-bottom: 19px;
+  border-bottom: 1px solid var(--kk-rule);
+}
+.kk-trow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 14px;
+  line-height: 18px;
+  padding-right: 2px;
+}
+.kk-trow + .kk-trow {
+  margin-top: 12px;
+}
+.kk-trow-total {
+  margin-top: 12px;
+  padding-top: 5px;
+  border-top: 1px solid #e2e2e2;
+  color: var(--kk-navy);
+  font-weight: 600;
+  font-size: 16px;
+}
+.kk-trow-total .kk-big {
+  font-size: 26px;
+  line-height: 30px;
+  font-weight: 700;
+}
+
+/* ---------- Payment / queries ---------- */
+.kk-pay {
+  position: relative;
+  display: grid;
+  grid-template-columns: 297px 247px;
+  padding-top: 33px;
+  height: 305px;
+  box-sizing: border-box;
+  flex: none;
+}
+.kk-pay::before {
+  content: "";
+  position: absolute;
+  left: 236px;
+  top: 34px;
+  width: 1px;
+  height: 200px;
+  background: var(--kk-rule-strong);
+}
+.kk-pay h4 {
+  margin: 0;
+  margin-top: 9px;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+.kk-pay h4 + .kk-value {
+  margin-top: 3px;
+}
+.kk-pay .kk-label + .kk-value,
+.kk-pay .kk-label + h4 {
+  margin-top: 16px;
+}
+.kk-bank {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: 4px;
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 15px;
+}
+.kk-bank dt {
+  margin: 0;
+  white-space: pre;
+}
+.kk-bank dd {
+  position: relative;
+  margin: 0;
+  padding-left: 9px;
+  white-space: pre-line;
+}
+.kk-bank dd::before {
+  content: ":";
+  position: absolute;
+  left: 0;
+}
+.kk-pan {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 15px;
+  font-weight: 500;
+}
+.kk-queries .kk-value {
+  line-height: 21px;
+}
+
+/* ---------- Footer ---------- */
+.kk-footer {
+  position: absolute;
+  left: var(--kk-left);
+  right: 216px;
+  top: 1220px;
+  border-top: 1px solid var(--kk-rule);
+  padding-top: 15px;
+  font-size: 10px;
+  line-height: 14px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+.kk-footer .kk-page-no {
+  float: right;
+  letter-spacing: 0.1em;
+  margin-right: 40px;
+}
+.kk-page.is-continued .kk-footer {
+  right: var(--kk-left);
+}
+.kk-page.is-continued .kk-footer .kk-page-no {
+  margin-right: 0;
+}
+
+/* ---------- Photo column (page 1) ---------- */
+.kk-photo {
+  position: absolute;
+  left: var(--kk-photo-x);
+  top: 0;
+  width: 214px;
+  height: 1220px;
+  box-shadow: -2px 4px 10px rgba(0, 0, 0, 0.12);
+}
+.kk-photo img {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+}
+.kk-photo .kk-photo-top {
+  height: 750px;
+}
+.kk-photo .kk-photo-bottom {
+  height: 470px;
+}
+.kk-brackets {
+  position: absolute;
+  left: 49px;
+  top: 248px;
+  width: 112px;
+  height: 112px;
+  pointer-events: none;
+}
+.kk-brackets i {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: 0 solid rgba(255, 255, 255, 0.92);
+}
+.kk-brackets i:nth-child(1) {
+  left: 0;
+  top: 0;
+  border-left-width: 2px;
+  border-top-width: 2px;
+}
+.kk-brackets i:nth-child(2) {
+  right: 0;
+  top: 0;
+  border-right-width: 2px;
+  border-top-width: 2px;
+}
+.kk-brackets i:nth-child(3) {
+  left: 0;
+  bottom: 0;
+  border-left-width: 2px;
+  border-bottom-width: 2px;
+}
+.kk-brackets i:nth-child(4) {
+  right: 0;
+  bottom: 0;
+  border-right-width: 2px;
+  border-bottom-width: 2px;
+}
+
+.kk-continued-note {
+  margin-top: auto;
+  padding: 12px 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kk-muted);
+  text-align: right;
+}
+.kk-notes {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--kk-muted);
+  white-space: pre-line;
+}

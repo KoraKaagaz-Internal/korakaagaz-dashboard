@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-sans), Inter, system-ui, sans-serif;
+  --font-serif: var(--font-serif), Georgia, serif;
+  --color-navy: #081788;
+  --color-ink: #1a1a2d;
+}
+
+body {
+  background: #f4f4f6;
+  color: #1a1a2d;
+  font-family: var(--font-sans), Inter, system-ui, sans-serif;
+}
