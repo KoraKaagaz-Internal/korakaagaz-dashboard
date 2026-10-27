@@ -31,6 +31,8 @@ async function sessionFor(email) {
 }
 
 const created = { clients: [], documents: [], users: [] };
+// The test takes an invoice number; remember the counter so real numbering isn't disturbed.
+const { data: counterBefore } = await admin.from("doc_counters").select("*").eq("doc_type", "invoice").eq("fy", "26-27").maybeSingle();
 try {
   // Invite test users directly (service role), as the admin would.
   await admin.from("members").insert([
@@ -133,8 +135,9 @@ try {
   if (created.clients.length) await admin.from("clients").delete().in("id", created.clients);
   await admin.from("members").delete().in("email", [MEMBER, VIEWER]);
   for (const id of created.users.filter(Boolean)) await admin.auth.admin.deleteUser(id);
-  // test runs advance the invoice counter; put it back
-  await admin.from("doc_counters").delete().eq("fy", "26-27").eq("doc_type", "invoice");
+  // put the invoice counter back exactly as it was
+  if (counterBefore) await admin.from("doc_counters").update({ next_seq: counterBefore.next_seq }).eq("doc_type", "invoice").eq("fy", "26-27");
+  else await admin.from("doc_counters").delete().eq("doc_type", "invoice").eq("fy", "26-27");
   await admin.from("audit_events").delete().like("actor_email", "sec-%");
   console.log("cleaned up");
 }
