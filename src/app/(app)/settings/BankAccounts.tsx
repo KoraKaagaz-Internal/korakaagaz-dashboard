@@ -1,0 +1,99 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { deleteBankAccount, saveBankAccount } from "@/app/actions/settings";
+import { Card, Field, Input, Textarea, btn } from "@/components/ui";
+import type { BankAccount } from "@/lib/types";
+
+const EMPTY = { label: "", account_name: "", account_no: "", ifsc: "", bank_name: "", branch_address: "", swift: "", iban: "", upi_id: "", is_default: false };
+
+export function BankAccounts({ banks }: { banks: BankAccount[] }) {
+  const router = useRouter();
+  const [form, setForm] = useState<typeof EMPTY & { id?: string }>(banks.length ? EMPTY : { ...EMPTY, label: "Primary", is_default: true });
+  const [open, setOpen] = useState(banks.length === 0);
+  const [msg, setMsg] = useState("");
+  const [pending, start] = useTransition();
+  const set = (k: keyof typeof EMPTY, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }));
+
+  return (
+    <Card title="Bank accounts and UPI" actions={!open && <button className={btn.ghost} onClick={() => { setForm({ ...EMPTY, label: `Account ${banks.length + 1}` }); setOpen(true); }}>+ Add account</button>}>
+      <ul className="divide-y divide-neutral-100 text-sm">
+        {banks.map((b) => (
+          <li key={b.id} className="flex items-start gap-3 py-2.5">
+            <div className="flex-1">
+              <div className="font-medium">
+                {b.label} {b.is_default && <span className="ml-1 rounded-full bg-navy/10 px-2 py-0.5 text-xs text-navy">default</span>}
+              </div>
+              <div className="text-neutral-500">{[b.bank_name, b.account_no && `A/c ${b.account_no}`, b.ifsc, b.upi_id && `UPI ${b.upi_id}`, b.swift && `SWIFT ${b.swift}`].filter(Boolean).join(" · ")}</div>
+            </div>
+            <button className={btn.ghost} onClick={() => { const { id, label, account_name, account_no, ifsc, bank_name, branch_address, swift, iban, upi_id, is_default } = b; setForm({ id, label, account_name, account_no, ifsc, bank_name, branch_address, swift, iban, upi_id, is_default }); setOpen(true); }}>
+              Edit
+            </button>
+            <button className={btn.danger} disabled={pending} onClick={() => { if (window.confirm(`Delete ${b.label}?`)) start(async () => { await deleteBankAccount(b.id); router.refresh(); }); }}>
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
+      {open && (
+        <div className="mt-3 grid gap-3 border-t border-neutral-100 pt-3 sm:grid-cols-2">
+          <Field label="Label">
+            <Input value={form.label} onChange={(e) => set("label", e.target.value)} placeholder="Primary / USD account" />
+          </Field>
+          <Field label="UPI ID (prints a scan-to-pay QR)">
+            <Input value={form.upi_id} onChange={(e) => set("upi_id", e.target.value.trim())} placeholder="name@okhdfcbank" />
+          </Field>
+          <Field label="Account holder name">
+            <Input value={form.account_name} onChange={(e) => set("account_name", e.target.value)} />
+          </Field>
+          <Field label="Account number">
+            <Input value={form.account_no} onChange={(e) => set("account_no", e.target.value.replace(/\s/g, ""))} />
+          </Field>
+          <Field label="IFSC">
+            <Input value={form.ifsc} onChange={(e) => set("ifsc", e.target.value.toUpperCase())} />
+          </Field>
+          <Field label="Bank name">
+            <Input value={form.bank_name} onChange={(e) => set("bank_name", e.target.value)} />
+          </Field>
+          <Field label="Branch address" className="sm:col-span-2">
+            <Textarea value={form.branch_address} onChange={(e) => set("branch_address", e.target.value)} />
+          </Field>
+          <Field label="SWIFT (for foreign clients)">
+            <Input value={form.swift} onChange={(e) => set("swift", e.target.value.toUpperCase())} />
+          </Field>
+          <Field label="IBAN (optional)">
+            <Input value={form.iban} onChange={(e) => set("iban", e.target.value.toUpperCase())} />
+          </Field>
+          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+            <input type="checkbox" checked={form.is_default} onChange={(e) => set("is_default", e.target.checked)} />
+            Use by default on new documents
+          </label>
+          <div className="flex items-center gap-2 sm:col-span-2">
+            <button
+              className={btn.primary}
+              disabled={pending}
+              onClick={() =>
+                start(async () => {
+                  const r = await saveBankAccount(form);
+                  if (!r.ok) return setMsg(r.message);
+                  setMsg("");
+                  setOpen(false);
+                  router.refresh();
+                })
+              }
+            >
+              Save account
+            </button>
+            {banks.length > 0 && (
+              <button className={btn.secondary} onClick={() => setOpen(false)}>
+                Cancel
+              </button>
+            )}
+            {msg && <span className="text-sm text-red-600">{msg}</span>}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}

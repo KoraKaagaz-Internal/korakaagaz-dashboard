@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { Role } from "../types";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -19,20 +20,20 @@ export async function createClient() {
   });
 }
 
-/** Returns the signed-in user, or null. Also enforces the single-owner allowlist. */
+/** Anonymous client for public share pages (only the shared_* RPCs are open to anon). */
+export function createAnonClient() {
+  return createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    cookies: { getAll: () => [], setAll: () => {} },
+  });
+}
+
+/** Signed-in user plus their workspace role (null when not a member). */
 export async function getUser() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user || !isAllowedEmail(user.email)) return { supabase, user: null };
-  return { supabase, user };
-}
-
-export function isAllowedEmail(email: string | undefined | null): boolean {
-  const allowed = (process.env.ALLOWED_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  return !!email && allowed.includes(email.toLowerCase());
+  if (!user) return { supabase, user: null, role: null as Role | null };
+  const { data: role } = await supabase.rpc("my_role");
+  return { supabase, user: role ? user : null, role: (role as Role | null) ?? null };
 }

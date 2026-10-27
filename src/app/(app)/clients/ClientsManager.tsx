@@ -1,67 +1,83 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
-import { deleteClient } from "@/app/actions";
+import { deleteClient } from "@/app/actions/catalog";
 import { ClientForm } from "@/components/ClientForm";
-import { Card, btn } from "@/components/ui";
+import { Card, Input, btn } from "@/components/ui";
+import { stateLabel } from "@/lib/gst";
 import type { Client } from "@/lib/types";
 
-export function ClientsManager({ initial }: { initial: Client[] }) {
+export function ClientsManager({ initial, canEdit }: { initial: Client[]; canEdit: boolean }) {
   const [clients, setClients] = useState(initial);
   const [editing, setEditing] = useState<string | "new" | null>(null);
+  const [q, setQ] = useState("");
+  const [error, setError] = useState("");
   const [pending, start] = useTransition();
 
   const upsert = (c: Client) => {
-    setClients((list) => {
-      const rest = list.filter((x) => x.id !== c.id);
-      return [...rest, c].sort((a, b) => a.name.localeCompare(b.name));
-    });
+    setClients((list) => [...list.filter((x) => x.id !== c.id), c].sort((a, b) => a.name.localeCompare(b.name)));
     setEditing(null);
   };
+  const shown = clients.filter((c) => !q || `${c.name} ${c.email} ${c.gstin} ${c.city}`.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <div className="space-y-4">
-      {editing === "new" ? (
+      <div className="flex gap-2">
+        <Input placeholder="Search clients" value={q} onChange={(e) => setQ(e.target.value)} />
+        {canEdit && editing !== "new" && (
+          <button className={`${btn.primary} whitespace-nowrap`} onClick={() => setEditing("new")}>
+            Add client
+          </button>
+        )}
+      </div>
+      {editing === "new" && (
         <Card title="New client">
           <ClientForm onSaved={upsert} onCancel={() => setEditing(null)} />
         </Card>
-      ) : (
-        <button className={btn.primary} onClick={() => setEditing("new")}>
-          Add client
-        </button>
       )}
-
+      {error && <p className="text-sm text-red-600">{error}</p>}
       <Card>
-        {clients.length === 0 && <p className="text-sm text-neutral-500">No clients yet.</p>}
+        {shown.length === 0 && <p className="text-sm text-neutral-500">No clients yet.</p>}
         <ul className="divide-y divide-neutral-100">
-          {clients.map((c) => (
+          {shown.map((c) => (
             <li key={c.id} className="py-3">
               {editing === c.id ? (
                 <ClientForm client={c} onSaved={upsert} onCancel={() => setEditing(null)} />
               ) : (
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium">{c.name}</div>
-                    <div className="text-sm whitespace-pre-line text-neutral-500">
-                      {[c.address, c.gstin && `GSTIN ${c.gstin}`, c.email, c.phone].filter(Boolean).join(" · ")}
+                    <Link href={`/clients/${c.id}`} className="font-medium hover:text-navy">
+                      {c.name}
+                    </Link>
+                    <div className="text-sm text-neutral-500">
+                      {[c.country !== "India" ? c.country : stateLabel(c.state_code), c.gstin && `GSTIN ${c.gstin}`, c.email].filter(Boolean).join(" · ")}
                     </div>
                   </div>
-                  <button className={btn.ghost} onClick={() => setEditing(c.id)}>
-                    Edit
-                  </button>
-                  <button
-                    className={btn.danger}
-                    disabled={pending}
-                    onClick={() => {
-                      if (!window.confirm(`Delete ${c.name}? Past invoices keep their copy of the client details.`)) return;
-                      start(async () => {
-                        await deleteClient(c.id);
-                        setClients((l) => l.filter((x) => x.id !== c.id));
-                      });
-                    }}
-                  >
-                    Delete
-                  </button>
+                  <Link href={`/clients/${c.id}`} className={btn.ghost}>
+                    Ledger
+                  </Link>
+                  {canEdit && (
+                    <>
+                      <button className={btn.ghost} onClick={() => setEditing(c.id)}>
+                        Edit
+                      </button>
+                      <button
+                        className={btn.danger}
+                        disabled={pending}
+                        onClick={() => {
+                          if (!window.confirm(`Delete ${c.name}? Their documents keep a copy of the client details.`)) return;
+                          start(async () => {
+                            const r = await deleteClient(c.id);
+                            if (r.ok) setClients((l) => l.filter((x) => x.id !== c.id));
+                            else setError(r.message);
+                          });
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </li>

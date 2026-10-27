@@ -11,6 +11,9 @@ export const LAYOUT = {
   titleLine: 16,
   descLine: 13.4,
   rowPadding: 15 + 18 + 4, // top + bottom + gap between title and description
+  sacLine: 14, // "SAC 998391" sub-line under the description
+  notesLine: 15, // notes / terms / export endorsement under the items (11px, full width)
+  notesCharsPerLine: 88,
   /** Items area when everything fits on one page (rule at 597 to rule at 804). */
   singlePage: 207,
   /** Each extra totals row (discount, CGST, SGST, IGST) takes space from the items area. */
@@ -52,20 +55,38 @@ export function wrapLines(text: string, charsPerLine: number): number {
   return lines;
 }
 
-export function estimateRowHeight(item: Pick<LineItem, "title" | "description">): number {
+type Row = Pick<LineItem, "title" | "description"> & { sac?: string };
+
+export function estimateRowHeight(item: Row): number {
   const titleLines = Math.max(1, wrapLines(item.title, LAYOUT.titleCharsPerLine));
   const descLines = wrapLines(item.description, LAYOUT.descCharsPerLine);
-  return LAYOUT.rowPadding + titleLines * LAYOUT.titleLine + descLines * LAYOUT.descLine;
+  return LAYOUT.rowPadding + titleLines * LAYOUT.titleLine + descLines * LAYOUT.descLine + (item.sac ? LAYOUT.sacLine : 0);
 }
 
-/** Pixels the items area loses to extra totals rows, after using the slack under the payment details. */
-export function totalsSqueeze(extraTotalsRows: number): number {
-  return Math.max(0, extraTotalsRows * LAYOUT.totalsRow - LAYOUT.paySlack);
+/** Height of the notes/terms block printed under the last page's items. */
+export function estimateNotesHeight(blocks: string[]): number {
+  const filled = blocks.filter((b) => b.trim());
+  if (!filled.length) return 0;
+  const lines = filled.reduce((n, b) => n + wrapLines(b, LAYOUT.notesCharsPerLine), 0);
+  return lines * LAYOUT.notesLine + (filled.length - 1) * 8 + 18; // paragraph gaps + padding
 }
 
-/** Height of the payment block: shrinks into its slack when there are extra totals rows. */
-export function payBlockHeight(extraTotalsRows: number): number {
-  return 305 - Math.min(extraTotalsRows * LAYOUT.totalsRow, LAYOUT.paySlack);
+/**
+ * Extra totals rows and the notes block both need vertical space on the last page.
+ * They take the empty space under the payment details first, then from the items area.
+ */
+function lastPageDemand(extraTotalsRows: number, notesHeight: number): number {
+  return extraTotalsRows * LAYOUT.totalsRow + notesHeight;
+}
+
+/** Pixels the item rows lose on the last page. */
+export function totalsSqueeze(extraTotalsRows: number, notesHeight = 0): number {
+  return Math.max(0, lastPageDemand(extraTotalsRows, notesHeight) - LAYOUT.paySlack);
+}
+
+/** Height of the payment block: shrinks into its slack to make room. */
+export function payBlockHeight(extraTotalsRows: number, notesHeight = 0): number {
+  return 305 - Math.min(lastPageDemand(extraTotalsRows, notesHeight), LAYOUT.paySlack);
 }
 
 export interface PagePlan<T> {
@@ -75,13 +96,10 @@ export interface PagePlan<T> {
 }
 
 /** Splits items into pages. Totals + payment details are always on the last page. */
-export function paginate<T extends Pick<LineItem, "title" | "description">>(
-  items: T[],
-  extraTotalsRows = 0,
-): PagePlan<T>[] {
+export function paginate<T extends Row>(items: T[], extraTotalsRows = 0, notesHeight = 0): PagePlan<T>[] {
   const indexed = items.map((item, index) => ({ item, index, h: estimateRowHeight(item) }));
   const totalHeight = indexed.reduce((s, r) => s + r.h, 0);
-  const squeeze = totalsSqueeze(extraTotalsRows);
+  const squeeze = totalsSqueeze(extraTotalsRows, notesHeight);
   const singleCapacity = LAYOUT.singlePage - squeeze;
 
   if (totalHeight <= singleCapacity) {

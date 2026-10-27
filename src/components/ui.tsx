@@ -48,6 +48,36 @@ export const btn = {
 
 export const STATUS_STYLES: Record<string, string> = {
   draft: "bg-neutral-100 text-neutral-700",
-  sent: "bg-amber-100 text-amber-800",
+  awaiting_approval: "bg-violet-100 text-violet-800",
+  issued: "bg-blue-100 text-blue-800",
+  accepted: "bg-green-100 text-green-800",
+  declined: "bg-neutral-200 text-neutral-700",
+  expired: "bg-neutral-200 text-neutral-700",
+  cancelled: "bg-neutral-200 text-neutral-500 line-through",
+  unpaid: "bg-amber-100 text-amber-800",
+  partial: "bg-sky-100 text-sky-800",
   paid: "bg-green-100 text-green-800",
+  overdue: "bg-red-100 text-red-800",
 };
+
+const STATUS_TEXT: Record<string, string> = {
+  awaiting_approval: "Needs approval",
+  issued: "Issued",
+  partial: "Part paid",
+};
+
+/** Status pill with a text label (never colour alone). */
+export function StatusPill({ status }: { status: string }) {
+  return (
+    <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap capitalize ${STATUS_STYLES[status] ?? STATUS_STYLES.draft}`}>
+      {STATUS_TEXT[status] ?? status.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+/** The most useful single status for a document: overdue > payment status > lifecycle status. */
+export function displayStatus(d: { status: string; balance: { payment_status: string | null; overdue: boolean } | null }): string {
+  if (d.status === "issued" && d.balance?.overdue) return "overdue";
+  if (d.status === "issued" && d.balance?.payment_status) return d.balance.payment_status;
+  return d.status;
+}

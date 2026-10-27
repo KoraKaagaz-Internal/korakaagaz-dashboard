@@ -78,29 +78,29 @@
   <strong>KORA KAAGAZ · Invoices</strong>
   <a href="#overview">Overview</a><a href="#map">System map</a><a href="#flows">Flows</a><a href="#roles">Roles</a>
   <a href="#data">Data</a><a href="#limits">Limits</a><a href="#code">Code map</a><a href="#run">Run</a>
-  <a href="#changelog">Change log</a><a href="#glossary">Glossary</a>
+  <a href="#changelog">Change log</a><a href="market-research.html">Research</a><a href="#glossary">Glossary</a>
   <button id="theme" type="button" aria-label="Toggle theme">◐</button>
 </div></header>
 
 <main>
 <section id="overview">
-  <span class="pill">Last updated 2026-10-27</span>
-  <h1>Invoice Generator</h1>
-  <p><b>Live:</b> <a href="https://invoice-generator-flax-pi.vercel.app">invoice-generator-flax-pi.vercel.app</a> · Supabase project <code>invoice-generator</code> (ref <code>komdaeylldwknhwcjevv</code>, Mumbai) · Vercel project <code>invoice-generator</code></p>
-  <p>A private web app for <b>Kora Kaagaz</b> that creates invoices matching the brand template, exports them as PDFs, and keeps a searchable history with paid/unpaid tracking and saved clients.</p>
+  <span class="pill">Last updated 2026-10-28</span>
+  <h1>Kora Kaagaz Invoices</h1>
+  <p><b>Live:</b> <a href="https://invoice-generator-flax-pi.vercel.app">invoice-generator-flax-pi.vercel.app</a> · Supabase project <code>invoice-generator</code> (ref <code>komdaeylldwknhwcjevv</code>, Mumbai) · Vercel project <code>invoice-generator</code> · Market research: <a href="market-research.html">market-research.html</a></p>
+  <p>A private, <b>invite-only</b> invoicing workspace for the Kora Kaagaz team. It handles quotes, proforma invoices, tax invoices, receipt vouchers (advances) and credit notes in the Kora Kaagaz design, GST-compliant (Rule 46), with UPI QR codes, client share links, email/WhatsApp sending, reminders, part payments with TDS, projects, a client ledger, a dashboard and GSTR-1 CSV exports. <b>Running cost: ₹0</b>.</p>
   <ul>
-    <li><b>Stack:</b> Next.js 15.5.28 (App Router, TypeScript, Tailwind 4) on Vercel · Supabase (Postgres, magic-link auth, Storage) · Puppeteer + <code>@sparticuz/chromium</code> for PDFs.</li>
-    <li><b>Users:</b> one owner. Sign-in is limited to the emails in <code>ALLOWED_EMAILS</code>, and every table uses row-level security keyed on <code>auth.uid()</code>.</li>
-    <li><b>Template fidelity:</b> the invoice is a fixed 852 × 1278 px page (2:3). The browser preview, the print page and the PDF all render the same React component, so they match exactly.</li>
+    <li><b>Stack:</b> Next.js 15.5.28 (App Router, TypeScript, Tailwind 4) on Vercel Hobby · Supabase free (Postgres with RLS, Google auth, Storage) · Puppeteer + <code>@sparticuz/chromium</code> for PDFs · Gmail SMTP (nodemailer) for email · Vercel Cron for the daily job.</li>
+    <li><b>Access:</b> Google sign-in. <b>team@korakaagaz.co is the only admin</b>; the admin invites Members and Viewers. A database trigger refuses to create an account for any email that isn't invited, so people who find the link can't get in.</li>
+    <li><b>Template:</b> one fixed 852 × 1278 px React template (<code>DocumentTemplate</code>) renders the editor preview, the client share page, the print page and the PDF, so they always match.</li>
   </ul>
-  <div class="callout"><b>Open item:</b> the fonts (DM Serif Display and Inter) are stand-ins until the Figma font names are confirmed. The side image is the real artwork (<code>public/brand/fabric-panel.jpg</code>, corner brackets baked in). Diff against the reference screenshot: <b>3.2%</b> of pixels in the content area (anti-aliasing, the added "Invoice no." field and dummy sample data). The photo column differs only because the new artwork replaces the screenshot crop.</div>
+  <div class="callout"><b>Two setup steps left for you</b> (see <a href="#run">Run and deploy</a>): (1) create the Google sign-in client and paste its two values in one Terminal command; (2) create a Gmail app password for team@korakaagaz.co so emails actually send. Until (2), emails are logged as "skipped" and invites show a message you can copy.</div>
 </section>
 
 <section id="map">
   <h2>System map</h2>
   <p class="muted">Click a box for details.</p>
   <div class="map">
-    <svg viewBox="0 0 560 360" role="img" aria-label="System map">
+    <svg viewBox="0 0 560 420" role="img" aria-label="System map">
       <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
       <path class="edge" d="M110,70 L200,70"/>
       <path class="edge" d="M320,70 L420,70"/>
@@ -108,14 +108,18 @@
       <path class="edge" d="M320,175 L420,175"/>
       <path class="edge" d="M260,200 L260,255"/>
       <path class="edge" d="M320,280 L420,280"/>
+      <path class="edge" d="M60,95 L60,360 L200,360"/>
+      <path class="edge" d="M320,360 L420,360"/>
       <path class="edge" d="M480,200 L480,255"/>
-      <g class="node" data-k="browser"><rect x="10" y="45" width="100" height="50"/><text x="60" y="68" text-anchor="middle">Browser</text><text class="sub" x="60" y="84" text-anchor="middle">you</text></g>
+      <g class="node" data-k="browser"><rect x="10" y="45" width="100" height="50"/><text x="60" y="68" text-anchor="middle">Team</text><text class="sub" x="60" y="84" text-anchor="middle">admin · members</text></g>
       <g class="node" data-k="middleware"><rect x="200" y="45" width="120" height="50"/><text x="260" y="68" text-anchor="middle">Middleware</text><text class="sub" x="260" y="84" text-anchor="middle">session check</text></g>
-      <g class="node" data-k="auth"><rect x="420" y="45" width="120" height="50"/><text x="480" y="68" text-anchor="middle">Supabase Auth</text><text class="sub" x="480" y="84" text-anchor="middle">magic link</text></g>
-      <g class="node" data-k="pages"><rect x="200" y="150" width="120" height="50"/><text x="260" y="173" text-anchor="middle">Pages + actions</text><text class="sub" x="260" y="189" text-anchor="middle">Next.js server</text></g>
-      <g class="node" data-k="db"><rect x="420" y="150" width="120" height="50"/><text x="480" y="173" text-anchor="middle">Postgres</text><text class="sub" x="480" y="189" text-anchor="middle">RLS tables</text></g>
-      <g class="node" data-k="pdf"><rect x="200" y="255" width="120" height="50"/><text x="260" y="278" text-anchor="middle">PDF route</text><text class="sub" x="260" y="294" text-anchor="middle">headless Chromium</text></g>
-      <g class="node" data-k="storage"><rect x="420" y="255" width="120" height="50"/><text x="480" y="278" text-anchor="middle">Storage</text><text class="sub" x="480" y="294" text-anchor="middle">invoices bucket</text></g>
+      <g class="node" data-k="auth"><rect x="420" y="45" width="120" height="50"/><text x="480" y="68" text-anchor="middle">Google + Auth</text><text class="sub" x="480" y="84" text-anchor="middle">invite gate trigger</text></g>
+      <g class="node" data-k="pages"><rect x="200" y="150" width="120" height="50"/><text x="260" y="173" text-anchor="middle">Pages + actions</text><text class="sub" x="260" y="189" text-anchor="middle">role checks</text></g>
+      <g class="node" data-k="db"><rect x="420" y="150" width="120" height="50"/><text x="480" y="173" text-anchor="middle">Postgres</text><text class="sub" x="480" y="189" text-anchor="middle">RLS · locks · audit</text></g>
+      <g class="node" data-k="pdf"><rect x="200" y="255" width="120" height="50"/><text x="260" y="278" text-anchor="middle">PDF + email</text><text class="sub" x="260" y="294" text-anchor="middle">Chromium · Gmail</text></g>
+      <g class="node" data-k="storage"><rect x="420" y="255" width="120" height="50"/><text x="480" y="278" text-anchor="middle">Storage</text><text class="sub" x="480" y="294" text-anchor="middle">PDF copies</text></g>
+      <g class="node" data-k="share"><rect x="200" y="335" width="120" height="50"/><text x="260" y="358" text-anchor="middle">Share link /d/…</text><text class="sub" x="260" y="374" text-anchor="middle">clients, no login</text></g>
+      <g class="node" data-k="cron"><rect x="420" y="335" width="120" height="50"/><text x="480" y="358" text-anchor="middle">Daily cron</text><text class="sub" x="480" y="374" text-anchor="middle">09:00 IST</text></g>
     </svg>
     <div class="detail" id="detail"><p class="muted">Select a component.</p></div>
   </div>
@@ -131,77 +135,104 @@
 <section id="roles">
   <h2>Roles and permissions</h2>
   <div class="tablewrap"><table>
-    <tr><th>Who</th><th>Can</th><th>How it's enforced</th></tr>
-    <tr><td>Owner (allowed email)</td><td>Everything: settings, clients, invoices, PDFs</td><td><code>ALLOWED_EMAILS</code> check before sending a magic link and on every request (<code>getUser</code>), plus RLS <code>owner_id = auth.uid()</code></td></tr>
-    <tr><td>Anyone else</td><td>Sees only the login page. Requesting a link gets the same "on its way" message, so the form doesn't reveal which email is allowed</td><td>Middleware redirects to <code>/login</code>. Turn off public sign-ups in Supabase Auth settings</td></tr>
-    <tr><td>Headless Chromium (PDF)</td><td>Loads <code>/print/[id]</code> as the owner</td><td>The PDF route forwards the owner's session cookies to the browser it launches</td></tr>
+    <tr><th>Can…</th><th>Admin (team@korakaagaz.co)</th><th>Member</th><th>Viewer</th><th>Client (share link)</th><th>Anyone else</th></tr>
+    <tr><td>Sign in</td><td>✓</td><td>✓</td><td>✓</td><td>no login</td><td>✗ (trigger rejects the account)</td></tr>
+    <tr><td>See documents, clients, reports</td><td>✓</td><td>✓</td><td>✓</td><td>only that one document</td><td>✗</td></tr>
+    <tr><td>Create / edit drafts, clients, items, projects</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Issue (number + lock)</td><td>✓</td><td>✓, or "submit for approval" when that setting is on</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Send, record payments, credit notes, cancel</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Accept / decline a quote</td><td>✓</td><td>✓</td><td>✗</td><td>✓</td><td>✗</td></tr>
+    <tr><td>Settings, bank accounts, Team (invite/remove)</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
   </table></div>
+  <p class="muted">Enforced in the database (RLS policies with <code>is_member()</code>, <code>can_edit()</code>, <code>is_admin()</code>), not just the UI. The UI hides what a role can't do. There is exactly one admin: the admin can't be invited, demoted or removed.</p>
 </section>
 
 <section id="data">
   <h2>Data and privacy</h2>
   <div class="tablewrap"><table>
     <tr><th>Table</th><th>Holds</th><th>Notes</th></tr>
-    <tr><td><code>settings</code></td><td>Business name, UPI, bank, IFSC, PAN, GSTIN, contact, numbering, defaults</td><td>One row per owner. <code>next_number</code> is the invoice counter</td></tr>
-    <tr><td><code>clients</code></td><td>Name, address, GSTIN, email, phone</td><td>Deleting a client keeps past invoices intact (<code>on delete set null</code>)</td></tr>
-    <tr><td><code>invoices</code></td><td>Number, dates, currency, terms, discount, GST, stored totals, status, <code>pdf_path</code></td><td><b>Snapshots:</b> <code>client_snapshot</code> and <code>payment_snapshot</code> freeze details at creation, so editing Settings never rewrites old invoices ("Use current payment details" updates them on purpose)</td></tr>
-    <tr><td><code>invoice_items</code></td><td>Position, title, description, qty, unit price, amount</td><td>Replaced in full on every save</td></tr>
-    <tr><td>Storage <code>invoices/&lt;owner&gt;/&lt;number&gt;.pdf</code></td><td>Latest generated PDF</td><td>Private bucket, owner-folder policies</td></tr>
+    <tr><td><code>members</code></td><td>Invited emails, role, joined date</td><td>No direct access; only via admin RPCs. <code>gate_new_user</code> trigger blocks sign-ups that aren't on this list.</td></tr>
+    <tr><td><code>settings</code> (1 row)</td><td>Business, GSTIN, PAN, LUT, signatory, prefixes, defaults, terms, message templates</td><td>Admin-only writes. Signature stored as a small data URL.</td></tr>
+    <tr><td><code>bank_accounts</code></td><td>Account, IFSC, SWIFT, UPI ID, default flag</td><td>Admin-only writes.</td></tr>
+    <tr><td><code>clients</code>, <code>projects</code>, <code>items</code></td><td>Clients (state, GSTIN, country), projects with budget, services catalog with SAC</td><td>Members write, viewers read.</td></tr>
+    <tr><td><code>documents</code> + <code>document_items</code></td><td>All five document types, snapshots of client + supplier, totals, share token, status</td><td>Unique <code>(doc_type, fy, number)</code>. Triggers lock issued documents and block deleting them.</td></tr>
+    <tr><td><code>payments</code></td><td>Amount, TDS + section, mode, reference</td><td>Feeds the <code>document_balances</code> view (paid / partial / unpaid / overdue).</td></tr>
+    <tr><td><code>doc_counters</code></td><td>Next number per document type + FY</td><td>Used by <code>next_doc_number()</code>; resets with each FY.</td></tr>
+    <tr><td><code>email_log</code></td><td>Every send/reminder/invite: sent, failed or skipped</td><td></td></tr>
+    <tr><td><code>audit_events</code></td><td>Who did what, with field-level diffs</td><td>Append-only for users (no update/delete grants).</td></tr>
+    <tr><td>Storage <code>invoices/documents/…pdf</code></td><td>Latest PDF of issued documents</td><td>Private bucket; members read.</td></tr>
   </table></div>
-  <h3>Sensitive data</h3>
-  <p>Bank account, PAN and client details live only in your Supabase project. Keys sit in <code>.env.local</code> (git-ignored) and Vercel environment variables. Nothing is sent to third parties.</p>
-  <h3>Totals</h3>
-  <p><code>subtotal = Σ qty × unit price</code> → discount (flat or %, capped at subtotal) → GST on the discounted amount (CGST+SGST split evenly, or IGST) → <code>total</code>. Amounts are rounded to paise and shown with Indian grouping (<code>1,50,000</code>). Computed in <code>src/lib/money.ts</code>, used by both the preview and the server, and stored on the invoice.</p>
+  <h3>Secrets</h3>
+  <p>Kept in <code>.env.local</code> (git-ignored) and Vercel env vars only: Supabase service-role key (used by the daily cron only), <code>CRON_SECRET</code>, Gmail app password (<code>SMTP_PASS</code>), DB password. The anon key is public by design; RLS protects the data.</p>
+  <h3>Share links</h3>
+  <p>Each document has a random 128-bit token. <code>/d/&lt;token&gt;</code> calls a <code>security definer</code> function that returns only that document (never drafts) and counts views. A link can be turned off or replaced. Pages are <code>noindex</code>.</p>
+  <h3>Money rules</h3>
+  <p><code>subtotal</code> → discount (flat/%) → taxable → GST (CGST+SGST if place of supply = our state, IGST otherwise, none for exports under LUT) → optional round-off → total. Balance = total − payments − TDS − issued credit notes. TDS shortcuts apply to the pre-GST share of the balance. All maths lives in <code>src/lib/money.ts</code>, shared by the preview and the server.</p>
 </section>
 
 <section id="limits">
-  <h2>Limits and cost</h2>
+  <h2>Limits and cost (₹0)</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Service</th><th>Plan</th><th>What could bite</th></tr>
+    <tr><td>Vercel</td><td>Hobby (free)</td><td>Hobby is officially for non-commercial use: a risk for a business tool, but the app isn't tied to Vercel. Crons run at most once a day. PDF function up to 60 s.</td></tr>
+    <tr><td>Supabase</td><td>Free</td><td>500 MB DB, 1 GB storage (≈1,300 PDFs at ~0.75 MB). Pauses after 7 idle days; the daily cron touches it, so it stays awake. Free plan allows 2 active projects (this + jhalak).</td></tr>
+    <tr><td>Gmail SMTP</td><td>Workspace account</td><td>About 2,000 emails/day. Needs 2-step verification + an app password.</td></tr>
+    <tr><td>FX rates</td><td>frankfurter (free, keyless)</td><td>ECB reference rate; falls back to manual entry.</td></tr>
+    <tr><td>GSTIN lookup</td><td>none</td><td>No free official API: we validate the check digit, derive state + PAN, and link to the GST portal.</td></tr>
+  </table></div>
   <ul>
-    <li><b>Supabase free tier:</b> 500 MB database and 1 GB storage. One PDF is about 0.6 MB with the placeholder images, so roughly 1,500 PDFs. Free projects pause after a week with no activity.</li>
-    <li><b>Vercel Hobby:</b> free. The PDF function is allowed up to 60 s; a cold start of Chromium takes about 3–6 s.</li>
-    <li><b>Pagination:</b> pages are planned ahead from estimated row heights (<code>src/lib/paginate.ts</code>). Very long single descriptions (more than about a page) get clipped. Split them into several items.</li>
-    <li><b>Client name:</b> one line. Names over 16 characters drop to 28px; very long names get an ellipsis.</li>
+    <li>PIN → state uses postal-zone prefixes: right for most PINs, always editable.</li>
+    <li>Very long single line items (over a page) get clipped; split them.</li>
+    <li>E-invoicing (IRN) isn't built: it's needed only above ₹5 Cr turnover and requires a paid GSP.</li>
   </ul>
 </section>
 
 <section id="code">
   <h2>Code map</h2>
-  <input type="search" id="codeSearch" placeholder="Filter files… (e.g. pdf, totals, auth)" />
+  <input type="search" id="codeSearch" placeholder="Filter files… (e.g. pdf, gst, team, cron)" />
   <div class="tablewrap"><table id="codeTable"><thead><tr><th>Path</th><th>What it does</th></tr></thead><tbody></tbody></table></div>
 </section>
 
 <section id="run">
   <h2>Run and deploy</h2>
-  <h3>One-time setup (already done for production)</h3>
-  <p class="muted">Done on 2026-10-27 with the Supabase CLI and Management API: project created, migrations pushed, owner user created, sign-ups disabled, Site URL and redirect URLs set. Vercel env vars set, and the anon key is stored as public config (RLS protects the data).</p>
-  <pre>1. Create a Supabase project → SQL editor → run supabase/migrations/0001_init.sql
-2. Auth → Providers → Email: enabled.  Auth → Settings: disable "Allow new users to sign up"
-   after your first sign-in (or create your user under Auth → Users first).
-3. Auth → URL configuration: Site URL = your Vercel URL; add http://localhost:3000/auth/callback
-   and https://&lt;your-app&gt;/auth/callback to Redirect URLs.
-4. cp .env.example .env.local and fill in the four values.</pre>
+  <h3>Still to do (one time)</h3>
+  <pre>1. Google sign-in client (console.cloud.google.com → APIs &amp; Services → Credentials → Create OAuth client ID → Web application)
+   Authorised redirect URI:  https://komdaeylldwknhwcjevv.supabase.co/auth/v1/callback
+   Then give Supabase the client ID + secret (Supabase dashboard → Authentication → Providers → Google, or the CLI command Claude opens for you).
+
+2. Gmail sending as team@korakaagaz.co
+   myaccount.google.com → Security → 2-Step Verification (on) → App passwords → create "Invoices"
+   vercel env add SMTP_PASS production --type secret     (paste the 16-character password)
+   vercel deploy --prod</pre>
   <h3>Local</h3>
   <pre>npm install
-npm run dev                 # http://localhost:3000
-npm test                    # unit tests (totals, GST, formatting, pagination, dates)
-SUPABASE_SERVICE_ROLE_KEY=… node scripts/e2e.mjs https://invoice-generator-flax-pi.vercel.app
-                            # 13 end-to-end checks on a real project; deletes and verifies its test data
+npm run dev                                   # http://localhost:3000 (needs .env.local)
+npm test                                      # unit tests: GST, money, words, numbering, pagination, reports, GSTR-1
+node scripts/security-test.mjs                # 33 database permission checks, as anon/viewer/member
+node scripts/e2e.mjs http://localhost:3000    # 32 end-to-end checks; refuses to run if the workspace has data
 node scripts/visual-diff.mjs public/dev-reference.png http://localhost:3000
-                            # compares /dev/sample with the reference image</pre>
-  <h3>Deploy (Vercel)</h3>
-  <pre>vercel link
-vercel env add NEXT_PUBLIC_SUPABASE_URL
-vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY --type config
-vercel env add ALLOWED_EMAILS
-vercel env add NEXT_PUBLIC_SITE_URL      # https://&lt;your-app&gt;.vercel.app
+/dev/sample?full=1 | ?type=quote | ?export=1 | ?items=15   # template previews (dev only)</pre>
+  <h3>Deploy</h3>
+  <pre>npx supabase db push --linked -p "$SUPABASE_DB_PASSWORD" --agent no   # new files in supabase/migrations
 vercel deploy --prod
-npx supabase db push --linked   # apply new files in supabase/migrations</pre>
+# env on Vercel: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY (config), NEXT_PUBLIC_SITE_URL,
+#                SUPABASE_SERVICE_ROLE_KEY (secret), CRON_SECRET (secret), SMTP_PASS (secret, once created)</pre>
 </section>
 
 <section id="changelog">
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-10-28</td><td><b>v2: invite-only team workspace and a market-informed feature set.</b>
+      <ul>
+        <li>Researched 15 invoicing tools plus a Swipe deep-dive (<a href="market-research.html">market-research.html</a>).</li>
+        <li>Google sign-in; team@korakaagaz.co is the sole admin; Members and Viewers by invite. Uninvited accounts are rejected by a database trigger. The old gmail login is removed.</li>
+        <li>New schema (migrations 0003–0004): documents of five types; GST Rule 46 fields; FY numbering per type; locking; payments with TDS; projects; items; bank accounts; share tokens; email log; append-only audit log.</li>
+        <li>Template: supplier block, place of supply, SAC lines, UPI QR, amount in words, signatory, export endorsement, Draft/Cancelled watermark.</li>
+        <li>Features: quote → proforma/invoice, revisions, won/lost; receipt vouchers + advance adjustment; credit notes; export invoices with FX fetch; client share page with quote accept/decline; Gmail email with PDF; WhatsApp links; reminders and recurring drafts via daily cron; client ledger + statement email; projects with budget; dashboard; GSTR-1 CSV pack; keyboard shortcuts; approval setting.</li>
+        <li>Tests: 33 security checks, 32 end-to-end checks, more unit tests.</li>
+        <li>Fixed during testing: dashboard crash (function passed to a client chart), number fields that snapped back to 1 while typing, PDF routes on Vercel missing the Chromium binary, and an e2e safety guard so the test can never wipe real data. Verified on production: 33/33 security checks, 32/32 end-to-end checks.</li>
+      </ul></td></tr>
     <tr><td>2026-10-27</td><td>Replaced the placeholder side images with the real artwork ("Blue and Grayscale Draped Fabric Panels"): cropped out of its white margins and scaled to the 214 × 1220 column at 2× (428 × 2440 JPEG). The blue/grey split lands at 750px as in the template. The image carries its own corner brackets, so the CSS brackets were removed.</td></tr>
     <tr><td>2026-10-27</td><td><b>Went live.</b> Created the Supabase project (Mumbai), applied migrations, created the owner user, disabled sign-ups, set auth URLs. Deployed to Vercel at invoice-generator-flax-pi.vercel.app. Upgraded Next.js 15.5.4 → 15.5.28 (Vercel blocks the vulnerable version). Added <code>token_hash</code> support to <code>/auth/callback</code>, a site-URL fallback for magic links, India-time default dates and invoice-number year (migration 0002), and <code>scripts/e2e.mjs</code>: 12/12 checks pass locally and in production. Later the same day: the test now works with any starting invoice number and verifies its own cleanup (13 checks), after one run inherited a leftover counter from an earlier run.</td></tr>
     <tr><td>2026-10-27</td><td>Initial build: schema and RLS, magic-link login with an allowlist, settings, clients, invoice editor with live preview, multi-page template, discount and GST, history with search, filters and status, duplicate, PDF export to Storage, visual-diff script, unit tests. Template measured from the reference screenshot (2.78% pixel diff). Dropped react-hook-form from the plan; plain React state drives the live preview.</td></tr>
@@ -211,26 +242,32 @@ npx supabase db push --linked   # apply new files in supabase/migrations</pre>
 <section id="glossary">
   <h2>Glossary</h2>
   <dl class="gloss">
-    <dt>RLS (row-level security)</dt><dd>Postgres rules that make every query return only your rows, even if a bug sends the wrong query.</dd>
-    <dt>Snapshot</dt><dd>A copy of the client and payment details stored on the invoice, so history doesn't change when you edit a client or Settings.</dd>
-    <dt>Magic link</dt><dd>Passwordless sign-in: Supabase emails you a one-time link.</dd>
-    <dt>CGST / SGST / IGST</dt><dd>Indian GST. Same-state sales split the rate into Central and State halves; inter-state sales use Integrated GST at the full rate.</dd>
-    <dt>Server action</dt><dd>A Next.js function that runs on the server and is called straight from a form or button (<code>src/app/actions.ts</code>).</dd>
-    <dt>Print page</dt><dd><code>/print/[id]</code>: the invoice with no app chrome, which headless Chromium turns into the PDF.</dd>
-    <dt>Visual diff</dt><dd>A pixel-by-pixel comparison of the rendered template against the design image (pixelmatch).</dd>
+    <dt>Issue</dt><dd>Turning a draft into a real document: it gets the next number in its series and becomes locked. Changes after that go through a credit note or cancellation, as GST requires.</dd>
+    <dt>Place of supply</dt><dd>The state where the client is (or "Outside India"). It decides IGST (different state) vs CGST+SGST (same state).</dd>
+    <dt>SAC</dt><dd>Services Accounting Code, the services version of HSN. Design work is usually 998391.</dd>
+    <dt>LUT</dt><dd>Letter of Undertaking, filed each financial year so exports can be invoiced without IGST.</dd>
+    <dt>Receipt voucher</dt><dd>The GST document for an advance payment (Rule 50); later adjusted against the final invoice.</dd>
+    <dt>Credit note</dt><dd>Reduces or reverses an issued invoice (Section 34).</dd>
+    <dt>TDS</dt><dd>Tax a business client deducts before paying you (usually 10% under s.194J). You claim it back; match it with Form 26AS.</dd>
+    <dt>GSTR-1</dt><dd>The monthly/quarterly return of outward supplies. Our CSVs follow the GST offline tool's columns.</dd>
+    <dt>RLS</dt><dd>Row-level security: database rules that decide who can read or write each row.</dd>
+    <dt>Share link</dt><dd><code>/d/&lt;token&gt;</code>: a private, unguessable link that shows one document to a client without logging in.</dd>
+    <dt>Audit log</dt><dd>An append-only record of who created, edited, issued, paid or cancelled what.</dd>
   </dl>
 </section>
 </main>
 
 <script>
   const NODES = {
-    browser: ["Browser", "The app UI: invoice list, editor with live preview, clients, settings. Built from React Server Components plus a few client components (editor, row actions, forms)."],
-    middleware: ["Middleware", "<code>src/middleware.ts</code> refreshes the Supabase session cookie and redirects signed-out visitors to <code>/login</code>. <code>/dev/*</code> is open only in development."],
-    auth: ["Supabase Auth", "Magic-link email login. <code>sendMagicLink</code> sends a link only to emails in <code>ALLOWED_EMAILS</code>. <code>/auth/callback</code> trades the code for a session."],
-    pages: ["Pages and server actions", "Server components read data through <code>src/lib/data.ts</code>. Mutations go through <code>src/app/actions.ts</code>, which validates with zod, recomputes totals on the server and revalidates pages."],
-    db: ["Postgres", "Tables <code>settings</code>, <code>clients</code>, <code>invoices</code>, <code>invoice_items</code>, all with owner-only RLS. <code>next_invoice_number()</code> locks the settings row, so two saves can never get the same number."],
-    pdf: ["PDF route", "<code>/api/invoices/[id]/pdf</code> launches Chromium (<code>@sparticuz/chromium</code> on Vercel, full Puppeteer locally), forwards your cookies, opens <code>/print/[id]</code> and prints at 852 × 1278 px."],
-    storage: ["Storage", "A private <code>invoices</code> bucket. Each download also overwrites <code>&lt;owner&gt;/&lt;number&gt;.pdf</code> and records <code>pdf_path</code> on the invoice."],
+    browser: ["Team", "The admin (team@korakaagaz.co) plus invited Members and Viewers, using the app in a browser. Navigation and buttons adapt to the role."],
+    middleware: ["Middleware", "<code>src/middleware.ts</code> refreshes the Supabase session and sends signed-out visitors to <code>/login</code>. Public paths: <code>/login</code>, <code>/auth</code>, <code>/d</code> (share links), <code>/print/share</code>, <code>/api/share</code>, <code>/api/cron</code>."],
+    auth: ["Google sign-in + invite gate", "Supabase Google OAuth (PKCE). The <code>gate_new_user</code> trigger on <code>auth.users</code> raises an error unless the email is in <code>members</code>, so uninvited people never get an account. <code>/auth/callback</code> shows \"isn't invited\" in that case."],
+    pages: ["Pages + server actions", "Server components read via <code>src/lib/data.ts</code> (<code>requireMember(role)</code>). Mutations live in <code>src/app/actions/*.ts</code>: zod validation, server-side totals, then RLS applies."],
+    db: ["Postgres", "Workspace-wide tables with RLS by role. <code>next_doc_number()</code> gives FY series per type. Triggers lock issued documents, block deleting them, and write the append-only <code>audit_events</code>. <code>document_balances</code> view computes paid/partial/overdue."],
+    pdf: ["PDF + email", "Chromium renders <code>/print/[id]</code> (with the member's cookies) or <code>/print/share/[token]</code> (public) at 852 × 1278 px. Emails go from team@korakaagaz.co via Gmail SMTP with the PDF attached. Without an app password they're logged as skipped."],
+    storage: ["Storage", "Private <code>invoices</code> bucket keeps the latest PDF of each issued document; <code>brand</code> bucket reserved."],
+    share: ["Client share link", "<code>/d/&lt;token&gt;</code>: the document, a PDF download, a UPI pay button on phones, and Accept/Decline for quotes. It uses an anon-only RPC that returns exactly one non-draft document and counts views."],
+    cron: ["Daily job", "Vercel Cron calls <code>/api/cron/daily</code> at 09:00 IST with <code>CRON_SECRET</code>. It expires old quotes, emails reminders (3 days before, on the due date, then +7, +14 and +30 days), creates recurring retainer drafts (never sent automatically), and keeps the free Supabase project awake. <code>?dry=1</code> previews."],
   };
   const detail = document.getElementById("detail");
   document.querySelectorAll(".node").forEach((n) => n.addEventListener("click", () => {
@@ -241,31 +278,34 @@ npx supabase db push --linked   # apply new files in supabase/migrations</pre>
   }));
 
   const FLOWS = {
-    "Create invoice": [
-      "Open <b>New invoice</b>. Defaults (currency, terms, GST) come from Settings, and the number preview shows the next value.",
-      "Pick a saved client or type details (or add a new client inline). The client's details are copied onto the invoice.",
-      "Add line items, discount and GST. The right-hand preview re-renders the exact template on every keystroke.",
-      "<b>Save</b> → <code>saveInvoice</code> validates, recomputes totals on the server, reserves a number with <code>next_invoice_number()</code> and stores the payment-details snapshot.",
-      "Items are inserted with their positions, <code>/invoices</code> is revalidated, and you land on the edit page.",
+    "Invite someone": [
+      "The admin opens <b>Team</b>, enters an email and picks Member or Viewer.",
+      "<code>admin_invite()</code> adds them to <code>members</code> (admin-only RPC).",
+      "An invite email goes from team@korakaagaz.co, or a copyable message is shown if email isn't set up.",
+      "They click \"Continue with Google\" with that exact email. The trigger sees the invite and lets the account be created.",
+      "Anyone else trying Google sign-in is rejected by the same trigger and sees \"Access is by invitation only\".",
+      "Removing someone deletes their account, so their sessions stop working immediately.",
     ],
-    "Download PDF": [
-      "Click <b>PDF</b> in history, or <b>Save and download PDF</b>.",
-      "The route checks the session and loads the invoice (RLS limits it to your rows).",
-      "Chromium starts, receives your session cookies and opens <code>/print/[id]</code>.",
-      "Pages print at 852 × 1278 px with backgrounds on; fonts load before printing.",
-      "The PDF is saved to Storage at <code>&lt;owner&gt;/&lt;number&gt;.pdf</code> and streamed back as a download.",
+    "Quote to cash": [
+      "<b>New quote</b>: pick the client (place of supply and GST type fill in), add items from the catalog, terms default from Settings.",
+      "<b>Save and issue</b>: gets <code>QT/26-27/001</code> and locks. (If approval is on, a member's quote waits for the admin.)",
+      "Send it: Email (PDF attached + link) or WhatsApp. The client opens <code>/d/…</code> and clicks <b>Accept quote</b>.",
+      "Optional advance: a <b>Receipt voucher</b> records it.",
+      "<b>Convert to invoice</b>: a draft copy, then issue it as <code>KK/26-27/001</code>, with UPI QR, amount in words and due date.",
+      "<b>Record payment</b>: UPI/bank with TDS shortcut, or adjust the advance. Status moves unpaid → part paid → paid.",
+      "Reminders go out automatically until it's paid. Corrections go through a <b>credit note</b>.",
     ],
-    "Track payment": [
-      "History lists invoices newest first and shows outstanding and paid totals for each currency.",
-      "Filter by text (number or client name), status and a date range. The filters live in the URL, so you can bookmark them.",
-      "<b>Mark sent</b>, then <b>Mark paid</b> (records <code>paid_at</code>). <b>Mark unpaid</b> reverses it.",
-      "<b>Duplicate</b> copies the client, items and tax settings into a new draft dated today with the next number.",
+    "Export invoice": [
+      "A client whose country isn't India gets place of supply \"Outside India\".",
+      "Currency switches to USD (or pick EUR/GBP…); <b>Fetch</b> gets the ECB reference rate (editable).",
+      "With an LUT number in Settings, the invoice is zero-rated with the LUT endorsement; otherwise IGST is charged (claim refund).",
+      "The PDF shows SWIFT details and the INR equivalent; GSTR-1 EXP rows are in INR.",
     ],
-    "Sign in": [
-      "Enter your email on <code>/login</code>.",
-      "If it's in <code>ALLOWED_EMAILS</code>, Supabase emails a magic link. Any other email silently gets nothing.",
-      "The link opens <code>/auth/callback</code> (with <code>?code=</code> or <code>?token_hash=</code>), which sets the session cookie and redirects to <code>/invoices</code>.",
-      "From then on, middleware keeps the session fresh. <b>Sign out</b> clears it.",
+    "Month end": [
+      "<b>Reports</b> → pick the month → download the GSTR-1 CSVs (B2B, B2CL, B2CS, EXP, CDNR, HSN B2B/B2C, Table 13) for your CA.",
+      "Download payments and the TDS CSV to match with Form 26AS.",
+      "Check <b>Dashboard</b> ageing and send <b>Email statement</b> to clients with overdue balances.",
+      "Recurring retainers have new drafts waiting: review and issue them.",
     ],
   };
   const tabs = document.getElementById("flowTabs"), steps = document.getElementById("flowSteps"), info = document.getElementById("stepInfo");
@@ -283,32 +323,38 @@ npx supabase db push --linked   # apply new files in supabase/migrations</pre>
   render();
 
   const CODE = [
-    ["src/components/invoice/InvoiceTemplate.tsx", "The invoice template: header, meta, item table, totals, payment details, photo column; multi-page"],
-    ["src/styles/invoice.css", "All template measurements and colours (CSS variables); 852 × 1278 px page"],
-    ["src/lib/paginate.ts", "Estimates row heights and splits items across pages; totals always on the last page"],
-    ["src/lib/money.ts", "Totals, discount, CGST/SGST/IGST, Indian number formatting, template date format"],
-    ["src/lib/types.ts", "Shared types: Settings, Client, InvoiceDraft, Invoice, snapshots"],
-    ["src/lib/data.ts", "Server-only reads: settings, clients, invoices (with search and filters), owner guard"],
-    ["src/app/actions.ts", "Server actions: auth, settings, clients, save/duplicate/delete invoice, status, refresh payment details"],
-    ["src/app/(app)/invoices/InvoiceEditor.tsx", "Editor form with live scaled preview, line items, client picker, totals"],
-    ["src/app/(app)/invoices/page.tsx", "History: search, filters, per-currency outstanding and paid totals"],
-    ["src/app/(app)/invoices/InvoiceRowActions.tsx", "Row buttons: open, PDF, duplicate, mark sent/paid/unpaid, delete"],
-    ["src/app/(app)/clients/*", "Saved clients list and inline edit"],
-    ["src/app/(app)/settings/*", "Business, bank, UPI, contact, numbering and tax defaults"],
-    ["src/app/print/[id]/page.tsx", "Bare print page used for PDFs"],
-    ["src/app/api/invoices/[id]/pdf/route.ts", "PDF endpoint: render, upload to Storage, download"],
-    ["src/lib/pdf.ts", "Chromium launcher (serverless or local) and cookie-forwarding PDF render"],
-    ["src/middleware.ts", "Session refresh and sign-in redirect"],
-    ["src/lib/supabase/server.ts · client.ts", "Supabase clients; ALLOWED_EMAILS check"],
-    ["src/app/login/* · src/app/auth/callback/route.ts", "Magic-link login and callback"],
-    ["src/app/dev/sample/page.tsx", "Dev-only reference invoice (?items=15, ?gst=cgst_sgst, ?overlay=1)"],
-    ["src/lib/sample.ts", "Reference invoice data (SuperDMC, ₹15,000)"],
-    ["supabase/migrations/0001_init.sql", "Schema, RLS, invoice-number function, storage bucket and policies"],
-    ["supabase/migrations/0002_ist_invoice_year.sql", "Invoice-number year uses India time"],
-    ["scripts/e2e.mjs", "End-to-end checks against a real project (sign-in, settings, client, invoice, PDF, paid, duplicate, search); cleans up after itself"],
-    ["scripts/visual-diff.mjs", "Screenshot /dev/sample and pixel-diff it against the design image"],
-    ["src/lib/*.test.ts", "Vitest unit tests"],
-    ["public/brand/fabric-panel.jpg", "Side artwork: blue and grey fabric panels with corner brackets (428 × 2440, shown at 214 × 1220)"],
+    ["supabase/migrations/0003_v2_team_documents.sql", "v2 schema: members + invite gate, roles, documents, items, payments, projects, bank accounts, counters, balances view, locks, share RPCs, audit log, RLS"],
+    ["supabase/migrations/0004_share_tracking.sql", "Share RPC with optional view tracking + source reference"],
+    ["src/components/invoice/DocumentTemplate.tsx", "The template for all five document types (supplier block, GST fields, QR, words, signatory, watermark, pages)"],
+    ["src/styles/invoice.css", "Template measurements and colours"],
+    ["src/lib/gst.ts", "State codes, GSTIN checksum, auto GST mode, PIN → state, export endorsements"],
+    ["src/lib/money.ts", "Totals, round-off, Indian formatting, amount in words, FY, dates"],
+    ["src/lib/upi.ts", "UPI link + QR (works in browser and server)"],
+    ["src/lib/paginate.ts", "Splits items across pages; makes room for totals and notes"],
+    ["src/lib/reports.ts · ledger.ts · projects.ts", "Dashboard KPIs, revenue by month, ageing, client ledger, project totals"],
+    ["src/lib/gstr1.ts", "GSTR-1 sections in offline-tool CSV columns"],
+    ["src/lib/messages.ts", "Email/WhatsApp/reminder templates and placeholders"],
+    ["src/lib/mail.ts", "Gmail SMTP sender (team@korakaagaz.co), dry-run when not configured"],
+    ["src/lib/data.ts", "Server reads + requireMember(role) + document mapping"],
+    ["src/lib/doc-copy.ts", "Copy a document to a new draft (convert, credit note, duplicate, revise, recurring)"],
+    ["src/lib/pdf.ts · document-pdf.ts", "Chromium launcher and PDF rendering (member or public)"],
+    ["src/app/actions/*.ts", "Server actions: auth, team, settings, catalog, documents, payments, send"],
+    ["src/app/(app)/page.tsx", "Dashboard"],
+    ["src/app/(app)/documents/*", "List, editor (DocumentEditor), detail page with actions"],
+    ["src/app/(app)/clients/*", "Clients and the per-client ledger/statement"],
+    ["src/app/(app)/projects/* · items/* · reports/* · team/* · settings/*", "Projects, catalog, reports + exports, team, settings + bank accounts"],
+    ["src/app/d/[token]/*", "Public client share page + quote accept/decline"],
+    ["src/app/api/documents/[id]/pdf · api/share/[token]/pdf", "PDF downloads"],
+    ["src/app/api/export/[report]", "CSV exports (documents, payments, TDS, ledger, GSTR-1)"],
+    ["src/app/api/cron/daily", "Daily job: reminders, quote expiry, recurring drafts"],
+    ["src/app/api/fx", "Free FX rate fetch"],
+    ["src/app/login · auth/callback", "Google sign-in and callback (handles \"not invited\")"],
+    ["src/components/BarChart.tsx · NumberInput.tsx · ClientForm.tsx · ui.tsx", "Shared UI"],
+    ["scripts/security-test.mjs", "33 database permission checks"],
+    ["scripts/e2e.mjs", "32 end-to-end checks (refuses to run over real data)"],
+    ["scripts/visual-diff.mjs", "Template vs reference image"],
+    ["vercel.json", "Cron schedule (03:30 UTC = 09:00 IST)"],
+    ["docs/market-research.html", "Market study, Swipe deep-dive, compliance notes"],
   ];
   const tbody = document.querySelector("#codeTable tbody"), search = document.getElementById("codeSearch");
   function renderCode() {

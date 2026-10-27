@@ -2,7 +2,8 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// Handles both magic-link styles: ?code= (PKCE) and ?token_hash=&type= (email OTP link).
+// Google OAuth returns ?code= (PKCE). Admin-generated links (used by tests) return ?token_hash=&type=.
+// Uninvited accounts are rejected by a database trigger, which Supabase reports as error_description.
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
@@ -10,12 +11,22 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") as EmailOtpType | null;
   const supabase = await createClient();
 
-  if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}/invoices`);
-  } else if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
-    if (!error) return NextResponse.redirect(`${origin}/invoices`);
+  const failure = (searchParams.get("error_description") ?? "").toLowerCase();
+  if (failure) {
+    const reason = failure.includes("database error") || failure.includes("not_invited") ? "not_invited" : "link";
+    return NextResponse.redirect(`${origin}/login?error=${reason}`);
   }
-  return NextResponse.redirect(`${origin}/login?error=1`);
+
+  let ok = false;
+  if (code) ok = !(await supabase.auth.exchangeCodeForSession(code)).error;
+  else if (tokenHash && type) ok = !(await supabase.auth.verifyOtp({ token_hash: tokenHash, type })).error;
+  if (!ok) return NextResponse.redirect(`${origin}/login?error=link`);
+
+  // Belt and braces: a session without a membership (e.g. removed member) is signed out.
+  const { data: role } = await supabase.rpc("my_role");
+  if (!role) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(`${origin}/login?error=not_invited`);
+  }
+  return NextResponse.redirect(`${origin}/`);
 }

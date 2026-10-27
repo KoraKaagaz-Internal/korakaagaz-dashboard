@@ -1,12 +1,16 @@
-import { getSettings } from "@/lib/data";
+import { getSettings, listBankAccounts, requireMember } from "@/lib/data";
+import { mailConfigured } from "@/lib/mail";
+import { BankAccounts } from "./BankAccounts";
 import { SettingsForm } from "./SettingsForm";
 
 export default async function SettingsPage() {
-  const settings = await getSettings();
+  await requireMember("admin");
+  const [settings, banks] = await Promise.all([getSettings(), listBankAccounts()]);
   return (
-    <div className="mx-auto max-w-3xl">
-      <h1 className="mb-6 text-2xl font-semibold">Settings</h1>
-      <SettingsForm settings={settings} />
+    <div className="mx-auto max-w-3xl space-y-5">
+      <h1 className="text-2xl font-semibold">Settings</h1>
+      <SettingsForm settings={settings} mailReady={mailConfigured()} />
+      <BankAccounts banks={banks} />
     </div>
   );
 }

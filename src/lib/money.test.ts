@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeTotals, formatAmount, formatInvoiceDate, lineAmount, todayIso } from "./money";
+import { addMonths, amountInWords, computeTotals, financialYear, formatAmount, formatInvoiceDate, isValidDocNumber, lineAmount, todayIso } from "./money";
 
 const base = { discount_type: "none" as const, discount_value: 0, gst_mode: "none" as const, gst_rate: 0 };
 
@@ -62,5 +62,49 @@ describe("todayIso", () => {
   it("returns an ISO date in the given time zone", () => {
     expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(todayIso("Asia/Kolkata")).toBe(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }));
+  });
+});
+
+describe("round off", () => {
+  it("rounds the total and reports the adjustment", () => {
+    const t = computeTotals({ ...base, items: [{ qty: 1, unit_price: 999.6 }], round_off: true });
+    expect(t.total).toBe(1000);
+    expect(t.roundOff).toBe(0.4);
+  });
+});
+
+describe("financialYear", () => {
+  it("rolls over on 1 April", () => {
+    expect(financialYear("2026-03-31")).toBe("25-26");
+    expect(financialYear("2026-04-01")).toBe("26-27");
+    expect(financialYear("2027-01-15")).toBe("26-27");
+    expect(financialYear("2099-12-01")).toBe("99-00");
+  });
+});
+
+describe("isValidDocNumber", () => {
+  it("enforces Rule 46(b)", () => {
+    expect(isValidDocNumber("KK/26-27/001")).toBe(true);
+    expect(isValidDocNumber("KK 26-27 001")).toBe(false);
+    expect(isValidDocNumber("KKSTUDIO/2026-27/0001")).toBe(false);
+  });
+});
+
+describe("amountInWords", () => {
+  it("uses lakh and crore", () => {
+    expect(amountInWords(15000)).toBe("Rupees Fifteen Thousand Only");
+    expect(amountInWords(150000)).toBe("Rupees One Lakh Fifty Thousand Only");
+    expect(amountInWords(12345678.5)).toBe("Rupees One Crore Twenty Three Lakh Forty Five Thousand Six Hundred Seventy Eight and Fifty Paise Only");
+    expect(amountInWords(23600)).toBe("Rupees Twenty Three Thousand Six Hundred Only");
+  });
+  it("handles foreign currency", () => {
+    expect(amountInWords(1250.25, "USD")).toBe("US Dollars One Thousand Two Hundred Fifty and Twenty Five Cents Only");
+  });
+});
+
+describe("addMonths", () => {
+  it("clamps to month end", () => {
+    expect(addMonths("2026-01-31", 1)).toBe("2026-02-28");
+    expect(addMonths("2026-11-15", 3)).toBe("2027-02-15");
   });
 });

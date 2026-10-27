@@ -1,16 +1,17 @@
 import { notFound } from "next/navigation";
-import { InvoiceTemplate } from "@/components/invoice/InvoiceTemplate";
-import { getInvoice } from "@/lib/data";
+import { DocumentTemplate } from "@/components/invoice/DocumentTemplate";
+import { getDocument } from "@/lib/data";
+import { referenceFor } from "@/lib/reference";
 
-// Bare invoice page rendered by the PDF route (and printable from the browser).
+// Bare document page rendered by the PDF route (and printable from the browser).
 export default async function PrintPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const invoice = await getInvoice(id);
-  if (!invoice) notFound();
+  const doc = await getDocument(id);
+  if (!doc) notFound();
   return (
     <>
       <style>{`@page { size: 852px 1278px; margin: 0 } html, body { margin: 0; background: #fff }`}</style>
-      <InvoiceTemplate invoice={invoice} payment={invoice.payment} />
+      <DocumentTemplate doc={doc} supplier={doc.supplier} status={doc.status} reference={await referenceFor(doc)} />
     </>
   );
 }

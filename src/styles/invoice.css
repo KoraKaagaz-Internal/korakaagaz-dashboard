@@ -135,7 +135,7 @@
   color: var(--kk-muted);
   white-space: pre-line;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -227,11 +227,53 @@
 /* ---------- Totals ---------- */
 .kk-totals {
   flex: none;
+  display: grid;
+  grid-template-columns: 297px 247px; /* rows start at 351 like the reference */
   border-top: 1px solid var(--kk-rule);
-  padding-left: 297px; /* 351 - 54 */
   padding-top: 21px;
   padding-bottom: 19px;
   border-bottom: 1px solid var(--kk-rule);
+}
+.kk-totals-left {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding-right: 28px;
+}
+.kk-qr {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: none;
+}
+.kk-qr svg {
+  display: block;
+}
+.kk-scan {
+  font-size: 10.5px;
+  line-height: 14px;
+  font-weight: 600;
+  color: var(--kk-navy);
+  margin-bottom: 8px;
+}
+.kk-words {
+  font-size: 11px;
+  line-height: 15px;
+  color: var(--kk-ink);
+}
+.kk-words-label,
+.kk-fx {
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kk-muted);
+  margin-bottom: 4px;
+}
+.kk-fx {
+  margin: 6px 0 0;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 10.5px;
 }
 .kk-trow {
   display: flex;
@@ -375,9 +417,92 @@
   text-align: right;
 }
 .kk-notes {
-  margin-top: 6px;
+  margin-top: auto;
+  padding: 8px 0 10px;
   font-size: 11px;
   line-height: 15px;
   color: var(--kk-muted);
   white-space: pre-line;
+}
+.kk-notes p {
+  margin: 0 0 15px;
+}
+.kk-notes p:last-child {
+  margin-bottom: 0;
+}
+.kk-items {
+  display: flex;
+  flex-direction: column;
+}
+.kk-item-sac {
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 11px;
+  letter-spacing: 0.04em;
+  color: var(--kk-muted);
+}
+
+/* ---------- Supplier block (top right, beside the logo) ---------- */
+.kk-supplier {
+  position: absolute;
+  left: 383px;
+  top: 46px;
+  width: 215px;
+  font-size: 10.5px;
+  line-height: 15px;
+  color: var(--kk-muted);
+  white-space: pre-line;
+}
+.kk-supplier-name {
+  color: var(--kk-ink);
+  font-weight: 500;
+}
+.kk-supplier-tax {
+  color: var(--kk-ink);
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Signatory (under "For any queries") ---------- */
+.kk-sign {
+  margin-top: 26px;
+  font-size: 11px;
+  line-height: 15px;
+}
+.kk-sign-for {
+  color: var(--kk-muted);
+}
+.kk-sign-img {
+  display: block;
+  height: 34px;
+  max-width: 150px;
+  object-fit: contain;
+  object-position: left;
+  margin: 4px 0;
+}
+.kk-sign-space {
+  height: 26px;
+}
+.kk-sign-name {
+  font-weight: 500;
+}
+.kk-sign-role {
+  color: var(--kk-muted);
+  font-size: 10px;
+}
+
+/* ---------- Status watermark ---------- */
+.kk-watermark {
+  position: absolute;
+  left: 0;
+  right: 214px;
+  top: 560px;
+  text-align: center;
+  font-family: var(--kk-serif);
+  font-size: 150px;
+  letter-spacing: 0.05em;
+  color: rgba(8, 23, 136, 0.06);
+  transform: rotate(-24deg);
+  pointer-events: none;
+  z-index: 2;
+  text-transform: uppercase;
 }

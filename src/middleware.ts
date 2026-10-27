@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth", ...(process.env.NODE_ENV === "production" ? [] : ["/dev"])];
+// Share links, their PDFs and the cron endpoint are public (each checks its own token/secret).
+const PUBLIC_PATHS = ["/login", "/auth", "/d", "/print/share", "/api/share", "/api/cron", ...(process.env.NODE_ENV === "production" ? [] : ["/dev"])];
 
 export async function middleware(request: NextRequest) {
   if (process.env.NODE_ENV !== "production" && request.nextUrl.pathname.startsWith("/dev")) {

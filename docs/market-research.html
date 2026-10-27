@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Invoicing Market Research</title>
+<style>
+  :root { --bg:#f6f6f8; --card:#fff; --ink:#1a1a2d; --muted:#5d5d70; --line:#e2e2ea; --navy:#081788; --soft:#e8eaf8; --ok:#16794a; --no:#a3a3b2; --warn:#a15c00; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#101018; --card:#191924; --ink:#ececf4; --muted:#a0a0b4; --line:#2c2c3c; --navy:#8c9cff; --soft:#23284a; --ok:#5fd39a; --no:#5a5a6e; --warn:#f0b35a; } }
+  :root[data-theme="dark"] { --bg:#101018; --card:#191924; --ink:#ececf4; --muted:#a0a0b4; --line:#2c2c3c; --navy:#8c9cff; --soft:#23284a; --ok:#5fd39a; --no:#5a5a6e; --warn:#f0b35a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 Inter, system-ui, sans-serif; }
+  header.top { position:sticky; top:0; z-index:5; background:var(--card); border-bottom:1px solid var(--line); }
+  header.top .in { max-width:1100px; margin:0 auto; padding:10px 16px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  header.top strong { font-family:Georgia, serif; color:var(--navy); margin-right:8px; }
+  header.top a { color:var(--muted); text-decoration:none; font-size:13px; padding:4px 8px; border-radius:6px; }
+  header.top a:hover { background:var(--soft); color:var(--ink); }
+  #theme { margin-left:auto; border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:6px; padding:3px 8px; cursor:pointer; }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 80px; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:18px; }
+  h1 { font-family:Georgia, serif; font-size:32px; margin:4px 0 6px; }
+  h2 { margin:0 0 12px; font-size:19px; }
+  h3 { margin:16px 0 6px; font-size:15px; }
+  .muted { color:var(--muted); }
+  .wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th, td { text-align:left; padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+  tr.us td { background:var(--soft); }
+  .y { color:var(--ok); font-weight:600; } .n { color:var(--no); } .p { color:var(--warn); }
+  .pill { display:inline-block; font-size:11.5px; padding:1px 8px; border-radius:99px; background:var(--soft); color:var(--navy); }
+  .callout { border-left:3px solid var(--warn); padding:8px 12px; background:color-mix(in srgb, var(--warn) 10%, transparent); border-radius:6px; }
+  ol.recs li { margin-bottom:8px; }
+  input[type=search] { width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); font:inherit; margin-bottom:10px; }
+  code { font-family:ui-monospace, Menlo, monospace; font-size:12.5px; background:var(--soft); padding:1px 5px; border-radius:4px; }
+  a { color:var(--navy); }
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <strong>KORA KAAGAZ · Market research</strong>
+  <a href="#summary">Summary</a><a href="#compare">Tools</a><a href="#matrix">Us vs market</a><a href="#swipe">Swipe deep-dive</a>
+  <a href="#compliance">India compliance</a><a href="#recs">Recommendations</a><a href="#sources">Sources</a>
+  <button id="theme" type="button" aria-label="Toggle theme">◐</button>
+</div></header>
+<main>
+
+<section id="summary">
+  <span class="pill">Researched 27 Oct 2026</span>
+  <h1>Invoicing tools: what's out there, and how we beat it</h1>
+  <p>We compared 15 invoicing tools that Indian freelancers and studios use. Global tools (FreshBooks, Bonsai, Xero, Wave, Stripe) look polished but don't handle GST, e-invoicing or UPI. Indian tools (Zoho Invoice, Refrens, Swipe, myBillBook, Vyapar) are compliant, but they're built for traders with inventory, and they charge per user or per message for the useful parts: WhatsApp, reminders, team roles.</p>
+  <p><b>Our angle:</b> a private, invite-only tool shaped around how a design studio works. Quote, advance, invoice, part payments with TDS, credit notes, exports under LUT. It's GST-correct and keeps the Kora Kaagaz look. <b>Running cost: ₹0</b> (Vercel Hobby, Supabase free, Gmail SMTP, UPI QR, wa.me links).</p>
+  <div class="callout">Prices change often and many come from review sites (Capterra, GetApp). Treat them as indicative. Anything not confirmed from a primary source is marked “unverified”.</div>
+</section>
+
+<section id="compare">
+  <h2>The tools</h2>
+  <input type="search" id="q" placeholder="Filter tools (e.g. UPI, free, India)…" />
+  <div class="wrap"><table id="tools">
+    <thead><tr><th>Tool</th><th>For</th><th>Price</th><th>Stands out for</th><th>India (GST · IRN · UPI)</th><th>Weak spots</th></tr></thead>
+    <tbody>
+      <tr><td><b>Zoho Invoice</b></td><td>Indian SMBs, freelancers</td><td>Free forever (2 users, 500 invoices/yr, Zoho branding)</td><td>Quotes, recurring, reminders, client portal, WhatsApp/email sending</td><td>Yes · paid plans only · via gateways</td><td>Caps and branding on free; upsells to Zoho Books</td></tr>
+      <tr><td><b>Refrens</b></td><td>Indian freelancers, agencies</td><td>Free tier (15 docs); paid ≈ $130–250/yr (unverified)</td><td>WhatsApp sending, TDS handling, GSTR-1 reports, multi-currency</td><td>Yes · yes · QR + links</td><td>Modular upsells (CRM, inventory)</td></tr>
+      <tr><td><b>Swipe</b></td><td>Indian SMBs, mobile-first</td><td>≈ ₹2,999–5,499 per user/yr (unverified)</td><td>Keyboard shortcuts, AI fill, 40+ reports, Tally sync</td><td>Yes · yes · QR + links</td><td>Per-user pricing; automation costs credits per message</td></tr>
+      <tr><td><b>myBillBook</b></td><td>MSMEs, traders</td><td>Free; paid ≈ ₹399–2,599/yr (unverified)</td><td>Staff roles, SMS/WhatsApp reminders</td><td>Yes · one-click · QR on invoice</td><td>Goods/inventory focus</td></tr>
+      <tr><td><b>Vyapar</b></td><td>Retail and trading</td><td>≈ $38–44/device/yr (unverified)</td><td>Offline desktop, inventory</td><td>Yes · yes · QR on invoice</td><td>Not built for services</td></tr>
+      <tr><td><b>FreshBooks</b></td><td>Global freelancers</td><td>$19–70/mo; client caps</td><td>Polished UX, proposals, time tracking</td><td>No · no · no</td><td>Expensive per user; no GST</td></tr>
+      <tr><td><b>Bonsai</b></td><td>Creative freelancers</td><td>From $19–25/user/mo</td><td>Proposals, contracts with e-sign, client portal</td><td>No · no · no</td><td>No Indian compliance</td></tr>
+      <tr><td><b>Invoice Ninja</b></td><td>Self-hosters</td><td>Self-host free; cloud Pro $14/mo</td><td>Open source, client portal, many gateways</td><td>Custom tax only · no · no</td><td>You run it; no GST logic</td></tr>
+      <tr><td><b>Stripe Invoicing</b></td><td>SaaS, developers</td><td>0.4–0.5% per paid invoice</td><td>Hosted invoice page, API</td><td>No · no · no</td><td>New Indian accounts invite-only since May 2024</td></tr>
+      <tr><td><b>Razorpay Invoices / Links</b></td><td>Indian businesses</td><td>≈ 2% + GST per payment</td><td>Partial payments, payment links</td><td>GST fields · no · yes</td><td>Payments tool, not full invoicing</td></tr>
+      <tr><td><b>Wave</b></td><td>US/Canada micro-businesses</td><td>Free starter</td><td>Free bookkeeping</td><td>No · no · no</td><td>Irrelevant for GST</td></tr>
+      <tr><td><b>Xero</b></td><td>Global SMBs + accountants</td><td>From ≈ $35/mo, 20 invoices/mo cap</td><td>Bank feeds, accountant ecosystem</td><td>No · no · no</td><td>Invoice caps</td></tr>
+      <tr><td><b>QuickBooks</b></td><td>n/a</td><td>n/a</td><td>n/a</td><td>Left India in 2023</td><td>Unavailable</td></tr>
+      <tr><td><b>Invoice Simple</b></td><td>Solo tradespeople</td><td>$5–22/mo with monthly caps</td><td>Fast mobile creation</td><td>No · no · no</td><td>Tight caps, basic</td></tr>
+      <tr><td><b>Zervant</b></td><td>EU freelancers</td><td>Free plan; paid from ≈ $7/user/mo</td><td>EU VAT, recurring</td><td>No · no · no</td><td>EU-only tax</td></tr>
+      <tr class="us"><td><b>Kora Kaagaz Invoices</b></td><td>Our studio, invited team</td><td><b>₹0</b></td><td>Branded template, quote → advance → invoice → TDS-aware payments, client links, GSTR-1 CSVs, audit log, invite-only</td><td>Yes · not needed under ₹5 Cr (field reserved) · QR on every invoice</td><td>No automated WhatsApp (needs a paid API); no online card payments</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="matrix">
+  <h2>What we built vs the market</h2>
+  <p class="muted"><span class="y">✓</span> built · <span class="p">◐</span> partly · <span class="n">—</span> skipped on purpose. Market column: how common it is (table stakes or differentiator).</p>
+  <div class="wrap"><table>
+    <thead><tr><th>Feature</th><th>Market</th><th>Us</th><th>How (₹0)</th></tr></thead>
+    <tbody>
+      <tr><td>Branded template + PDF</td><td>Table stakes</td><td class="y">✓</td><td>Pixel-matched to the Kora Kaagaz design; Puppeteer on Vercel</td></tr>
+      <tr><td>GST Rule 46 fields (SAC, place of supply, state codes, reverse charge, signatory)</td><td>Table stakes (India)</td><td class="y">✓</td><td>Auto IGST vs CGST+SGST from the two state codes</td></tr>
+      <tr><td>FY numbering, max 16 characters, resets 1 April</td><td>Table stakes (India)</td><td class="y">✓</td><td><code>KK/26-27/001</code>; series per document type, enforced by the database</td></tr>
+      <tr><td>Amount in words (lakh/crore)</td><td>Common</td><td class="y">✓</td><td>Also for USD/EUR/GBP</td></tr>
+      <tr><td>UPI QR on invoice</td><td>Table stakes (India)</td><td class="y">✓</td><td><code>upi://pay</code> link + QR, amount pre-filled</td></tr>
+      <tr><td>Items catalog with SAC</td><td>Table stakes</td><td class="y">✓</td><td>Pick in the editor or save a line back to it</td></tr>
+      <tr><td>Quotes → proforma/invoice, quote revisions, won/lost</td><td>Table stakes</td><td class="y">✓</td><td>One click; win rate on the dashboard</td></tr>
+      <tr><td>Receipt vouchers (advances) + adjust against invoice</td><td>Differentiator</td><td class="y">✓</td><td>Rule 50 receipt voucher; adjusted as an "advance" payment</td></tr>
+      <tr><td>Credit notes linked to the invoice</td><td>Table stakes</td><td class="y">✓</td><td>Reduce the invoice balance; in GSTR-1 CDNR</td></tr>
+      <tr><td>Export invoices (LUT/IGST, currency, FX rate)</td><td>Differentiator</td><td class="y">✓</td><td>Endorsement text, INR value; free ECB rate fetch</td></tr>
+      <tr><td>Shareable client link (view, download, pay, accept quote)</td><td>Table stakes</td><td class="y">✓</td><td>Random 128-bit token; can be revoked; tracks views</td></tr>
+      <tr><td>Email sending with PDF</td><td>Table stakes</td><td class="p">◐</td><td>Gmail SMTP from team@ once the app password is added</td></tr>
+      <tr><td>WhatsApp sharing</td><td>Table stakes (India)</td><td class="y">✓</td><td><code>wa.me</code> link with an editable message (no API cost)</td></tr>
+      <tr><td>Automatic payment reminders</td><td>Table stakes</td><td class="y">✓</td><td>Daily cron: 3 days before, on the due date, then +7, +14 and +30 days</td></tr>
+      <tr><td>Outstanding statement email per client</td><td>Differentiator</td><td class="y">✓</td><td>One email listing every unpaid invoice with links</td></tr>
+      <tr><td>Partial payments + TDS deducted</td><td>Differentiator</td><td class="y">✓</td><td>10%/2%/1% shortcuts on the pre-GST value; TDS CSV for Form 26AS</td></tr>
+      <tr><td>Recurring retainers</td><td>Table stakes (mid-tier)</td><td class="y">✓</td><td>Creates drafts only, so nothing is sent unchecked</td></tr>
+      <tr><td>Client ledger / statement of account</td><td>Differentiator</td><td class="y">✓</td><td>Running balance, date range, CSV</td></tr>
+      <tr><td>Projects with budget</td><td>Differentiator</td><td class="y">✓</td><td>Quoted vs billed vs received</td></tr>
+      <tr><td>Dashboard: revenue, ageing, TDS, pipeline</td><td>Table stakes</td><td class="y">✓</td><td>All INR, FY-aware</td></tr>
+      <tr><td>GSTR-1 CSV pack (B2B, B2CL, B2CS, EXP, CDNR, HSN B2B/B2C, Table 13)</td><td>Differentiator</td><td class="y">✓</td><td>Offline-tool column layout, for your CA</td></tr>
+      <tr><td>Team roles (admin / member / viewer), invite-only</td><td>Paid tier elsewhere</td><td class="y">✓</td><td>A database trigger blocks anyone who wasn't invited</td></tr>
+      <tr><td>Approval before issuing</td><td>Rare</td><td class="y">✓</td><td>Optional setting</td></tr>
+      <tr><td>Audit log</td><td>Rare at this tier</td><td class="y">✓</td><td>Append-only, recorded by triggers</td></tr>
+      <tr><td>Keyboard shortcuts</td><td>Swipe only</td><td class="y">✓</td><td>N, Q, /, Ctrl/Cmd+Enter</td></tr>
+      <tr><td>GSTIN lookup (auto-fill name/address)</td><td>Paid (Swipe AI, GSPs)</td><td class="p">◐</td><td>No free official API. We validate the check digit, derive state + PAN, and link to the GST portal search</td></tr>
+      <tr><td>E-invoicing (IRN/QR)</td><td>Mandatory only above ₹5 Cr</td><td class="n">—</td><td>Needs a paid GSP; not required at studio scale</td></tr>
+      <tr><td>Online card payments / gateway links</td><td>Common</td><td class="n">—</td><td>Fees; UPI QR covers domestic</td></tr>
+      <tr><td>Automated WhatsApp/SMS</td><td>Paid credits</td><td class="n">—</td><td>Needs a paid API</td></tr>
+      <tr><td>Inventory, e-way bill, POS, thermal print</td><td>Trader tools</td><td class="n">—</td><td>Not relevant to services</td></tr>
+      <tr><td>AI invoice extraction</td><td>Swipe (paid)</td><td class="n">—</td><td>Needs a paid model</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="swipe">
+  <h2>Swipe deep-dive: what we took, what we left</h2>
+  <p>Swipe is the most feature-dense Indian tool. Its help forum works as its knowledge base, and the Play Store shows 4.7★ from about 15.5k reviews. Reviewers praise its speed and complain about bot-only support.</p>
+  <h3>Taken (free to run)</h3>
+  <ul>
+    <li>Document series per type and financial year (<code>QT/26-27/…</code>, <code>CN/26-27/…</code>).</li>
+    <li>Quote → invoice/proforma in one click; won/lost tracking with a reason.</li>
+    <li>Customer ledger with a date-range statement.</li>
+    <li>Outstanding-balance reminder per client.</li>
+    <li>Terms library per document type, snapshotted into each document.</li>
+    <li>Multiple bank accounts chosen per document (INR account + SWIFT account).</li>
+    <li>Editable WhatsApp and email message templates.</li>
+    <li>Signature/stamp image; round-off toggle.</li>
+    <li>Custom fields (PO No., project code).</li>
+    <li>Projects with budget.</li>
+    <li>FX rate fetch on export invoices.</li>
+    <li>Keyboard shortcuts.</li>
+    <li>Approval workflow.</li>
+    <li>PIN → state.</li>
+  </ul>
+  <h3>Left out, and why</h3>
+  <ul>
+    <li><b>Inventory, warehouses, barcodes, POS, thermal print, e-way bill:</b> goods only.</li>
+    <li><b>Automated WhatsApp/SMS, AI fill, DSC signing, payment links:</b> they cost money per use.</li>
+    <li><b>Tally/Shopify sync:</b> not needed yet; our CSVs cover the CA hand-off.</li>
+  </ul>
+</section>
+
+<section id="compliance">
+  <h2>India compliance notes for a design studio</h2>
+  <h3>GST invoice (CGST Rule 46)</h3>
+  <ul>
+    <li><b>Supplier:</b> name, address and GSTIN.</li>
+    <li><b>Invoice number:</b> serial, consecutive, max 16 characters, letters/digits/<code>-</code>/<code>/</code> only, unique per financial year.</li>
+    <li><b>Date.</b></li>
+    <li><b>Recipient:</b> name, address and GSTIN if registered.</li>
+    <li><b>Per line:</b> HSN/SAC, description, taxable value after discount, rate and amount of each tax.</li>
+    <li><b>Place of supply:</b> state name and code.</li>
+    <li><b>Reverse charge:</b> whether it applies.</li>
+    <li><b>Signature:</b> required, but not on electronic invoices.</li>
+    <li><b>Design services:</b> usually SAC 998391 at 18%. Four-digit SAC is enough up to ₹5 Cr turnover.</li>
+  </ul>
+  <h3>Documents</h3>
+  <ul>
+    <li><b>Receipt voucher for advances</b> (Rule 50).</li>
+    <li><b>Credit notes for corrections</b> (Section 34). Issue them by 30 November after the year ends.</li>
+    <li><b>Amount in words:</b> not legally required, but expected.</li>
+  </ul>
+  <h3>E-invoicing (IRN)</h3>
+  <p>Mandatory only above ₹5 Cr aggregate turnover. From April 2025, taxpayers above ₹10 Cr must report within 30 days. Not needed for us now.</p>
+  <h3>Exports of services</h3>
+  <p>Zero-rated. File an LUT every financial year to invoice without IGST, and print “SUPPLY MEANT FOR EXPORT UNDER LETTER OF UNDERTAKING WITHOUT PAYMENT OF INTEGRATED TAX”. Keep the FIRC or bank advice. Whether INR receipts qualify: check with your CA.</p>
+  <h3>TDS</h3>
+  <p>Clients usually deduct 10% under s.194J (professional services) above ₹50,000 a year. It may be 2% (technical) or 1–2% under s.194C depending on how the client classifies the work. Ask your CA. From 1 April 2026 the same rates sit under the Income-tax Act, 2025. Track TDS per payment and match it with Form 26AS.</p>
+</section>
+
+<section id="recs">
+  <h2>Recommendations (ranked by value vs effort), and what we did</h2>
+  <ol class="recs">
+    <li><b>Rule 46 compliance.</b> <span class="y">Done.</span> It's a legal requirement, and the work was pure schema and UI.</li>
+    <li><b>UPI QR on the PDF and share page.</b> <span class="y">Done.</span> Fastest way for Indian clients to pay; costs nothing.</li>
+    <li><b>Public share link.</b> <span class="y">Done.</span> Works over WhatsApp; doubles as a lightweight client portal.</li>
+    <li><b>Team roles + audit log + issued-invoice locking.</b> <span class="y">Done.</span></li>
+    <li><b>Email + WhatsApp sending.</b> <span class="y">Done.</span> Email goes live once the Gmail app password is added.</li>
+    <li><b>Due dates, overdue tracking, reminders.</b> <span class="y">Done</span> via the daily cron.</li>
+    <li><b>Part payments + TDS ledger.</b> <span class="y">Done.</span></li>
+    <li><b>Quotes → invoices, advance receipts.</b> <span class="y">Done.</span></li>
+    <li><b>Exports, multi-currency, credit notes.</b> <span class="y">Done.</span></li>
+    <li><b>Reports + GSTR-1 CSVs.</b> <span class="y">Done.</span></li>
+    <li><b>Later, if needed:</b> Razorpay links (≈2% fee), Tally export, IRN through a GSP near ₹5 Cr turnover, attachments.</li>
+  </ol>
+</section>
+
+<section id="sources">
+  <h2>Sources</h2>
+  <p class="muted">Compliance:</p>
+  <ul>
+    <li><a href="https://taxinformation.cbic.gov.in/content/html/tax_repository/gst/rules/cgst_rules/active/chapter6/rule46_v1.00.html">CBIC Rule 46</a></li>
+    <li><a href="https://www.gstcouncil.gov.in/sites/default/files/2024-05/notfctn-78-central-tax-english-2020.pdf">Notification 78/2020 (HSN digits)</a></li>
+    <li><a href="https://irisgst.com/effective-1st-april-2026-reset-the-invoice-number-series/">IRIS: invoice series reset</a></li>
+    <li><a href="https://www.vatcalc.com/india/india-b2b-e-invoicing/">VATCalc: e-invoicing thresholds</a></li>
+    <li><a href="https://www.comarch.com/trade-and-services/data-management/legal-regulation-changes/india-implements-30-day-reporting-window-for-e-invoices-starting-april-2025/">Comarch: 30-day IRP rule</a></li>
+    <li><a href="https://www.skydo.com/blog/export-of-services-under-gst">Skydo: export of services</a></li>
+    <li><a href="https://cleartax.in/s/section-194j">ClearTax: s.194J</a></li>
+    <li><a href="https://www.taxaj.com/learn/?p=505">SAC 998391</a></li>
+    <li><a href="https://tutorial.gst.gov.in/userguide/taxpayersdashboard/Search_Taxpayer_manual.htm">GST portal taxpayer search</a></li>
+  </ul>
+  <p class="muted">Vendors:</p>
+  <ul>
+    <li><a href="https://www.zoho.com/in/invoice/pricing/">Zoho Invoice pricing</a></li>
+    <li><a href="https://www.refrens.com/pricing">Refrens pricing</a></li>
+    <li><a href="https://getswipe.in/">Swipe</a> and <a href="https://community.getswipe.in/">Swipe community help</a></li>
+    <li><a href="https://knowledge.mybillbook.in/articles/2485225-how-to-display-qr-code-on-invoice-and-collect-payments">myBillBook UPI QR</a></li>
+    <li><a href="https://invoiceninja.com/pricing-plans/">Invoice Ninja pricing</a></li>
+    <li><a href="https://support.stripe.com/questions/stripe-accounts-are-invite-only-in-india">Stripe India invite-only</a></li>
+    <li><a href="https://razorpay.com/docs/payments/invoices/">Razorpay Invoices</a></li>
+    <li><a href="https://quickbooks.intuit.com/in/">QuickBooks India</a></li>
+    <li><a href="https://www.xero.com/nz/plans">Xero plans</a></li>
+    <li><a href="https://www.invoicesimple.com/pricing">Invoice Simple pricing</a></li>
+    <li><a href="https://play.google.com/store/apps/details?id=in.swipe.app">Swipe on Google Play</a></li>
+  </ul>
+  <p class="muted">Data: <a href="https://ndp.ckan.civicdatalab.in/dataset/all-india-pincode-directory">All India Pincode Directory</a> (we use approximate postal-zone prefixes instead of bundling it).</p>
+</section>
+</main>
+<script>
+  const q = document.getElementById("q");
+  q.addEventListener("input", () => {
+    const v = q.value.toLowerCase();
+    document.querySelectorAll("#tools tbody tr").forEach((tr) => { tr.style.display = tr.textContent.toLowerCase().includes(v) ? "" : "none"; });
+  });
+  document.getElementById("theme").onclick = () => {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+  };
+</script>
+</body>
+</html>

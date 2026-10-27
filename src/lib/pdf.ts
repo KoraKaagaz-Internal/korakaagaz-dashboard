@@ -34,3 +34,8 @@ export async function renderPdf(url: string, cookies: { name: string; value: str
     await browser.close();
   }
 }
+
+/** File name for a document PDF: "KK-26-27-001.pdf" (slashes aren't allowed in file names). */
+export function pdfFileName(number: string | null, fallback = "draft"): string {
+  return `${(number || fallback).replace(/[^A-Za-z0-9-]+/g, "-")}.pdf`;
+}
