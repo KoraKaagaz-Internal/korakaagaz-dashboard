@@ -10,7 +10,16 @@ type Group = { title?: string; items: Item[] };
 
 function groups(role: Role): Group[] {
   if (role === "freelancer") {
-    return [{ items: [{ href: "/my-work", label: "My work" }, { href: "/projects", label: "Projects" }] }];
+    return [
+      {
+        items: [
+          { href: "/my-work", label: "My work" },
+          { href: "/projects", label: "Projects" },
+          { href: "/calendar", label: "Calendar" },
+          { href: "/time", label: "Time" },
+        ],
+      },
+    ];
   }
   return [
     {
@@ -21,7 +30,18 @@ function groups(role: Role): Group[] {
     },
     {
       title: "Work",
-      items: [{ href: "/projects", label: "Projects" }],
+      items: [
+        { href: "/projects", label: "Projects" },
+        { href: "/calendar", label: "Calendar" },
+        { href: "/time", label: "Time" },
+      ],
+    },
+    {
+      title: "People",
+      items: [
+        { href: "/team/workload", label: "Workload" },
+        { href: "/team/leave", label: "Leave" },
+      ],
     },
     {
       title: "Clients",
@@ -58,6 +78,11 @@ export function Nav({ role }: { role: Role }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const gs = groups(role);
+  // the most specific matching link wins (/team/workload highlights Workload, not Team)
+  const current = gs
+    .flatMap((g) => g.items.map((i) => i.href))
+    .filter((h) => isActive(path, h))
+    .sort((a, b) => b.length - a.length)[0];
   const list = (onClick?: () => void) =>
     gs.map((g, i) => (
       <div key={i} className="mb-4">
@@ -67,8 +92,8 @@ export function Nav({ role }: { role: Role }) {
             key={n.href}
             href={n.href}
             onClick={onClick}
-            aria-current={isActive(path, n.href) ? "page" : undefined}
-            className={`block rounded-md px-2 py-1.5 text-sm ${isActive(path, n.href) ? "bg-navy/10 font-medium text-navy" : "text-neutral-700 hover:bg-neutral-100"}`}
+            aria-current={current === n.href ? "page" : undefined}
+            className={`block rounded-md px-2 py-1.5 text-sm ${current === n.href ? "bg-navy/10 font-medium text-navy" : "text-neutral-700 hover:bg-neutral-100"}`}
           >
             {n.label}
           </Link>
@@ -76,9 +101,20 @@ export function Nav({ role }: { role: Role }) {
       </div>
     ));
 
-  const bottom: Item[] = role === "freelancer"
-    ? [{ href: "/my-work", label: "My work" }, { href: "/projects", label: "Projects" }]
-    : [{ href: "/", label: "Home" }, { href: "/my-work", label: "My work" }, { href: "/projects", label: "Projects" }, { href: "/documents", label: "Billing" }];
+  const bottom: Item[] =
+    role === "freelancer"
+      ? [
+          { href: "/my-work", label: "My work" },
+          { href: "/projects", label: "Projects" },
+          { href: "/calendar", label: "Calendar" },
+          { href: "/time", label: "Time" },
+        ]
+      : [
+          { href: "/", label: "Home" },
+          { href: "/my-work", label: "My work" },
+          { href: "/calendar", label: "Calendar" },
+          { href: "/time", label: "Time" },
+        ];
 
   return (
     <>

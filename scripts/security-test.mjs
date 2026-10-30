@@ -206,7 +206,77 @@ try {
   const { data: fAudit } = await freelancer.from("audit_events").select("entity");
   check("freelancer's activity feed only shows their project's work", (fAudit ?? []).length > 0 && fAudit.every((a) => ["tasks", "task_comments", "files", "deliverables"].includes(a.entity)));
 
-  // 9. Removing a member ends their access.
+  // 9. Time: people log their own time on their projects; only the admin approves; rates stay private.
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: fTime, error: fTimeErr } = await freelancer.from("time_entries").insert({ project_id: pA.id, task_id: tA.id, work_date: today, minutes: 90 }).select("id").single();
+  check("freelancer can log time on their project", !fTimeErr && !!fTime, fTimeErr?.message);
+  const { error: fTimeB } = await freelancer.from("time_entries").insert({ project_id: pB.id, work_date: today, minutes: 30 });
+  check("freelancer cannot log time on another project", !!fTimeB);
+  const { error: spoofTime } = await freelancer.from("time_entries").insert({ project_id: pA.id, work_date: today, minutes: 30, member_email: MEMBER });
+  check("time can't be logged as someone else", !!spoofTime);
+  const { data: mTime } = await member.from("time_entries").insert({ project_id: pB.id, work_date: today, minutes: 60 }).select("id").single();
+  const { data: fSeesM } = await freelancer.from("time_entries").select("id").eq("id", mTime.id);
+  check("freelancer cannot see other people's time", (fSeesM ?? []).length === 0);
+  const { data: selfApprove } = await freelancer.from("time_entries").update({ status: "approved" }).eq("id", fTime.id).select("id");
+  check("people cannot approve their own time", !selfApprove || selfApprove.length === 0);
+  await freelancer.from("time_entries").update({ status: "submitted" }).eq("id", fTime.id);
+  const { data: mApprove } = await member.from("time_entries").update({ status: "approved" }).eq("id", fTime.id).select("id");
+  check("members cannot approve time", !mApprove || mApprove.length === 0);
+  const { data: afterSubmit } = await freelancer.from("time_entries").update({ minutes: 600 }).eq("id", fTime.id).select("id");
+  check("submitted time can't be changed by its owner", !afterSubmit || afterSubmit.length === 0);
+  await admin.from("time_entries").update({ status: "approved" }).eq("id", fTime.id);
+  const { data: fDel } = await freelancer.from("time_entries").delete().eq("id", fTime.id).select("id");
+  check("approved time can't be deleted by its owner", !fDel || fDel.length === 0);
+  const { error: memberEdit } = await member.from("time_entries").update({ minutes: 1 }).eq("id", fTime.id);
+  check("approved time is locked for members", !!memberEdit);
+  const { error: rates } = await member.rpc("admin_member_rates");
+  check("members cannot read cost rates", !!rates);
+  const { error: costs } = await member.rpc("admin_project_costs", {});
+  check("members cannot read project costs", !!costs);
+  const { error: cap } = await freelancer.rpc("team_capacity");
+  check("freelancers cannot read team capacity", !!cap);
+  const { error: setRate } = await member.rpc("admin_set_rates", { p_email: MEMBER, p_cost: 1, p_bill: 1, p_capacity: 40 });
+  check("members cannot set rates", !!setRate);
+  const { data: tok1 } = await freelancer.rpc("my_ics_token", { p_rotate: false });
+  const { data: tok2 } = await member.rpc("my_ics_token", { p_rotate: false });
+  check("everyone gets their own private calendar token", /^[0-9a-f]{32}$/.test(tok1 ?? "") && tok1 !== tok2);
+
+  // 10. Calendar: freelancers see events on their projects or that they're booked on.
+  const at = (h) => new Date(Date.now() + h * 3600000).toISOString();
+  const { data: evA, error: evErr } = await member.from("events").insert({ type: "shoot", title: "Sec shoot A", project_id: pA.id, starts_at: at(24), ends_at: at(32) }).select("id").single();
+  check("member can create an event", !evErr && !!evA, evErr?.message);
+  const { data: evB } = await member.from("events").insert({ type: "shoot", title: "Sec shoot B", project_id: pB.id, starts_at: at(24), ends_at: at(32) }).select("id").single();
+  const { data: evC } = await member.from("events").insert({ type: "meeting", title: "Sec meeting C", starts_at: at(48), ends_at: at(49) }).select("id").single();
+  await member.from("event_people").insert({ event_id: evC.id, member_email: FREELANCER, role: "assistant" });
+  const { data: fEvents } = await freelancer.from("events").select("id");
+  const seen = (fEvents ?? []).map((e) => e.id);
+  check("freelancer sees their project's event and their bookings only", seen.includes(evA.id) && seen.includes(evC.id) && !seen.includes(evB.id), `${seen.length} visible`);
+  const { error: fEv } = await freelancer.from("events").insert({ type: "meeting", title: "x", starts_at: at(1), ends_at: at(2) });
+  check("freelancer cannot create events", !!fEv);
+  const { error: vEv } = await viewer.from("events").insert({ type: "meeting", title: "x", starts_at: at(1), ends_at: at(2) });
+  check("viewer cannot create events", !!vEv);
+  const { data: k } = await member.from("kit").insert({ name: "Sec camera", category: "Camera" }).select("id").single();
+  const { data: fKit } = await freelancer.from("kit").select("id").eq("id", k.id);
+  check("freelancer can see the kit list", (fKit ?? []).length === 1);
+  const { error: fKitW } = await freelancer.from("kit").insert({ name: "x" });
+  check("freelancer cannot change the kit list", !!fKitW);
+  await admin.from("kit").delete().eq("id", k.id);
+
+  // 11. Leave: request your own; only the admin decides; freelancers can't see others' leave.
+  const { data: fLeave, error: fLeaveErr } = await freelancer.from("leave_requests").insert({ from_date: today, to_date: today }).select("id").single();
+  check("freelancer can request leave", !fLeaveErr && !!fLeave, fLeaveErr?.message);
+  const { error: preApproved } = await member.from("leave_requests").insert({ from_date: today, to_date: today, status: "approved" });
+  check("leave can't be created already approved", !!preApproved);
+  const { data: selfLeave } = await freelancer.from("leave_requests").update({ status: "approved" }).eq("id", fLeave.id).select("id");
+  check("people cannot approve their own leave", !selfLeave || selfLeave.length === 0);
+  const { data: mLeave } = await member.from("leave_requests").insert({ from_date: today, to_date: today }).select("id").single();
+  const { data: fSeesLeave } = await freelancer.from("leave_requests").select("id").eq("id", mLeave.id);
+  check("freelancer cannot see others' leave", (fSeesLeave ?? []).length === 0);
+  const { data: mSeesLeave } = await member.from("leave_requests").select("id").eq("id", fLeave.id);
+  check("staff can see team leave", (mSeesLeave ?? []).length === 1);
+  await admin.from("leave_requests").delete().in("id", [fLeave.id, mLeave.id]);
+
+  // 12. Removing a member ends their access.
   await admin.from("members").delete().eq("email", VIEWER);
   const { data: afterRemoval } = await viewer.from("clients").select("id");
   check("removed member loses access immediately", (afterRemoval ?? []).length === 0);
@@ -214,6 +284,8 @@ try {
   check("unexpected error", false, e.message);
 } finally {
   if (created.objects.length) await admin.storage.from("files").remove([...new Set(created.objects)]);
+  await admin.from("events").delete().like("title", "Sec %");
+  await admin.from("leave_requests").delete().in("member_email", [MEMBER, VIEWER, FREELANCER]);
   if (created.projects.length) await admin.from("projects").delete().in("id", created.projects);
   if (created.documents.length) await admin.from("documents").delete().in("id", created.documents);
   if (created.clients.length) await admin.from("clients").delete().in("id", created.clients);

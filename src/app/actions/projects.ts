@@ -111,6 +111,8 @@ export async function deleteProject(id: string): Promise<Result> {
   const { supabase } = await requireMember("admin");
   const { count } = await supabase.from("documents").select("id", { count: "exact", head: true }).eq("project_id", id).neq("status", "draft");
   if (count) return fail("This project has issued billing documents. Mark it Done or Cancelled instead.");
+  const { count: approvedTime } = await supabase.from("time_entries").select("id", { count: "exact", head: true }).eq("project_id", id).eq("status", "approved");
+  if (approvedTime) return fail("This project has approved time. Mark it Done or Cancelled instead.");
   const { data: files } = await supabase.from("files").select("storage_path").eq("project_id", id).eq("kind", "upload");
   const paths = (files ?? []).map((f) => f.storage_path as string).filter(Boolean);
   if (paths.length) await supabase.storage.from("files").remove(paths);

@@ -147,6 +147,7 @@ export interface TaskDetail {
   files: FileRow[];
   phases: Phase[];
   members: string[];
+  logged_minutes: number;
 }
 
 export async function getTaskDetail(id: string): Promise<TaskDetail | null> {
@@ -155,12 +156,13 @@ export async function getTaskDetail(id: string): Promise<TaskDetail | null> {
   const { data: t } = await supabase.from("tasks").select("*, task_assignees(member_email), projects(id, name, code)").eq("id", id).maybeSingle();
   if (!t) return null;
   const pid = t.project_id as string;
-  const [subs, comments, files, phases, members] = await Promise.all([
+  const [subs, comments, files, phases, members, time] = await Promise.all([
     supabase.from("tasks").select("*, task_assignees(member_email)").eq("parent_id", id).order("sort"),
     supabase.from("task_comments").select("*").eq("task_id", id).order("created_at"),
     supabase.from("files").select("*").eq("task_id", id).order("created_at", { ascending: false }),
     supabase.from("phases").select("*").eq("project_id", pid).order("sort"),
     supabase.from("project_members").select("member_email").eq("project_id", pid),
+    supabase.from("time_entries").select("minutes").eq("task_id", id),
   ]);
   return {
     task: toTask(t as Row),
@@ -170,6 +172,7 @@ export async function getTaskDetail(id: string): Promise<TaskDetail | null> {
     files: ((files.data ?? []) as Row[]).map((f) => ({ ...(f as unknown as FileRow), size: Number(f.size ?? 0) })),
     phases: (phases.data ?? []) as Phase[],
     members: (members.data ?? []).map((m) => m.member_email as string),
+    logged_minutes: (time.data ?? []).reduce((sum, r) => sum + Number(r.minutes), 0),
   };
 }
 

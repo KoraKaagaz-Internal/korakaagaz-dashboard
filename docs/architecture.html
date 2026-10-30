@@ -87,8 +87,15 @@
   <span class="pill">Last updated 2026-10-30</span>
   <h1>Kora Kaagaz Studio</h1>
   <p><b>Live:</b> <a href="https://invoice-generator-flax-pi.vercel.app">invoice-generator-flax-pi.vercel.app</a> · Supabase project <code>invoice-generator</code> (ref <code>komdaeylldwknhwcjevv</code>, Mumbai) · Vercel project <code>invoice-generator</code> · Market research: <a href="market-research.html">market-research.html</a></p>
-  <p><b>Where it's going:</b> one tool for the whole studio. Invoicing was first; projects and tasks are now live. Next, in order: time, team and calendar (shoots, crew, kit); CRM; documents with e-signatures; client onboarding and a client portal; proofing; then a studio dashboard with automations. The plan and research are in <a href="market-research.html#agency">market-research.html</a>.</p>
+  <p><b>Where it's going:</b> one tool for the whole studio. Invoicing was first; projects and tasks, then time, team and calendar are now live. Next, in order: CRM; documents with e-signatures; client onboarding and a client portal; proofing; then a studio dashboard with automations. The plan and research are in <a href="market-research.html#agency">market-research.html</a>.</p>
   <p><b>Projects (live):</b> start a project from a studio template (brand identity, product shoot, campaign shoot, social retainer, packaging, website). Then work it on a board, list or timeline, with a task side panel for assignees, dates, estimates, checklist, comments with @mentions and files. Each project also has deliverables with revision limits, a team, a staff-only budget, a billing tab and an activity feed. "My work" lists everyone's tasks, and a bell shows notifications. <b>Freelancers</b> see only the projects they're added to and never see clients or money.</p>
+  <p><b>Time, team and calendar (live):</b></p>
+  <ul>
+    <li><b>Time:</b> a timer (from a task or the Time page; it shows in the header) and a weekly timesheet. People submit their week and the admin approves it.</li>
+    <li><b>Project Time tab:</b> hours against budget, this month's retainer use, and, for the admin only, cost and margin from private cost rates. "Draft invoice from approved time" turns approved billable hours into a GST invoice draft.</li>
+    <li><b>Calendar:</b> month, week, and crew &amp; kit views for shoots, meetings and deadlines. You book team, outside crew and kit, double bookings are flagged, and each shoot has a printable call sheet. Everyone gets a private feed for Google Calendar.</li>
+    <li><b>People:</b> leave requests with admin approval, studio holidays, and a 6-week workload view of booked hours against capacity.</li>
+  </ul>
   <p>The billing side is a private, <b>invite-only</b> invoicing workspace. It handles quotes, proforma invoices, tax invoices, receipt vouchers (advances) and credit notes in the Kora Kaagaz design, GST-compliant (Rule 46), with UPI QR codes, client share links, email/WhatsApp sending, reminders, part payments with TDS, projects, a client ledger, a dashboard and GSTR-1 CSV exports. <b>Running cost: ₹0</b>.</p>
   <ul>
     <li><b>Stack:</b> Next.js 15.5.28 (App Router, TypeScript, Tailwind 4) on Vercel Hobby · Supabase free (Postgres with RLS, Google auth, Storage) · Puppeteer + <code>@sparticuz/chromium</code> for PDFs · Gmail SMTP (nodemailer) for email · Vercel Cron for the daily job.</li>
@@ -148,7 +155,14 @@
     <tr><td>Issue (number + lock)</td><td>✓</td><td>✓, or "submit for approval" when that setting is on</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Send, record payments, credit notes, cancel</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Accept / decline a quote</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✓</td><td>✗</td></tr>
-    <tr><td>Delete a project</td><td>✓ (only if nothing issued is tagged to it)</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Log time (timer, timesheet), submit the week</td><td>✓</td><td>✓</td><td>✗</td><td>on their projects</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Approve time, approve leave, set rates and capacity, holidays</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See everyone's time, leave and the workload view</td><td>✓</td><td>✓</td><td>✓</td><td>own only</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See cost rates and project margins</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Create events, book crew and kit, edit the kit list</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See events</td><td>all</td><td>all</td><td>all</td><td>their projects' events + ones they're booked on</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Draft an invoice from approved time</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Delete a project</td><td>✓ (only if nothing issued or approved time is tagged to it)</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Settings, bank accounts, Team (invite/remove)</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
   </table></div>
   <p class="muted">Enforced in the database, not just the UI. RLS uses <code>is_member()</code> (staff: admin, member, viewer), <code>is_team()</code> (staff + freelancers), <code>on_project(id)</code> (staff, or added to that project), <code>can_work(id)</code> (editors, or freelancers on that project), <code>can_edit()</code> and <code>is_admin()</code>. Money lives in <code>project_finance</code>, which only staff can read. There is exactly one admin: the admin can't be invited, demoted or removed.</p>
@@ -168,6 +182,10 @@
     <tr><td><code>project_templates</code></td><td>Six studio templates: phases, tasks with hours and day offsets, deliverables</td><td>Applied by <code>apply_project_template()</code>.</td></tr>
     <tr><td><code>phases</code>, <code>tasks</code>, <code>task_assignees</code>, <code>task_comments</code>, <code>deliverables</code></td><td>Plan and work items. Tasks have status, priority, dates, estimate, labels, subtasks (<code>parent_id</code>), "client can see" flag, fractional <code>sort</code></td><td>Everyone on the project reads; editors and that project's freelancers change tasks; only editors change phases and deliverables.</td></tr>
     <tr><td><code>files</code></td><td>Uploads (Storage path) or links (Drive etc.) on a project or task</td><td>Same project rules; uploader or editor deletes.</td></tr>
+    <tr><td><code>time_entries</code></td><td>Person, project, task, date, minutes, billable, note, status (draft → submitted → approved/rejected), running timer start, invoice it was billed on</td><td>People see their own; staff see all. Owners edit only draft or sent-back time. Only the admin approves. Approved time can't be deleted, and once invoiced its hours are locked (trigger). One running timer per person (unique index).</td></tr>
+    <tr><td><code>members</code> (new columns)</td><td><code>cost_rate</code>, <code>bill_rate</code>, <code>weekly_capacity_hours</code>, <code>ics_token</code></td><td>Rates only via admin RPCs (<code>admin_member_rates</code>, <code>admin_project_costs</code>). Capacity via <code>team_capacity()</code> for staff.</td></tr>
+    <tr><td><code>events</code>, <code>event_people</code>, <code>event_kit</code>, <code>kit</code></td><td>Shoots, meetings, deadlines with times, location, map link, tentative/confirmed/cancelled, call time, shot list, contacts; crew (team or outside, with role/phone); kit bookings</td><td>Editors write. Freelancers see events on their projects or ones they're booked on (<code>on_event()</code>).</td></tr>
+    <tr><td><code>leave_requests</code>, <code>holidays</code></td><td>Leave (dates, half day, type, status) and studio holidays</td><td>Anyone requests their own; only the admin decides. Staff see all leave; freelancers their own.</td></tr>
     <tr><td><code>notifications</code></td><td>Assigned, mentioned, commented, status changes, added to project</td><td>Each person reads only their own; can't be forged (actor must be you).</td></tr>
     <tr><td><code>documents</code> + <code>document_items</code></td><td>All five document types, snapshots of client + supplier, totals, share token, status</td><td>Unique <code>(doc_type, fy, number)</code>. Triggers lock issued documents and block deleting them.</td></tr>
     <tr><td><code>payments</code></td><td>Amount, TDS + section, mode, reference</td><td>Feeds the <code>document_balances</code> view (paid / partial / unpaid / overdue).</td></tr>
@@ -179,6 +197,8 @@
   </table></div>
   <h3>Secrets</h3>
   <p>Kept in <code>.env.local</code> (git-ignored) and Vercel env vars only: Supabase service-role key (used by the daily cron only), <code>CRON_SECRET</code>, Gmail app password (<code>SMTP_PASS</code>), DB password. The anon key is public by design; RLS protects the data.</p>
+  <h3>Calendar feed</h3>
+  <p><code>/api/ics/&lt;token&gt;.ics</code> is public but keyed by a random 128-bit token per person (<code>members.ics_token</code>), like a share link. It uses the service-role client to return only that person's bookings, assigned task due dates, approved leave and holidays. "Make a new link" rotates the token, which breaks the old URL.</p>
   <h3>Share links</h3>
   <p>Each document has a random 128-bit token. <code>/d/&lt;token&gt;</code> calls a <code>security definer</code> function that returns only that document (never drafts) and counts views. A link can be turned off or replaced. Pages are <code>noindex</code>.</p>
   <h3>Money rules</h3>
@@ -223,9 +243,9 @@
   <pre>npm install
 npm run dev                                   # http://localhost:3000 (needs .env.local)
 npm test                                      # unit tests: GST, money, words, numbering, pagination, reports, GSTR-1
-node scripts/security-test.mjs                # 73 database permission checks, as anon/viewer/member/freelancer
+node scripts/security-test.mjs                # 98 database permission checks, as anon/viewer/member/freelancer
 node scripts/e2e.mjs http://localhost:3000    # 32 billing end-to-end checks; refuses to run if the workspace has data
-node scripts/e2e-projects.mjs http://localhost:3000   # 25 project checks; safe on real data
+node scripts/e2e-projects.mjs http://localhost:3000   # 44 project/time/calendar checks; safe on real data
 node scripts/visual-diff.mjs public/dev-reference.png http://localhost:3000
 /dev/sample?full=1 | ?type=quote | ?export=1 | ?items=15   # template previews (dev only)</pre>
   <h3>Deploy</h3>
@@ -239,6 +259,15 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-10-30</td><td><b>Phase 2: time, team and calendar.</b>
+      <ul>
+        <li>Migrations 0007–0008: time entries with approvals and locks; private cost/bill rates and weekly capacity on members; events with crew and kit; leave and holidays; a private calendar token per person.</li>
+        <li>Time: header timer, weekly timesheet (1:30 / 1.5 / 90m), submit week → admin approves or sends back. Project Time tab: hours vs budget, retainer use this month, admin-only cost and margin. "Draft invoice from approved time" makes a GST draft, one line per task, and links the time to it.</li>
+        <li>Calendar: month, week, and crew &amp; kit views; event form with live double-booking warnings; booked crew are notified; printable call sheets; kit list; private Google Calendar feed (<code>/api/ics/&lt;token&gt;.ics</code>).</li>
+        <li>People: leave requests and approvals, studio holidays, 6-week workload view. Navigation gained Calendar, Time, Workload and Leave.</li>
+        <li>Projects with approved time can't be deleted; mark them Done instead.</li>
+        <li>Tests: 17 new unit tests (durations, timers, weeks, load, retainer, invoice lines, IST, conflicts, iCalendar); security test 73 → 98; projects e2e 25 → 44.</li>
+      </ul></td></tr>
     <tr><td>2026-10-30</td><td><b>Kora Kaagaz Studio, phase 0 + 1: projects, tasks, freelancers.</b>
       <ul>
         <li>The goal is now a full agency tool. We researched 40+ agency, client-portal, proposal and e-sign tools and Indian e-signature law (<a href="market-research.html#agency">market-research.html</a>), and set a phased plan.</li>
@@ -289,7 +318,7 @@ vercel deploy --prod
 <script>
   const NODES = {
     browser: ["Team", "The admin (team@korakaagaz.co) plus invited Members, Viewers and Freelancers, in a browser or on a phone (bottom bar on small screens). Navigation and buttons adapt to the role. Freelancers only get My work and Projects."],
-    middleware: ["Middleware", "<code>src/middleware.ts</code> refreshes the Supabase session and sends signed-out visitors to <code>/login</code>. Public paths: <code>/login</code>, <code>/auth</code>, <code>/d</code> (share links), <code>/print/share</code>, <code>/api/share</code>, <code>/api/cron</code>."],
+    middleware: ["Middleware", "<code>src/middleware.ts</code> refreshes the Supabase session and sends signed-out visitors to <code>/login</code>. Public paths: <code>/login</code>, <code>/auth</code>, <code>/d</code> (share links), <code>/print/share</code>, <code>/api/share</code>, <code>/api/cron</code>, <code>/api/ics</code> (token-checked calendar feeds)."],
     auth: ["Google sign-in + invite gate", "Supabase Google OAuth (PKCE). The <code>gate_new_user</code> trigger on <code>auth.users</code> raises an error unless the email is in <code>members</code>, so uninvited people never get an account. <code>/auth/callback</code> shows \"isn't invited\" in that case."],
     pages: ["Pages + server actions", "Server components read via <code>src/lib/data.ts</code> (<code>requireMember(role)</code> for staff pages; <code>requireTeam()</code> for pages freelancers may open) and <code>src/lib/pm-data.ts</code> for projects. Mutations live in <code>src/app/actions/*.ts</code>: zod validation, server-side totals, then RLS applies."],
     db: ["Postgres", "Workspace-wide tables with RLS by role. <code>next_doc_number()</code> gives FY series per type. Triggers lock issued documents, block deleting them, and write the append-only <code>audit_events</code>. <code>document_balances</code> view computes paid/partial/overdue."],
@@ -315,6 +344,21 @@ vercel deploy --prod
       "Everyone sees their tasks in <b>My work</b> (overdue, today, next 7 days) and gets notifications in the bell.",
       "<b>Billing</b> tab: new quotes and invoices from here are tagged to the project; quoted vs billed vs received against the budget.",
       "Mark the project Done when delivered. The <b>Activity</b> tab keeps the history.",
+    ],
+    "Time to invoice": [
+      "Start a timer from a task (▶ Start timer) or the Time page. It runs in the header bar; Stop saves the minutes as draft time for today.",
+      "Or type hours straight into the weekly timesheet: 1:30, 1.5, 90m or 2h.",
+      "At the end of the week: <b>Submit week for approval</b>. The admin is notified.",
+      "Admin: <b>Time → Approve</b>. Tick entries and approve, or send them back with a reason (they turn amber in the person's timesheet).",
+      "The project's <b>Time</b> tab shows hours against budget and retainer use. Only the admin sees cost and margin.",
+      "Hourly project: <b>Draft invoice from approved time</b> makes one GST line per task at the project's hourly rate. The time is linked to that invoice and can't be billed twice.",
+    ],
+    "Plan a shoot": [
+      "<b>Calendar → New event</b>: Shoot, title, project, dates/times (or all day), call time, location and map link.",
+      "Book team members (they're notified and it appears in their calendar feed), outside crew and talent with phone numbers, and kit.",
+      "If someone or some kit is already booked at that time, the form warns before you save. The Crew &amp; kit view shows the whole week.",
+      "Mark it Tentative while you wait for the client, then Confirmed.",
+      "Open the event for the <b>call sheet</b>: crew, call time, location, kit checklist, shot list, contacts. Print it or save it as PDF.",
     ],
     "Bring in a freelancer": [
       "Admin: <b>Team</b> → invite their email as <b>Freelancer</b>.",
@@ -377,7 +421,17 @@ vercel deploy --prod
     ["src/app/(app)/my-work/*", "My tasks by due date"],
     ["src/components/pm/*", "TaskDrawer side panel, Files (direct-to-storage upload, Drive links), PeoplePicker, Avatar, Pills"],
     ["src/app/(app)/Nav.tsx · Bell.tsx · Shortcuts.tsx", "Sidebar + phone bottom bar by role, notifications bell, keyboard shortcuts (g h / g w / g p, n, q, p, /)"],
-    ["scripts/e2e-projects.mjs", "25 end-to-end checks of projects, board drag, task panel, files and freelancer access; safe on real data (cleans up only its own rows)"],
+    ["supabase/migrations/0007_time_calendar.sql · 0008_time_invoicing.sql", "Time entries with approval + locks, rates/capacity/feed token on members, admin cost RPCs, events/crew/kit, leave, holidays; editors can link approved time to invoices"],
+    ["src/lib/time.ts", "Durations, timer rounding, weeks, available days, weekly load, retainer burn, invoice lines from time"],
+    ["src/lib/calendar.ts", "IST conversions, event days, overlap + conflict detection, month grid, iCalendar feed writer"],
+    ["src/lib/time-data.ts", "Server reads: timers, entries, approvals, rates, costs, capacity, events, kit, leave, holidays"],
+    ["src/app/actions/time.ts · calendar.ts", "Timer, timesheet cells, submit/approve, rates, invoice from time, leave/holidays; events with crew/kit + conflicts, kit, feed token"],
+    ["src/app/(app)/time/*", "Weekly timesheet, team week, admin approvals"],
+    ["src/app/(app)/calendar/*", "Month/week/crew views, event form, call sheet, kit list, feed link"],
+    ["src/app/(app)/team/workload · team/leave · team/RatesEditor.tsx", "Capacity vs booked hours; leave + holidays; admin rates"],
+    ["src/app/(app)/TimerBar.tsx · projects/[id]/ProjectTime.tsx", "Running timer in the header; project time, retainer burn, margin, invoice from time"],
+    ["src/app/api/ics/[token]", "Private calendar feed (bookings, task due dates, leave, holidays)"],
+    ["scripts/e2e-projects.mjs", "44 end-to-end checks of projects, board drag, task panel, timer, timesheet, approvals, invoice from time, calendar, conflicts, feed, leave, files and freelancer access; safe on real data (cleans up only its own rows)"],
     ["supabase/migrations/0003_v2_team_documents.sql", "v2 schema: members + invite gate, roles, documents, items, payments, projects, bank accounts, counters, balances view, locks, share RPCs, audit log, RLS"],
     ["supabase/migrations/0004_share_tracking.sql", "Share RPC with optional view tracking + source reference"],
     ["src/components/invoice/DocumentTemplate.tsx", "The template for all five document types (supplier block, GST fields, QR, words, signatory, watermark, pages)"],
@@ -405,7 +459,7 @@ vercel deploy --prod
     ["src/app/api/fx", "Free FX rate fetch"],
     ["src/app/login · auth/callback", "Google sign-in and callback (handles \"not invited\")"],
     ["src/components/BarChart.tsx · NumberInput.tsx · ClientForm.tsx · ui.tsx", "Shared UI"],
-    ["scripts/security-test.mjs", "73 database permission checks as anon, viewer, member and freelancer (incl. storage)"],
+    ["scripts/security-test.mjs", "98 database permission checks as anon, viewer, member and freelancer (incl. storage, time, calendar, leave)"],
     ["scripts/e2e.mjs", "32 end-to-end checks (refuses to run over real data)"],
     ["scripts/visual-diff.mjs", "Template vs reference image"],
     ["vercel.json", "Cron schedule (03:30 UTC = 09:00 IST)"],

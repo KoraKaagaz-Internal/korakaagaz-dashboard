@@ -259,12 +259,12 @@
       <tr><td>Projects</td><td>Studio templates (brand identity, shoots, retainer, packaging, web)</td><td>D</td><td class="y">✓</td><td>Phases, tasks, estimates and revision limits pre-filled</td></tr>
       <tr><td>Projects</td><td>Freelancers see only their projects, never money</td><td>Paid elsewhere</td><td class="y">✓</td><td>Postgres row-level security; budget in a staff-only table</td></tr>
       <tr><td>Projects</td><td>Deliverables with revision limits</td><td>D</td><td class="y">✓</td><td>Feeds proofing's revision counter later</td></tr>
-      <tr><td>Time</td><td>Timer, timesheets, approval, billable vs not</td><td>T</td><td class="p">◐ 2</td><td>One timer per person; weekly grid</td></tr>
-      <tr><td>Time</td><td>Invoice from approved time</td><td>D</td><td class="p">◐ 2</td><td>Draft GST invoice lines, SAC 998391</td></tr>
-      <tr><td>Money</td><td>Budget vs actual, profitability, retainer burn</td><td>D</td><td class="p">◐ 2</td><td>Cost rates (admin-only) × approved hours</td></tr>
-      <tr><td>Calendar</td><td>Shoots with crew + kit, conflict warnings, call sheets</td><td>Gap</td><td class="p">◐ 2</td><td>Tentative vs confirmed; call sheet PDF</td></tr>
-      <tr><td>Calendar</td><td>Google Calendar sync</td><td>T</td><td class="p">◐ 2</td><td>Private ICS feed per person (no API)</td></tr>
-      <tr><td>Team</td><td>Workload incl. leave and holidays</td><td>D</td><td class="p">◐ 2</td><td>Capacity − leave vs estimates + bookings</td></tr>
+      <tr><td>Time</td><td>Timer, timesheets, approval, billable vs not</td><td>T</td><td class="y">✓</td><td>One timer per person; weekly grid</td></tr>
+      <tr><td>Time</td><td>Invoice from approved time</td><td>D</td><td class="y">✓</td><td>Draft GST invoice lines, SAC 998391</td></tr>
+      <tr><td>Money</td><td>Budget vs actual, profitability, retainer burn</td><td>D</td><td class="y">✓</td><td>Cost rates (admin-only) × approved hours</td></tr>
+      <tr><td>Calendar</td><td>Shoots with crew + kit, conflict warnings, call sheets</td><td>Gap</td><td class="y">✓</td><td>Tentative vs confirmed; call sheet PDF</td></tr>
+      <tr><td>Calendar</td><td>Google Calendar sync</td><td>T</td><td class="y">✓</td><td>Private ICS feed per person (no API)</td></tr>
+      <tr><td>Team</td><td>Workload incl. leave and holidays</td><td>D</td><td class="y">✓</td><td>Capacity − leave vs estimates + bookings</td></tr>
       <tr><td>CRM</td><td>Lead pipeline, enquiry form, convert to client + project</td><td>T</td><td class="p">◐ 3</td><td>Honeypot + rate limit instead of paid CAPTCHA</td></tr>
       <tr><td>CRM</td><td>Discovery-call booking page</td><td>D</td><td class="p">◐ 3</td><td>Slots minus calendar; .ics invite by email</td></tr>
       <tr><td>Documents</td><td>Templates with merge fields + clause library</td><td>T</td><td class="p">◐ 4</td><td>Rendered to PDF with the existing Puppeteer pipeline</td></tr>
@@ -299,7 +299,7 @@
   <h2>What we build, in order</h2>
   <ol class="recs">
     <li><b>Projects and tasks, with freelancer access.</b> <span class="y">Live</span> (phase 1). Six studio templates, board/list/timeline, task panel, files and links, notifications, "My work".</li>
-    <li><b>Time, team and calendar.</b> Timer and timesheets, profitability, retainer burn, shoots with crew/kit and call sheets, leave and workload.</li>
+    <li><b>Time, team and calendar.</b> <span class="y">Live</span> (phase 2). Timer, timesheets with approval, invoice from time, margins, retainer burn, shoots with crew/kit, conflicts and call sheets, Google Calendar feed, leave and workload.</li>
     <li><b>CRM.</b> Pipeline, enquiry form, convert to client + project, booking page.</li>
     <li><b>Documents.</b> Templates, interactive proposals, click-to-sign, document hub with renewals.</li>
     <li><b>Onboarding and client portal.</b> Magic-link portal, briefs, asset chasers.</li>

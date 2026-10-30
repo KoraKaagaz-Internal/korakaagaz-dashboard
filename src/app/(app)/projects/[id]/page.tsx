@@ -11,6 +11,7 @@ import { projectTotals } from "@/lib/projects";
 import { DOC_LABELS } from "@/lib/types";
 import { Board } from "./Board";
 import { Overview } from "./Overview";
+import { ProjectTime } from "./ProjectTime";
 import { StatusSelect } from "./StatusSelect";
 import { TaskList } from "./TaskList";
 import { Timeline } from "./Timeline";
@@ -21,6 +22,7 @@ const TABS = [
   { key: "timeline", label: "Timeline" },
   { key: "overview", label: "Overview" },
   { key: "files", label: "Files" },
+  { key: "time", label: "Time" },
   { key: "billing", label: "Billing", staff: true },
   { key: "activity", label: "Activity" },
 ];
@@ -99,6 +101,16 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
         <Card title="Files">
           <Files projectId={p.id} files={bundle.files} canWork={canWork} />
         </Card>
+      )}
+      {tab === "time" && (
+        <ProjectTime
+          project={p}
+          finance={bundle.finance}
+          people={people}
+          isAdmin={isAdmin}
+          canEdit={canEdit}
+          billed={isAdmin ? projectTotals(await listDocuments({ project: p.id })).billed : null}
+        />
       )}
       {tab === "billing" && isStaff && <Billing projectId={p.id} budget={bundle.finance?.budget ?? 0} canEdit={canEdit} />}
       {tab === "activity" && <Activity projectId={p.id} people={people} />}

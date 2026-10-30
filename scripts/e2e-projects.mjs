@@ -72,6 +72,8 @@ const admin = await browser.newPage();
 await admin.setViewport({ width: 1400, height: 1000 });
 const A = helpers(admin);
 let projectId, clientId;
+const createdDocs = [];
+const createdKit = [];
 
 try {
   const [c] = await api("/rest/v1/clients", { method: "POST", body: JSON.stringify({ name: CLIENT, state_code: "21" }) });
@@ -169,6 +171,99 @@ try {
   check("an @mention notifies the freelancer", mention === 1, mention === 1 ? "" : JSON.stringify(await api(`/rest/v1/notifications?recipient_email=eq.${encodeURIComponent(FREELANCER)}&select=kind,title`)) + JSON.stringify(await api(`/rest/v1/task_comments?task_id=eq.${callSheet.id}&select=body`)));
   await admin.keyboard.press("Escape");
 
+  // ------------------------------------------------------------ timer from the task panel
+  await A.go(`/projects/${projectId}?tab=list&task=${callSheet.id}`);
+  await (await admin.waitForSelector("::-p-xpath(//div[@role='dialog']//button[contains(., 'Start timer')])")).click();
+  await admin.waitForSelector("::-p-xpath(//div[@role='status']//button[normalize-space()='Stop'])");
+  check("starting a timer shows it in the header", true);
+  await admin.keyboard.press("Escape"); // close the task panel; its backdrop covers the header
+  await admin.waitForFunction(() => !document.querySelector("[role=dialog]"));
+  await (await admin.waitForSelector("::-p-xpath(//div[@role='status']//button[normalize-space()='Stop'])")).click();
+  const timed = await until(async () => {
+    const r = await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&select=minutes,timer_started_at,status`);
+    return r.length && !r[0].timer_started_at ? r[0] : null;
+  });
+  check("stopping the timer saves at least a minute as draft", timed?.minutes >= 1 && timed?.status === "draft", JSON.stringify(timed));
+
+  // ------------------------------------------------------------ timesheet, submit, approve
+  await A.go("/time");
+  const cellInput = await admin.waitForSelector(`input[aria-label^='${callSheet.title}, ']:not([disabled])`);
+  const todayCell = await admin.$$eval(`input[aria-label^='${callSheet.title}, ']`, (els) => els.map((e) => e.getAttribute("aria-label")));
+  void cellInput;
+  const today = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
+  const label = todayCell.find((l) => l.endsWith(today));
+  const cellEl = await admin.$(`input[aria-label='${label}']`);
+  await cellEl.focus();
+  await admin.keyboard.down("Control");
+  await admin.keyboard.press("a");
+  await admin.keyboard.up("Control");
+  await cellEl.evaluate((el) => (el.value = ""));
+  await cellEl.type("1:30");
+  await admin.screenshot({ path: ".visual/e2e-timesheet.png" });
+  await cellEl.evaluate((el) => el.blur());
+  const ninety = await until(async () => {
+    const r = await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&select=minutes,status`);
+    return r.length === 1 && r[0].minutes === 90 ? r[0] : null;
+  });
+  check("typing 1:30 in the timesheet saves 90 minutes", !!ninety, JSON.stringify(await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&select=minutes,status`)));
+  await (await admin.waitForSelector("::-p-xpath(//button[starts-with(normalize-space(), 'Submit week') and not(@disabled)])")).click();
+  const submitted = await until(async () => (await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&status=eq.submitted`)).length);
+  check("submit the week for approval", submitted === 1);
+  await A.go("/time?tab=approve");
+  await (await admin.waitForSelector("::-p-xpath(//button[starts-with(normalize-space(), 'Approve selected') and not(@disabled)])")).click();
+  const approved = await until(async () => (await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&status=eq.approved`)).length);
+  check("admin approves submitted time", approved === 1);
+
+  // ------------------------------------------------------------ invoice from time
+  await api(`/rest/v1/project_finance?project_id=eq.${projectId}`, { method: "PATCH", body: JSON.stringify({ billing: "hourly", hourly_rate: 2000 }) });
+  await A.go(`/projects/${projectId}?tab=time`);
+  await A.waitText("1.5 h ready to bill");
+  await admin.screenshot({ path: ".visual/e2e-project-time.png" });
+  await (await admin.waitForSelector("::-p-xpath(//button[normalize-space()='Draft invoice from approved time' and not(@disabled)])")).click();
+  await admin.waitForFunction(() => /\/documents\/[0-9a-f-]{36}\/edit/.test(location.pathname), { timeout: 60000 });
+  const docId = admin.url().match(/documents\/([0-9a-f-]{36})/)[1];
+  const [doc] = await api(`/rest/v1/documents?id=eq.${docId}&select=status,project_id,taxable,document_items(title,qty,unit_price)`);
+  check("draft invoice from time: 1.5 h × ₹2,000 for the task", doc.status === "draft" && doc.project_id === projectId && Number(doc.taxable) === 3000 && doc.document_items[0]?.title === callSheet.title, JSON.stringify(doc));
+  const linked = await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&select=invoiced_document_id`);
+  check("billed time is linked to the invoice", linked[0]?.invoiced_document_id === docId);
+  createdDocs.push(docId);
+
+  // ------------------------------------------------------------ calendar
+  const [kitItem] = await api("/rest/v1/kit", { method: "POST", body: JSON.stringify({ name: `E2E camera ${stamp}`, category: "Camera" }) });
+  createdKit.push(kitItem.id);
+  const shootDay = new Date(Date.now() + 330 * 60000 + 3 * 86400000).toISOString().slice(0, 10);
+  await A.go(`/calendar/new?date=${shootDay}`);
+  await (await A.field("Title")).type(`E2E shoot day ${stamp}`);
+  await (await A.field("Project")).select(projectId);
+  await (await admin.waitForSelector("::-p-xpath(//button[contains(., 'Book team members')])")).click();
+  await (await admin.waitForSelector(`::-p-xpath(//label[contains(., 'Fiona')]//input)`)).click();
+  await (await A.button("Done")).click();
+  await (await admin.waitForSelector(`::-p-xpath(//label[contains(., 'E2E camera ${stamp}')]//input)`)).click();
+  await (await A.button("Save event")).click();
+  await admin.waitForFunction(() => /\/calendar\/[0-9a-f-]{36}$/.test(location.pathname), { timeout: 60000 });
+  await admin.waitForSelector(`::-p-xpath(//h1[contains(., 'E2E shoot day ${stamp}')])`);
+  const [ev] = await api(`/rest/v1/events?title=eq.${encodeURIComponent(`E2E shoot day ${stamp}`)}&select=id,project_id,event_people(member_email),event_kit(kit_id)`);
+  check("create a shoot with crew and kit", ev && ev.project_id === projectId && ev.event_people[0]?.member_email === FREELANCER && ev.event_kit[0]?.kit_id === kitItem.id);
+  const booked = await until(async () => (await api(`/rest/v1/notifications?recipient_email=eq.${encodeURIComponent(FREELANCER)}&kind=eq.booked`)).length);
+  check("booked crew are notified", booked === 1);
+
+  await A.go(`/calendar/new?date=${shootDay}`);
+  await (await A.field("Title")).type("Clashing shoot");
+  await (await admin.waitForSelector(`::-p-xpath(//label[contains(., 'E2E camera ${stamp}')]//input)`)).click();
+  await A.waitText("Double booking");
+  check("the form warns when kit is double-booked", (await A.body()).includes(`E2E camera ${stamp}`));
+  await A.go(`/calendar?date=${shootDay}`);
+  check("month view shows the shoot", (await A.body()).includes(`E2E shoot day ${stamp}`));
+  await admin.screenshot({ path: ".visual/e2e-calendar.png" });
+  await A.go(`/calendar?view=crew&date=${shootDay}`);
+  check("crew & kit view shows the booking", (await A.body()).includes(`E2E shoot day ${stamp}`));
+  await admin.screenshot({ path: ".visual/e2e-crew.png", fullPage: true });
+
+  // ------------------------------------------------------------ workload + leave
+  await A.go("/team/workload");
+  check("workload page lists the freelancer", (await A.body()).includes("Fiona Lens"));
+  await admin.screenshot({ path: ".visual/e2e-workload.png" });
+
   // ------------------------------------------------------------ files
   await A.go(`/projects/${projectId}?tab=files`);
   await (await A.button("add a Drive link")).click();
@@ -223,11 +318,40 @@ try {
   await F.go(`/projects/${other[0].id}`);
   check("freelancer can't open a project they're not on", (await F.body()).includes("404") || (await F.body()).toLowerCase().includes("not found"));
   await api(`/rest/v1/projects?id=eq.${other[0].id}`, { method: "DELETE" });
+  await F.go("/calendar?view=week&date=" + new Date(Date.now() + 330 * 60000 + 3 * 86400000).toISOString().slice(0, 10));
+  check("freelancer sees the shoot they're booked on", (await F.body()).includes(`E2E shoot day ${stamp}`));
+  await F.go("/team/workload");
+  check("freelancer is kept out of workload", new URL(fl.url()).pathname === "/my-work");
+  await F.go("/team/leave");
+  await (await F.button("Request")).click();
+  const leave = await until(async () => (await api(`/rest/v1/leave_requests?member_email=eq.${encodeURIComponent(FREELANCER)}&select=id,status`))[0]);
+  check("freelancer requests leave", leave?.status === "pending");
   await ctx.close();
+
+  await A.go("/team/leave");
+  await (await admin.waitForSelector("::-p-xpath(//section[.//h2[starts-with(normalize-space(), 'Waiting for you')]]//button[normalize-space()='Approve'])")).click();
+  const decided = await until(async () => (await api(`/rest/v1/leave_requests?member_email=eq.${encodeURIComponent(FREELANCER)}&status=eq.approved`)).length);
+  check("admin approves the leave", decided === 1);
+
+  // private calendar feed
+  const [fm] = await api(`/rest/v1/members?email=eq.${encodeURIComponent(FREELANCER)}&select=ics_token`);
+  const feed = await fetch(`${base}/api/ics/${fm.ics_token}.ics`);
+  const ics = await feed.text();
+  check("calendar feed lists the shoot, the task and the leave", feed.status === 200 && ics.startsWith("BEGIN:VCALENDAR") && ics.includes(`E2E shoot day ${stamp}`) && ics.includes("Due: Call sheet") && ics.includes("Leave"), `${feed.status}`);
+  const bad = await fetch(`${base}/api/ics/${"0".repeat(32)}.ics`);
+  check("an unknown feed token gets 404", bad.status === 404);
 } catch (e) {
   check("unexpected error", false, e.message.split("\n")[0]);
   await admin.screenshot({ path: ".visual/e2e-projects-error.png" }).catch(() => {});
 } finally {
+  for (const d of createdDocs) {
+    await api(`/rest/v1/time_entries?invoiced_document_id=eq.${d}`, { method: "PATCH", body: JSON.stringify({ invoiced_document_id: null }) });
+    await api(`/rest/v1/document_items?document_id=eq.${d}`, { method: "DELETE" });
+    await api(`/rest/v1/documents?id=eq.${d}`, { method: "DELETE" });
+    await api(`/rest/v1/audit_events?entity_id=eq.${d}`, { method: "DELETE" });
+  }
+  for (const k of createdKit) await api(`/rest/v1/kit?id=eq.${k}`, { method: "DELETE" });
+  await api(`/rest/v1/leave_requests?member_email=eq.${encodeURIComponent(FREELANCER)}`, { method: "DELETE" });
   if (projectId) {
     const files = (await api(`/rest/v1/files?project_id=eq.${projectId}&kind=eq.upload&select=storage_path`)) ?? [];
     if (files.length) await api("/storage/v1/object/files", { method: "DELETE", body: JSON.stringify({ prefixes: files.map((f) => f.storage_path) }) });

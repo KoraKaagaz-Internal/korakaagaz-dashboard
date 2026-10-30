@@ -4,9 +4,11 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { addComment, createTask, deleteComment, deleteTask, loadTask, setAssignees, updateTask } from "@/app/actions/projects";
+import { startTimer } from "@/app/actions/time";
 import { NumberInput } from "@/components/NumberInput";
 import { Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { PRIORITIES, TASK_STATUSES, displayName, type Person, type Task } from "@/lib/pm";
+import { hhmm } from "@/lib/time";
 import type { TaskDetail } from "@/lib/pm-data";
 import { Avatar } from "./Avatar";
 import { Files } from "./Files";
@@ -99,6 +101,18 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
               aria-label="Task title"
               className="w-full rounded-md border border-transparent px-1 text-xl font-semibold outline-none hover:border-neutral-200 focus:border-navy disabled:bg-white"
             />
+
+            {canWork && (
+              <div className="flex items-center gap-3 rounded-xl bg-neutral-50 px-3 py-2 text-sm">
+                <button className={btn.secondary} disabled={pending} onClick={() => run(() => startTimer({ project_id: t.project_id, task_id: t.id }))}>
+                  ▶ Start timer
+                </button>
+                <span className="text-neutral-600">
+                  {detail.logged_minutes ? `${hhmm(detail.logged_minutes)} h logged` : "No time logged yet"}
+                  {t.estimate_hours ? ` of ${t.estimate_hours} h estimated` : ""}
+                </span>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <Field label="Status">

@@ -80,7 +80,7 @@ function helpers(page) {
 }
 
 async function resetWorkspace() {
-  for (const t of ["payments", "email_log", "document_items", "documents", "projects", "items", "clients", "bank_accounts"]) {
+  for (const t of ["payments", "email_log", "document_items", "documents", "events", "projects", "kit", "leave_requests", "items", "clients", "bank_accounts"]) {
     await api(`/rest/v1/${t}?id=not.is.null`, { method: "DELETE" });
   }
   await api("/rest/v1/doc_counters?fy=neq.x", { method: "DELETE" });
