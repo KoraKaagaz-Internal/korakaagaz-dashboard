@@ -7,7 +7,7 @@ const serif = DM_Serif_Display({ variable: "--font-serif", subsets: ["latin"], w
 const sans = Inter({ variable: "--font-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Kora Kaagaz Invoices",
+  title: "Kora Kaagaz Studio",
   description: "Create, track and export Kora Kaagaz invoices",
 };
 

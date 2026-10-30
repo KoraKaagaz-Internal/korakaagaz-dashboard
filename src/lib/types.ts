@@ -1,4 +1,4 @@
-export type Role = "admin" | "member" | "viewer";
+export type Role = "admin" | "member" | "viewer" | "freelancer";
 export type DocType = "invoice" | "quote" | "proforma" | "receipt" | "credit_note";
 export type DocStatus = "draft" | "awaiting_approval" | "issued" | "accepted" | "declined" | "expired" | "cancelled";
 export type PaymentStatus = "paid" | "partial" | "unpaid";
@@ -99,12 +99,33 @@ export interface SupplierSnapshot {
   bank: Omit<BankAccount, "id" | "is_default" | "label"> | null;
 }
 
+export type ProjectStatus = "planned" | "active" | "on_hold" | "review" | "done" | "cancelled";
+export type Billing = "fixed" | "hourly" | "retainer";
+
 export interface Project {
   id: string;
-  client_id: string;
+  code: string;
+  client_id: string | null;
   name: string;
+  type: string;
+  description: string;
+  status: ProjectStatus;
+  start_date: string | null;
+  due_date: string | null;
+  owner_email: string | null;
+  budget_hours: number;
+  retainer_hours_month: number;
+  template_id: string | null;
+  colour: string;
+  created_at: string;
+}
+
+/** Staff-only money side of a project (table project_finance). */
+export interface ProjectFinance {
   budget: number;
-  status: "active" | "closed";
+  billing: Billing;
+  hourly_rate: number;
+  retainer_amount_month: number;
 }
 
 export interface CatalogItem {

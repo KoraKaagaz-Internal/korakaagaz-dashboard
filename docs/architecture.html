@@ -84,13 +84,15 @@
 
 <main>
 <section id="overview">
-  <span class="pill">Last updated 2026-10-28</span>
-  <h1>Kora Kaagaz Invoices</h1>
+  <span class="pill">Last updated 2026-10-30</span>
+  <h1>Kora Kaagaz Studio</h1>
   <p><b>Live:</b> <a href="https://invoice-generator-flax-pi.vercel.app">invoice-generator-flax-pi.vercel.app</a> · Supabase project <code>invoice-generator</code> (ref <code>komdaeylldwknhwcjevv</code>, Mumbai) · Vercel project <code>invoice-generator</code> · Market research: <a href="market-research.html">market-research.html</a></p>
-  <p>A private, <b>invite-only</b> invoicing workspace for the Kora Kaagaz team. It handles quotes, proforma invoices, tax invoices, receipt vouchers (advances) and credit notes in the Kora Kaagaz design, GST-compliant (Rule 46), with UPI QR codes, client share links, email/WhatsApp sending, reminders, part payments with TDS, projects, a client ledger, a dashboard and GSTR-1 CSV exports. <b>Running cost: ₹0</b>.</p>
+  <p><b>Where it's going:</b> one tool for the whole studio. Invoicing was first; projects and tasks are now live. Next, in order: time, team and calendar (shoots, crew, kit); CRM; documents with e-signatures; client onboarding and a client portal; proofing; then a studio dashboard with automations. The plan and research are in <a href="market-research.html#agency">market-research.html</a>.</p>
+  <p><b>Projects (live):</b> start a project from a studio template (brand identity, product shoot, campaign shoot, social retainer, packaging, website). Then work it on a board, list or timeline, with a task side panel for assignees, dates, estimates, checklist, comments with @mentions and files. Each project also has deliverables with revision limits, a team, a staff-only budget, a billing tab and an activity feed. "My work" lists everyone's tasks, and a bell shows notifications. <b>Freelancers</b> see only the projects they're added to and never see clients or money.</p>
+  <p>The billing side is a private, <b>invite-only</b> invoicing workspace. It handles quotes, proforma invoices, tax invoices, receipt vouchers (advances) and credit notes in the Kora Kaagaz design, GST-compliant (Rule 46), with UPI QR codes, client share links, email/WhatsApp sending, reminders, part payments with TDS, projects, a client ledger, a dashboard and GSTR-1 CSV exports. <b>Running cost: ₹0</b>.</p>
   <ul>
     <li><b>Stack:</b> Next.js 15.5.28 (App Router, TypeScript, Tailwind 4) on Vercel Hobby · Supabase free (Postgres with RLS, Google auth, Storage) · Puppeteer + <code>@sparticuz/chromium</code> for PDFs · Gmail SMTP (nodemailer) for email · Vercel Cron for the daily job.</li>
-    <li><b>Access:</b> Google sign-in. <b>team@korakaagaz.co is the only admin</b>; the admin invites Members and Viewers. A database trigger refuses to create an account for any email that isn't invited, so people who find the link can't get in.</li>
+    <li><b>Access:</b> Google sign-in. <b>team@korakaagaz.co is the only admin</b>; the admin invites Members, Viewers and Freelancers. A database trigger refuses to create an account for any email that isn't invited, so people who find the link can't get in.</li>
     <li><b>Template:</b> one fixed 852 × 1278 px React template (<code>DocumentTemplate</code>) renders the editor preview, the client share page, the print page and the PDF, so they always match.</li>
   </ul>
   <div class="callout"><b>Two setup steps left for you</b> (see <a href="#run">Run and deploy</a>): (1) create the Google sign-in client and paste its two values in one Terminal command; (2) create a Gmail app password for team@korakaagaz.co so emails actually send. Until (2), emails are logged as "skipped" and invites show a message you can copy.</div>
@@ -111,13 +113,13 @@
       <path class="edge" d="M60,95 L60,360 L200,360"/>
       <path class="edge" d="M320,360 L420,360"/>
       <path class="edge" d="M480,200 L480,255"/>
-      <g class="node" data-k="browser"><rect x="10" y="45" width="100" height="50"/><text x="60" y="68" text-anchor="middle">Team</text><text class="sub" x="60" y="84" text-anchor="middle">admin · members</text></g>
+      <g class="node" data-k="browser"><rect x="10" y="45" width="100" height="50"/><text x="60" y="68" text-anchor="middle">Team</text><text class="sub" x="60" y="84" text-anchor="middle">staff · freelancers</text></g>
       <g class="node" data-k="middleware"><rect x="200" y="45" width="120" height="50"/><text x="260" y="68" text-anchor="middle">Middleware</text><text class="sub" x="260" y="84" text-anchor="middle">session check</text></g>
       <g class="node" data-k="auth"><rect x="420" y="45" width="120" height="50"/><text x="480" y="68" text-anchor="middle">Google + Auth</text><text class="sub" x="480" y="84" text-anchor="middle">invite gate trigger</text></g>
       <g class="node" data-k="pages"><rect x="200" y="150" width="120" height="50"/><text x="260" y="173" text-anchor="middle">Pages + actions</text><text class="sub" x="260" y="189" text-anchor="middle">role checks</text></g>
       <g class="node" data-k="db"><rect x="420" y="150" width="120" height="50"/><text x="480" y="173" text-anchor="middle">Postgres</text><text class="sub" x="480" y="189" text-anchor="middle">RLS · locks · audit</text></g>
       <g class="node" data-k="pdf"><rect x="200" y="255" width="120" height="50"/><text x="260" y="278" text-anchor="middle">PDF + email</text><text class="sub" x="260" y="294" text-anchor="middle">Chromium · Gmail</text></g>
-      <g class="node" data-k="storage"><rect x="420" y="255" width="120" height="50"/><text x="480" y="278" text-anchor="middle">Storage</text><text class="sub" x="480" y="294" text-anchor="middle">PDF copies</text></g>
+      <g class="node" data-k="storage"><rect x="420" y="255" width="120" height="50"/><text x="480" y="278" text-anchor="middle">Storage</text><text class="sub" x="480" y="294" text-anchor="middle">PDFs · project files</text></g>
       <g class="node" data-k="share"><rect x="200" y="335" width="120" height="50"/><text x="260" y="358" text-anchor="middle">Share link /d/…</text><text class="sub" x="260" y="374" text-anchor="middle">clients, no login</text></g>
       <g class="node" data-k="cron"><rect x="420" y="335" width="120" height="50"/><text x="480" y="358" text-anchor="middle">Daily cron</text><text class="sub" x="480" y="374" text-anchor="middle">09:00 IST</text></g>
     </svg>
@@ -135,16 +137,21 @@
 <section id="roles">
   <h2>Roles and permissions</h2>
   <div class="tablewrap"><table>
-    <tr><th>Can…</th><th>Admin (team@korakaagaz.co)</th><th>Member</th><th>Viewer</th><th>Client (share link)</th><th>Anyone else</th></tr>
-    <tr><td>Sign in</td><td>✓</td><td>✓</td><td>✓</td><td>no login</td><td>✗ (trigger rejects the account)</td></tr>
-    <tr><td>See documents, clients, reports</td><td>✓</td><td>✓</td><td>✓</td><td>only that one document</td><td>✗</td></tr>
-    <tr><td>Create / edit drafts, clients, items, projects</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Issue (number + lock)</td><td>✓</td><td>✓, or "submit for approval" when that setting is on</td><td>✗</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Send, record payments, credit notes, cancel</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Accept / decline a quote</td><td>✓</td><td>✓</td><td>✗</td><td>✓</td><td>✗</td></tr>
-    <tr><td>Settings, bank accounts, Team (invite/remove)</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><th>Can…</th><th>Admin (team@korakaagaz.co)</th><th>Member</th><th>Viewer</th><th>Freelancer</th><th>Client (share link)</th><th>Anyone else</th></tr>
+    <tr><td>Sign in</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>no login</td><td>✗ (trigger rejects the account)</td></tr>
+    <tr><td>See projects</td><td>all</td><td>all</td><td>all (read only)</td><td>only projects they're added to</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Create projects, change phases, deliverables, team, budget</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Add / move / edit tasks, comment, upload files</td><td>✓</td><td>✓</td><td>✗</td><td>on their projects</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See project budgets and money</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See documents, clients, reports</td><td>✓</td><td>✓</td><td>✓</td><td>✗ (only their project's client name)</td><td>only that one document</td><td>✗</td></tr>
+    <tr><td>Create / edit drafts, clients, items</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Issue (number + lock)</td><td>✓</td><td>✓, or "submit for approval" when that setting is on</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Send, record payments, credit notes, cancel</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Accept / decline a quote</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✓</td><td>✗</td></tr>
+    <tr><td>Delete a project</td><td>✓ (only if nothing issued is tagged to it)</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Settings, bank accounts, Team (invite/remove)</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
   </table></div>
-  <p class="muted">Enforced in the database (RLS policies with <code>is_member()</code>, <code>can_edit()</code>, <code>is_admin()</code>), not just the UI. The UI hides what a role can't do. There is exactly one admin: the admin can't be invited, demoted or removed.</p>
+  <p class="muted">Enforced in the database, not just the UI. RLS uses <code>is_member()</code> (staff: admin, member, viewer), <code>is_team()</code> (staff + freelancers), <code>on_project(id)</code> (staff, or added to that project), <code>can_work(id)</code> (editors, or freelancers on that project), <code>can_edit()</code> and <code>is_admin()</code>. Money lives in <code>project_finance</code>, which only staff can read. There is exactly one admin: the admin can't be invited, demoted or removed.</p>
 </section>
 
 <section id="data">
@@ -154,13 +161,21 @@
     <tr><td><code>members</code></td><td>Invited emails, role, joined date</td><td>No direct access; only via admin RPCs. <code>gate_new_user</code> trigger blocks sign-ups that aren't on this list.</td></tr>
     <tr><td><code>settings</code> (1 row)</td><td>Business, GSTIN, PAN, LUT, signatory, prefixes, defaults, terms, message templates</td><td>Admin-only writes. Signature stored as a small data URL.</td></tr>
     <tr><td><code>bank_accounts</code></td><td>Account, IFSC, SWIFT, UPI ID, default flag</td><td>Admin-only writes.</td></tr>
-    <tr><td><code>clients</code>, <code>projects</code>, <code>items</code></td><td>Clients (state, GSTIN, country), projects with budget, services catalog with SAC</td><td>Members write, viewers read.</td></tr>
+    <tr><td><code>clients</code>, <code>items</code></td><td>Clients (state, GSTIN, country), services catalog with SAC</td><td>Members write, viewers read. Freelancers can't read them.</td></tr>
+    <tr><td><code>projects</code></td><td>Code (<code>KK-0001</code>), client (optional), type, status, dates, lead, budget hours, template</td><td>Staff read all; freelancers read projects they're on.</td></tr>
+    <tr><td><code>project_finance</code></td><td>Fee/cap, billing type (fixed/hourly/retainer), hourly rate, retainer per month</td><td>Staff only. Kept apart so RLS can hide money from freelancers.</td></tr>
+    <tr><td><code>project_members</code></td><td>Who is on each project</td><td>Decides what freelancers can see.</td></tr>
+    <tr><td><code>project_templates</code></td><td>Six studio templates: phases, tasks with hours and day offsets, deliverables</td><td>Applied by <code>apply_project_template()</code>.</td></tr>
+    <tr><td><code>phases</code>, <code>tasks</code>, <code>task_assignees</code>, <code>task_comments</code>, <code>deliverables</code></td><td>Plan and work items. Tasks have status, priority, dates, estimate, labels, subtasks (<code>parent_id</code>), "client can see" flag, fractional <code>sort</code></td><td>Everyone on the project reads; editors and that project's freelancers change tasks; only editors change phases and deliverables.</td></tr>
+    <tr><td><code>files</code></td><td>Uploads (Storage path) or links (Drive etc.) on a project or task</td><td>Same project rules; uploader or editor deletes.</td></tr>
+    <tr><td><code>notifications</code></td><td>Assigned, mentioned, commented, status changes, added to project</td><td>Each person reads only their own; can't be forged (actor must be you).</td></tr>
     <tr><td><code>documents</code> + <code>document_items</code></td><td>All five document types, snapshots of client + supplier, totals, share token, status</td><td>Unique <code>(doc_type, fy, number)</code>. Triggers lock issued documents and block deleting them.</td></tr>
     <tr><td><code>payments</code></td><td>Amount, TDS + section, mode, reference</td><td>Feeds the <code>document_balances</code> view (paid / partial / unpaid / overdue).</td></tr>
     <tr><td><code>doc_counters</code></td><td>Next number per document type + FY</td><td>Used by <code>next_doc_number()</code>; resets with each FY.</td></tr>
     <tr><td><code>email_log</code></td><td>Every send/reminder/invite: sent, failed or skipped</td><td></td></tr>
-    <tr><td><code>audit_events</code></td><td>Who did what, with field-level diffs</td><td>Append-only for users (no update/delete grants).</td></tr>
+    <tr><td><code>audit_events</code></td><td>Who did what, with field-level diffs; <code>project_id</code> for the project activity feed</td><td>Append-only for users (no update/delete grants). Freelancers see only their projects' task/comment/file/deliverable events. Sort-only changes (board reordering) aren't logged.</td></tr>
     <tr><td>Storage <code>invoices/documents/…pdf</code></td><td>Latest PDF of issued documents</td><td>Private bucket; members read.</td></tr>
+    <tr><td>Storage <code>files/projects/&lt;id&gt;/…</code></td><td>Project and task uploads</td><td>Private; 50 MB per file; access follows project membership; 5-minute signed download links.</td></tr>
   </table></div>
   <h3>Secrets</h3>
   <p>Kept in <code>.env.local</code> (git-ignored) and Vercel env vars only: Supabase service-role key (used by the daily cron only), <code>CRON_SECRET</code>, Gmail app password (<code>SMTP_PASS</code>), DB password. The anon key is public by design; RLS protects the data.</p>
@@ -175,7 +190,7 @@
   <div class="tablewrap"><table>
     <tr><th>Service</th><th>Plan</th><th>What could bite</th></tr>
     <tr><td>Vercel</td><td>Hobby (free)</td><td>Hobby is officially for non-commercial use: a risk for a business tool, but the app isn't tied to Vercel. Crons run at most once a day. PDF function up to 60 s.</td></tr>
-    <tr><td>Supabase</td><td>Free</td><td>500 MB DB, 1 GB storage (≈1,300 PDFs at ~0.75 MB). Pauses after 7 idle days; the daily cron touches it, so it stays awake. Free plan allows 2 active projects (this + jhalak).</td></tr>
+    <tr><td>Supabase</td><td>Free</td><td>500 MB DB, 1 GB storage shared by invoice PDFs (~0.75 MB each) and project files. Photos over 2.5 MB are re-encoded to WebP (max 3000 px) in the browser; keep raws on Google Drive and add them as links. Pauses after 7 idle days; the daily cron touches it, so it stays awake. Free plan allows 2 active projects (this + jhalak).</td></tr>
     <tr><td>Gmail SMTP</td><td>Workspace account</td><td>About 2,000 emails/day. Needs 2-step verification + an app password.</td></tr>
     <tr><td>FX rates</td><td>frankfurter (free, keyless)</td><td>ECB reference rate; falls back to manual entry.</td></tr>
     <tr><td>GSTIN lookup</td><td>none</td><td>No free official API: we validate the check digit, derive state + PAN, and link to the GST portal.</td></tr>
@@ -208,12 +223,13 @@
   <pre>npm install
 npm run dev                                   # http://localhost:3000 (needs .env.local)
 npm test                                      # unit tests: GST, money, words, numbering, pagination, reports, GSTR-1
-node scripts/security-test.mjs                # 33 database permission checks, as anon/viewer/member
-node scripts/e2e.mjs http://localhost:3000    # 32 end-to-end checks; refuses to run if the workspace has data
+node scripts/security-test.mjs                # 73 database permission checks, as anon/viewer/member/freelancer
+node scripts/e2e.mjs http://localhost:3000    # 32 billing end-to-end checks; refuses to run if the workspace has data
+node scripts/e2e-projects.mjs http://localhost:3000   # 25 project checks; safe on real data
 node scripts/visual-diff.mjs public/dev-reference.png http://localhost:3000
 /dev/sample?full=1 | ?type=quote | ?export=1 | ?items=15   # template previews (dev only)</pre>
   <h3>Deploy</h3>
-  <pre>npx supabase db push --linked -p "$SUPABASE_DB_PASSWORD" --agent no   # new files in supabase/migrations
+  <pre>npx supabase db push --linked --agent no --output-format text   # new files in supabase/migrations
 vercel deploy --prod
 # env on Vercel: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY (config), NEXT_PUBLIC_SITE_URL,
 #                SUPABASE_SERVICE_ROLE_KEY (secret), CRON_SECRET (secret), SMTP_PASS (secret, once created)</pre>
@@ -223,6 +239,19 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-10-30</td><td><b>Kora Kaagaz Studio, phase 0 + 1: projects, tasks, freelancers.</b>
+      <ul>
+        <li>The goal is now a full agency tool. We researched 40+ agency, client-portal, proposal and e-sign tools and Indian e-signature law (<a href="market-research.html#agency">market-research.html</a>), and set a phased plan.</li>
+        <li>Renamed the app to Kora Kaagaz Studio. New sidebar navigation with a bottom bar on phones and a notifications bell.</li>
+        <li>New <b>Freelancer</b> role (migration 0005). They see only projects they're added to; RLS hides clients, money and billing.</li>
+        <li>Projects (migration 0006): six seeded studio templates, codes <code>KK-0001</code>, internal projects without a client, staff-only <code>project_finance</code>, team, phases, deliverables with revision limits.</li>
+        <li>Tasks: board with drag and drop, list, timeline, side panel (assignees, dates, estimate, checklist, comments with @mentions, files), "My work".</li>
+        <li>Files: direct browser → Storage uploads, WebP shrinking, Drive links.</li>
+        <li>Activity feed per project from the audit log.</li>
+        <li>New quotes and invoices can start from a project.</li>
+        <li>Fixed during testing: board drops landed in the wrong column when one column was much taller (switched to pointer-based collision detection); the phone menu button sat outside the header.</li>
+        <li>Tests: 14 new unit tests; security test 33 → 73 checks; new 25-check projects e2e; billing e2e still 32/32.</li>
+      </ul></td></tr>
     <tr><td>2026-10-28</td><td><b>v2: invite-only team workspace and a market-informed feature set.</b>
       <ul>
         <li>Researched 15 invoicing tools plus a Swipe deep-dive (<a href="market-research.html">market-research.html</a>).</li>
@@ -259,13 +288,13 @@ vercel deploy --prod
 
 <script>
   const NODES = {
-    browser: ["Team", "The admin (team@korakaagaz.co) plus invited Members and Viewers, using the app in a browser. Navigation and buttons adapt to the role."],
+    browser: ["Team", "The admin (team@korakaagaz.co) plus invited Members, Viewers and Freelancers, in a browser or on a phone (bottom bar on small screens). Navigation and buttons adapt to the role. Freelancers only get My work and Projects."],
     middleware: ["Middleware", "<code>src/middleware.ts</code> refreshes the Supabase session and sends signed-out visitors to <code>/login</code>. Public paths: <code>/login</code>, <code>/auth</code>, <code>/d</code> (share links), <code>/print/share</code>, <code>/api/share</code>, <code>/api/cron</code>."],
     auth: ["Google sign-in + invite gate", "Supabase Google OAuth (PKCE). The <code>gate_new_user</code> trigger on <code>auth.users</code> raises an error unless the email is in <code>members</code>, so uninvited people never get an account. <code>/auth/callback</code> shows \"isn't invited\" in that case."],
-    pages: ["Pages + server actions", "Server components read via <code>src/lib/data.ts</code> (<code>requireMember(role)</code>). Mutations live in <code>src/app/actions/*.ts</code>: zod validation, server-side totals, then RLS applies."],
+    pages: ["Pages + server actions", "Server components read via <code>src/lib/data.ts</code> (<code>requireMember(role)</code> for staff pages; <code>requireTeam()</code> for pages freelancers may open) and <code>src/lib/pm-data.ts</code> for projects. Mutations live in <code>src/app/actions/*.ts</code>: zod validation, server-side totals, then RLS applies."],
     db: ["Postgres", "Workspace-wide tables with RLS by role. <code>next_doc_number()</code> gives FY series per type. Triggers lock issued documents, block deleting them, and write the append-only <code>audit_events</code>. <code>document_balances</code> view computes paid/partial/overdue."],
     pdf: ["PDF + email", "Chromium renders <code>/print/[id]</code> (with the member's cookies) or <code>/print/share/[token]</code> (public) at 852 × 1278 px. Emails go from team@korakaagaz.co via Gmail SMTP with the PDF attached. Without an app password they're logged as skipped."],
-    storage: ["Storage", "Private <code>invoices</code> bucket keeps the latest PDF of each issued document; <code>brand</code> bucket reserved."],
+    storage: ["Storage", "Private <code>invoices</code> bucket keeps the latest PDF of each issued document. Private <code>files</code> bucket (50 MB per file) holds project uploads at <code>projects/&lt;project id&gt;/…</code>; storage policies let only people on that project read or write them. Browsers upload straight to Storage (Vercel caps request bodies at 4.5 MB) and big photos are shrunk to WebP first. Raws and PSDs stay on Google Drive as links."],
     share: ["Client share link", "<code>/d/&lt;token&gt;</code>: the document, a PDF download, a UPI pay button on phones, and Accept/Decline for quotes. It uses an anon-only RPC that returns exactly one non-draft document and counts views."],
     cron: ["Daily job", "Vercel Cron calls <code>/api/cron/daily</code> at 09:00 IST with <code>CRON_SECRET</code>. It expires old quotes, emails reminders (3 days before, on the due date, then +7, +14 and +30 days), creates recurring retainer drafts (never sent automatically), and keeps the free Supabase project awake. <code>?dry=1</code> previews."],
   };
@@ -278,8 +307,24 @@ vercel deploy --prod
   }));
 
   const FLOWS = {
+    "Run a project": [
+      "<b>Projects → New project</b>: pick a studio template (or blank), name it, choose the client, lead, team and dates. Staff set the fee or retainer.",
+      "<code>apply_project_template()</code> creates the phases, tasks (due dates counted from the start date, hours estimated) and deliverables with revision limits. The project gets a code like <code>KK-0007</code>.",
+      "Work it on the <b>Board</b> (drag cards between To do → In progress → Internal review → With client → Done), the <b>List</b> (grouped by phase), or the <b>Timeline</b>.",
+      "Click a task for the side panel: assign people (they're added to the project and notified), set dates and estimate, tick the checklist, comment with @name, attach files or Drive links.",
+      "Everyone sees their tasks in <b>My work</b> (overdue, today, next 7 days) and gets notifications in the bell.",
+      "<b>Billing</b> tab: new quotes and invoices from here are tagged to the project; quoted vs billed vs received against the budget.",
+      "Mark the project Done when delivered. The <b>Activity</b> tab keeps the history.",
+    ],
+    "Bring in a freelancer": [
+      "Admin: <b>Team</b> → invite their email as <b>Freelancer</b>.",
+      "Add them to a project (Overview → Team) or just assign them a task.",
+      "They sign in with Google and land on <b>My work</b>. They see only those projects: tasks, files, phases, deliverables, activity.",
+      "They can move and edit tasks, comment and upload on those projects. They can't create projects or see clients, budgets, invoices or other projects; the database refuses it even if they try directly.",
+      "When the job ends, remove them from the project, or from the team to end their access entirely.",
+    ],
     "Invite someone": [
-      "The admin opens <b>Team</b>, enters an email and picks Member or Viewer.",
+      "The admin opens <b>Team</b>, enters an email and picks Member, Viewer or Freelancer.",
       "<code>admin_invite()</code> adds them to <code>members</code> (admin-only RPC).",
       "An invite email goes from team@korakaagaz.co, or a copyable message is shown if email isn't set up.",
       "They click \"Continue with Google\" with that exact email. The trigger sees the invite and lets the account be created.",
@@ -323,6 +368,16 @@ vercel deploy --prod
   render();
 
   const CODE = [
+    ["supabase/migrations/0005_freelancer_role.sql · 0006_projects_tasks.sql", "Freelancer role; projects extended + project_finance, members, templates (seeded), phases, tasks, assignees, comments, deliverables, files, notifications; on_project/can_work helpers; audit project_id; files bucket policies"],
+    ["src/lib/pm.ts", "Project/task types and pure helpers: statuses, progress, health, due buckets, @mentions, fractional sort, timeline range"],
+    ["src/lib/pm-data.ts", "Server reads for projects: cards, project bundle, my tasks, task detail, templates, activity, notifications"],
+    ["src/app/actions/projects.ts", "Project, phase, deliverable, task, assignee, comment, file and notification actions (with notifications)"],
+    ["src/app/(app)/projects/[id]/*", "Project page: Board (dnd-kit), TaskList, Timeline, Overview, QuickAdd, StatusSelect, billing + activity tabs"],
+    ["src/app/(app)/projects/new/*", "New project from a template"],
+    ["src/app/(app)/my-work/*", "My tasks by due date"],
+    ["src/components/pm/*", "TaskDrawer side panel, Files (direct-to-storage upload, Drive links), PeoplePicker, Avatar, Pills"],
+    ["src/app/(app)/Nav.tsx · Bell.tsx · Shortcuts.tsx", "Sidebar + phone bottom bar by role, notifications bell, keyboard shortcuts (g h / g w / g p, n, q, p, /)"],
+    ["scripts/e2e-projects.mjs", "25 end-to-end checks of projects, board drag, task panel, files and freelancer access; safe on real data (cleans up only its own rows)"],
     ["supabase/migrations/0003_v2_team_documents.sql", "v2 schema: members + invite gate, roles, documents, items, payments, projects, bank accounts, counters, balances view, locks, share RPCs, audit log, RLS"],
     ["supabase/migrations/0004_share_tracking.sql", "Share RPC with optional view tracking + source reference"],
     ["src/components/invoice/DocumentTemplate.tsx", "The template for all five document types (supplier block, GST fields, QR, words, signatory, watermark, pages)"],
@@ -335,14 +390,14 @@ vercel deploy --prod
     ["src/lib/gstr1.ts", "GSTR-1 sections in offline-tool CSV columns"],
     ["src/lib/messages.ts", "Email/WhatsApp/reminder templates and placeholders"],
     ["src/lib/mail.ts", "Gmail SMTP sender (team@korakaagaz.co), dry-run when not configured"],
-    ["src/lib/data.ts", "Server reads + requireMember(role) + document mapping"],
+    ["src/lib/data.ts", "Server reads + requireMember(role) (staff) / requireTeam() (incl. freelancers) + document mapping"],
     ["src/lib/doc-copy.ts", "Copy a document to a new draft (convert, credit note, duplicate, revise, recurring)"],
     ["src/lib/pdf.ts · document-pdf.ts", "Chromium launcher and PDF rendering (member or public)"],
     ["src/app/actions/*.ts", "Server actions: auth, team, settings, catalog, documents, payments, send"],
     ["src/app/(app)/page.tsx", "Dashboard"],
     ["src/app/(app)/documents/*", "List, editor (DocumentEditor), detail page with actions"],
     ["src/app/(app)/clients/*", "Clients and the per-client ledger/statement"],
-    ["src/app/(app)/projects/* · items/* · reports/* · team/* · settings/*", "Projects, catalog, reports + exports, team, settings + bank accounts"],
+    ["src/app/(app)/items/* · reports/* · team/* · settings/*", "Catalog, reports + exports, team, settings + bank accounts"],
     ["src/app/d/[token]/*", "Public client share page + quote accept/decline"],
     ["src/app/api/documents/[id]/pdf · api/share/[token]/pdf", "PDF downloads"],
     ["src/app/api/export/[report]", "CSV exports (documents, payments, TDS, ledger, GSTR-1)"],
@@ -350,11 +405,11 @@ vercel deploy --prod
     ["src/app/api/fx", "Free FX rate fetch"],
     ["src/app/login · auth/callback", "Google sign-in and callback (handles \"not invited\")"],
     ["src/components/BarChart.tsx · NumberInput.tsx · ClientForm.tsx · ui.tsx", "Shared UI"],
-    ["scripts/security-test.mjs", "33 database permission checks"],
+    ["scripts/security-test.mjs", "73 database permission checks as anon, viewer, member and freelancer (incl. storage)"],
     ["scripts/e2e.mjs", "32 end-to-end checks (refuses to run over real data)"],
     ["scripts/visual-diff.mjs", "Template vs reference image"],
     ["vercel.json", "Cron schedule (03:30 UTC = 09:00 IST)"],
-    ["docs/market-research.html", "Market study, Swipe deep-dive, compliance notes"],
+    ["docs/market-research.html", "Invoicing study + Swipe deep-dive; agency tools study (40+ tools), feature plan, e-sign law"],
   ];
   const tbody = document.querySelector("#codeTable tbody"), search = document.getElementById("codeSearch");
   function renderCode() {

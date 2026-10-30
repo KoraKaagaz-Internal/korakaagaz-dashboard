@@ -4,14 +4,15 @@ import { DOC_TYPES, type DocType, type DocumentDraft } from "@/lib/types";
 import { DocumentEditor } from "../DocumentEditor";
 import { editorData } from "../editor-data";
 
-export default async function NewDocumentPage({ searchParams }: { searchParams: Promise<{ type?: string; client?: string }> }) {
+export default async function NewDocumentPage({ searchParams }: { searchParams: Promise<{ type?: string; client?: string; project?: string }> }) {
   await requireMember("member");
   const params = await searchParams;
   const docType: DocType = DOC_TYPES.includes(params.type as DocType) ? (params.type as DocType) : "invoice";
   const today = todayIso();
   const data = await editorData(docType, today, null);
   const s = data.settings;
-  const client = data.clients.find((c) => c.id === params.client);
+  const project = data.projects.find((p) => p.id === params.project);
+  const client = data.clients.find((c) => c.id === (params.client ?? project?.client_id));
 
   const initial: DocumentDraft = {
     doc_type: docType,
@@ -53,6 +54,8 @@ export default async function NewDocumentPage({ searchParams }: { searchParams: 
       currency: abroad ? "USD" : "INR",
     });
   }
+
+  if (project && (!project.client_id || project.client_id === initial.client_id)) initial.project_id = project.id;
 
   return (
     <DocumentEditor

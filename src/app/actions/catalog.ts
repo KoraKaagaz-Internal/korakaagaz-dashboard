@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireMember } from "@/lib/data";
 import { checkGstin } from "@/lib/gst";
-import type { CatalogItem, Client, Project } from "@/lib/types";
+import type { CatalogItem, Client } from "@/lib/types";
 
 const clientSchema = z.object({
   id: z.string().uuid().optional(),
@@ -76,22 +76,3 @@ export async function deleteItem(id: string) {
   return { ok: true as const };
 }
 
-const projectSchema = z.object({
-  id: z.string().uuid().optional(),
-  client_id: z.string().uuid("Pick a client"),
-  name: z.string().trim().min(1, "Name is required"),
-  budget: z.coerce.number().min(0),
-  status: z.enum(["active", "closed"]),
-});
-
-export async function saveProject(input: z.input<typeof projectSchema>): Promise<{ ok: true; project: Project } | { ok: false; message: string }> {
-  const { supabase } = await requireMember("member");
-  const parsed = projectSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, message: parsed.error.issues.map((i) => i.message).join(", ") };
-  const { id, ...p } = parsed.data;
-  const q = id ? supabase.from("projects").update(p).eq("id", id).select("*").single() : supabase.from("projects").insert(p).select("*").single();
-  const { data, error } = await q;
-  if (error) return { ok: false, message: error.message };
-  revalidatePath("/projects");
-  return { ok: true, project: { ...(data as Project), budget: Number(data.budget) } };
-}

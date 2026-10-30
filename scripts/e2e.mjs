@@ -93,6 +93,7 @@ async function resetWorkspace() {
   for (const u of users?.users ?? []) await api(`/auth/v1/admin/users/${u.id}`, { method: "DELETE" });
   await api(`/rest/v1/members?email=eq.${ADMIN_EMAIL}`, { method: "PATCH", body: JSON.stringify({ joined_at: null, name: "" }) });
   await api("/rest/v1/audit_events?id=gt.0", { method: "DELETE" });
+  await api("/rest/v1/notifications?id=gt.0", { method: "DELETE" });
 }
 if (existing.length) await resetWorkspace();
 

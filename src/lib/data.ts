@@ -18,14 +18,35 @@ import type {
   SupplierSnapshot,
 } from "./types";
 
-const RANK: Record<Role, number> = { viewer: 0, member: 1, admin: 2 };
+const RANK: Record<Role, number> = { freelancer: -1, viewer: 0, member: 1, admin: 2 };
 
-/** Signed-in workspace member with at least `min` role; otherwise redirect. */
-export async function requireMember(min: Role = "viewer") {
+/**
+ * Signed-in staff member (admin, member, viewer) with at least `min` role; otherwise redirect.
+ * Freelancers never pass: they only get the project pages (see requireTeam).
+ */
+export async function requireMember(min: Exclude<Role, "freelancer"> = "viewer") {
   const { supabase, user, role } = await getUser();
   if (!user || !role) redirect("/login");
+  if (role === "freelancer") redirect("/my-work");
   if (RANK[role] < RANK[min]) redirect("/?denied=1");
-  return { supabase, user, role, canEdit: RANK[role] >= RANK.member, isAdmin: role === "admin" };
+  return { supabase, user, role, email: (user.email ?? "").toLowerCase(), canEdit: RANK[role] >= RANK.member, isAdmin: role === "admin" };
+}
+
+/** Anyone on the team, freelancers included. RLS limits freelancers to their projects. */
+export async function requireTeam() {
+  const { supabase, user, role } = await getUser();
+  if (!user || !role) redirect("/login");
+  return {
+    supabase,
+    user,
+    role,
+    email: (user.email ?? "").toLowerCase(),
+    canEdit: RANK[role] >= RANK.member,
+    isAdmin: role === "admin",
+    isStaff: role !== "freelancer",
+    /** Can change tasks (editors everywhere, freelancers on their projects). */
+    canWork: role !== "viewer",
+  };
 }
 
 export const DEFAULT_PREFIXES: Record<DocType, string> = { invoice: "KK", quote: "QT", proforma: "PI", receipt: "RV", credit_note: "CN" };
@@ -89,12 +110,19 @@ export async function getClient(id: string): Promise<Client | null> {
   return (data as Client) ?? null;
 }
 
-export async function listProjects(clientId?: string): Promise<(Project & { client_name: string })[]> {
+/** Projects with client name and budget (staff only; freelancers use listMyProjects). */
+export async function listProjects(clientId?: string): Promise<(Project & { client_name: string; budget: number })[]> {
   const { supabase } = await requireMember();
-  let q = supabase.from("projects").select("*, clients(name)").order("created_at", { ascending: false });
+  let q = supabase.from("projects").select("*, clients(name), project_finance(budget)").order("created_at", { ascending: false });
   if (clientId) q = q.eq("client_id", clientId);
   const { data } = await q;
-  return (data ?? []).map((p) => ({ ...(p as Project), budget: Number(p.budget), client_name: p.clients?.name ?? "" }));
+  return (data ?? []).map(({ clients, project_finance, ...p }) => ({
+    ...(p as Project),
+    budget_hours: Number(p.budget_hours),
+    retainer_hours_month: Number(p.retainer_hours_month),
+    budget: Number(project_finance?.budget ?? 0),
+    client_name: clients?.name ?? "",
+  }));
 }
 
 export async function listItems(): Promise<CatalogItem[]> {

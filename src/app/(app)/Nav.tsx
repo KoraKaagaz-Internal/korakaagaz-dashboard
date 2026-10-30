@@ -5,52 +5,118 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { Role } from "@/lib/types";
 
-export function Nav({ role, canEdit }: { role: Role; canEdit: boolean }) {
+type Item = { href: string; label: string };
+type Group = { title?: string; items: Item[] };
+
+function groups(role: Role): Group[] {
+  if (role === "freelancer") {
+    return [{ items: [{ href: "/my-work", label: "My work" }, { href: "/projects", label: "Projects" }] }];
+  }
+  return [
+    {
+      items: [
+        { href: "/", label: "Home" },
+        { href: "/my-work", label: "My work" },
+      ],
+    },
+    {
+      title: "Work",
+      items: [{ href: "/projects", label: "Projects" }],
+    },
+    {
+      title: "Clients",
+      items: [{ href: "/clients", label: "Clients" }],
+    },
+    {
+      title: "Billing",
+      items: [
+        { href: "/documents", label: "Invoices & quotes" },
+        { href: "/items", label: "Items" },
+        { href: "/reports", label: "Reports" },
+      ],
+    },
+    ...(role === "admin"
+      ? [
+          {
+            title: "Studio",
+            items: [
+              { href: "/team", label: "Team" },
+              { href: "/settings", label: "Settings" },
+            ],
+          },
+        ]
+      : []),
+  ];
+}
+
+function isActive(path: string, href: string) {
+  return href === "/" ? path === "/" : path === href || path.startsWith(`${href}/`);
+}
+
+/** Left sidebar on desktop; a menu sheet plus a bottom bar on phones. */
+export function Nav({ role }: { role: Role }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
-  const links = [
-    { href: "/", label: "Dashboard" },
-    { href: "/documents", label: "Documents" },
-    { href: "/clients", label: "Clients" },
-    { href: "/projects", label: "Projects" },
-    { href: "/items", label: "Items" },
-    { href: "/reports", label: "Reports" },
-    ...(role === "admin" ? [{ href: "/team", label: "Team" }, { href: "/settings", label: "Settings" }] : []),
-  ];
-  const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
-  return (
-    <>
-      <Link href="/" className="font-serif text-xl leading-none whitespace-nowrap text-navy uppercase">
-        Kora Kaagaz
-      </Link>
-      <nav className="hidden gap-0.5 text-sm md:flex">
-        {links.map((n) => (
+  const gs = groups(role);
+  const list = (onClick?: () => void) =>
+    gs.map((g, i) => (
+      <div key={i} className="mb-4">
+        {g.title && <div className="mb-1 px-2 text-[11px] font-medium tracking-wider text-neutral-400 uppercase">{g.title}</div>}
+        {g.items.map((n) => (
           <Link
             key={n.href}
             href={n.href}
-            className={`rounded-md px-2.5 py-1.5 ${active(n.href) ? "bg-navy/10 text-navy" : "text-neutral-700 hover:bg-neutral-100"}`}
+            onClick={onClick}
+            aria-current={isActive(path, n.href) ? "page" : undefined}
+            className={`block rounded-md px-2 py-1.5 text-sm ${isActive(path, n.href) ? "bg-navy/10 font-medium text-navy" : "text-neutral-700 hover:bg-neutral-100"}`}
+          >
+            {n.label}
+          </Link>
+        ))}
+      </div>
+    ));
+
+  const bottom: Item[] = role === "freelancer"
+    ? [{ href: "/my-work", label: "My work" }, { href: "/projects", label: "Projects" }]
+    : [{ href: "/", label: "Home" }, { href: "/my-work", label: "My work" }, { href: "/projects", label: "Projects" }, { href: "/documents", label: "Billing" }];
+
+  return (
+    <>
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-56 border-r border-black/5 bg-white px-3 pt-4 pb-6 md:block print:hidden">
+        <Link href={role === "freelancer" ? "/my-work" : "/"} className="mb-6 block px-2 font-serif text-xl leading-none text-navy uppercase">
+          Kora Kaagaz
+          <span className="mt-1 block font-sans text-[11px] tracking-[0.2em] text-neutral-400 normal-case">Studio</span>
+        </Link>
+        <nav aria-label="Main">{list()}</nav>
+      </aside>
+
+      <div className="fixed top-3 left-4 z-40 md:hidden print:hidden">
+        <button
+          className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-sm"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+          aria-controls="mobile-menu"
+        >
+          Menu
+        </button>
+      </div>
+      {open && (
+        <div id="mobile-menu" className="fixed inset-x-0 top-14 z-40 max-h-[80vh] overflow-y-auto border-b border-black/5 bg-white px-4 py-3 shadow-sm md:hidden">
+          {list(() => setOpen(false))}
+        </div>
+      )}
+
+      <nav aria-label="Quick" className="fixed inset-x-0 bottom-0 z-30 flex border-t border-black/5 bg-white/95 backdrop-blur md:hidden print:hidden">
+        {bottom.map((n) => (
+          <Link
+            key={n.href}
+            href={n.href}
+            className={`flex-1 py-3 text-center text-xs ${isActive(path, n.href) ? "font-semibold text-navy" : "text-neutral-600"}`}
           >
             {n.label}
           </Link>
         ))}
       </nav>
-      {canEdit && (
-        <Link href="/documents/new?type=invoice" className="hidden rounded-lg bg-navy px-3 py-1.5 text-sm font-medium whitespace-nowrap text-white sm:inline-block">
-          New invoice
-        </Link>
-      )}
-      <button className="rounded-md border border-neutral-200 px-2 py-1 text-sm md:hidden" onClick={() => setOpen(!open)} aria-expanded={open}>
-        Menu
-      </button>
-      {open && (
-        <div className="absolute inset-x-0 top-14 border-b border-black/5 bg-white px-4 py-2 shadow-sm md:hidden">
-          {links.map((n) => (
-            <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="block rounded-md px-2 py-2 text-sm text-neutral-800">
-              {n.label}
-            </Link>
-          ))}
-        </div>
-      )}
     </>
   );
 }

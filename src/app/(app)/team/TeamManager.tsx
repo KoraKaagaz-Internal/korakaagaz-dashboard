@@ -7,10 +7,12 @@ import { Card, Input, Select, btn } from "@/components/ui";
 import { formatInvoiceDate } from "@/lib/money";
 import type { Member } from "@/lib/types";
 
+type Assignable = "member" | "viewer" | "freelancer";
+
 export function TeamManager({ members, me, mailReady }: { members: Member[]; me: string; mailReady: boolean }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<"member" | "viewer">("member");
+  const [role, setRole] = useState<Assignable>("member");
   const [msg, setMsg] = useState<{ ok: boolean; text: string; invite?: string } | null>(null);
   const [pending, start] = useTransition();
 
@@ -34,9 +36,10 @@ export function TeamManager({ members, me, mailReady }: { members: Member[]; me:
       <Card title="Invite someone">
         <div className="flex flex-wrap gap-2">
           <Input className="min-w-56 flex-1" type="email" placeholder="name@gmail.com or name@korakaagaz.co" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Select className="!w-auto" value={role} onChange={(e) => setRole(e.target.value as "member" | "viewer")}>
+          <Select className="!w-auto" value={role} onChange={(e) => setRole(e.target.value as Assignable)}>
             <option value="member">Member (create and send)</option>
             <option value="viewer">Viewer (read only)</option>
+            <option value="freelancer">Freelancer (only their projects)</option>
           </Select>
           <button className={btn.primary} disabled={pending || !email.includes("@")} onClick={invite}>
             Invite
@@ -83,13 +86,14 @@ export function TeamManager({ members, me, mailReady }: { members: Member[]; me:
                     value={m.role}
                     disabled={pending}
                     onChange={(e) => start(async () => {
-                      const r = await changeRole(m.email, e.target.value as "member" | "viewer");
+                      const r = await changeRole(m.email, e.target.value as Assignable);
                       if (!r.ok) setMsg({ ok: false, text: r.message });
                       router.refresh();
                     })}
                   >
                     <option value="member">Member</option>
                     <option value="viewer">Viewer</option>
+                    <option value="freelancer">Freelancer</option>
                   </Select>
                   <button
                     className={btn.danger}

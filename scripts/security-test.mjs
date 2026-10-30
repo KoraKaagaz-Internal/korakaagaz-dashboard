@@ -13,6 +13,7 @@ const stamp = Date.now();
 const MEMBER = `sec-member-${stamp}@example.com`;
 const VIEWER = `sec-viewer-${stamp}@example.com`;
 const OUTSIDER = `sec-outsider-${stamp}@example.com`;
+const FREELANCER = `sec-freelancer-${stamp}@example.com`;
 const results = [];
 const check = (name, ok, extra = "") => {
   results.push(ok);
@@ -30,7 +31,7 @@ async function sessionFor(email) {
   return c;
 }
 
-const created = { clients: [], documents: [], users: [] };
+const created = { clients: [], documents: [], users: [], projects: [], objects: [] };
 // The test takes an invoice number; remember the counter so real numbering isn't disturbed.
 const { data: counterBefore } = await admin.from("doc_counters").select("*").eq("doc_type", "invoice").eq("fy", "26-27").maybeSingle();
 try {
@@ -38,6 +39,7 @@ try {
   await admin.from("members").insert([
     { email: MEMBER, role: "member", invited_by: "security-test" },
     { email: VIEWER, role: "viewer", invited_by: "security-test" },
+    { email: FREELANCER, role: "freelancer", invited_by: "security-test" },
   ]);
 
   // 1. Uninvited people cannot get an account at all.
@@ -48,14 +50,15 @@ try {
 
   const member = await sessionFor(MEMBER);
   const viewer = await sessionFor(VIEWER);
+  const freelancer = await sessionFor(FREELANCER);
   const anon = createClient(URL, ANON, { auth: { persistSession: false } });
-  for (const e of [MEMBER, VIEWER]) {
+  for (const e of [MEMBER, VIEWER, FREELANCER]) {
     const { data } = await admin.from("members").select("user_id").eq("email", e).single();
     created.users.push(data.user_id);
   }
 
   // 2. Anonymous visitors see nothing.
-  for (const t of ["documents", "clients", "payments", "settings", "bank_accounts", "audit_events", "members"]) {
+  for (const t of ["documents", "clients", "payments", "settings", "bank_accounts", "audit_events", "members", "projects", "project_finance", "tasks", "task_comments", "files", "notifications"]) {
     const { data } = await anon.from(t).select("*").limit(1);
     check(`anon cannot read ${t}`, !data || data.length === 0);
   }
@@ -124,16 +127,98 @@ try {
   const { data: auditDel } = await member.from("audit_events").delete().eq("entity_id", doc.id).select("id");
   check("audit log can't be deleted", !auditDel || auditDel.length === 0);
 
-  // 8. Removing a member ends their access.
+  // 8. Projects: freelancers see only projects they're on, and never money or clients.
+  const { data: pA, error: pAErr } = await member.from("projects").insert({ name: "Sec project A", client_id: client.id }).select("id, code").single();
+  check("member can create a project", !pAErr && /^KK-\d{4}$/.test(pA?.code ?? ""), pAErr?.message ?? pA?.code);
+  const { data: pB } = await member.from("projects").insert({ name: "Sec project B", client_id: client.id }).select("id").single();
+  created.projects.push(pA.id, pB.id);
+  await member.from("project_finance").insert([{ project_id: pA.id, budget: 50000 }, { project_id: pB.id, budget: 90000 }]);
+  const { error: addErr } = await member.from("project_members").insert({ project_id: pA.id, member_email: FREELANCER });
+  check("member can add a freelancer to a project", !addErr, addErr?.message);
+
+  const { data: fProjects } = await freelancer.from("projects").select("id");
+  check("freelancer sees only their project", (fProjects ?? []).length === 1 && fProjects[0].id === pA.id, `${(fProjects ?? []).length} visible`);
+  for (const t of ["project_finance", "clients", "documents", "payments", "items", "bank_accounts", "email_log"]) {
+    const { data } = await freelancer.from(t).select("*").limit(5);
+    check(`freelancer cannot read ${t}`, !data || data.length === 0);
+  }
+  const { data: names } = await freelancer.rpc("project_client_names", { p_ids: [pA.id, pB.id] });
+  check("freelancer gets the client name of their project only", (names ?? []).length === 1 && names[0].client_name === "Security Test Co");
+  const { error: fProj } = await freelancer.from("projects").insert({ name: "Freelancer project" });
+  check("freelancer cannot create projects", !!fProj);
+  const { error: fSelfAdd } = await freelancer.from("project_members").insert({ project_id: pB.id, member_email: FREELANCER });
+  check("freelancer cannot add themselves to another project", !!fSelfAdd);
+  const { data: fRename } = await freelancer.from("projects").update({ name: "renamed" }).eq("id", pA.id).select("id");
+  check("freelancer cannot edit the project", !fRename || fRename.length === 0);
+
+  const { data: tA, error: tAErr } = await freelancer.from("tasks").insert({ project_id: pA.id, title: "Retouch selects" }).select("id").single();
+  check("freelancer can add a task on their project", !tAErr && !!tA, tAErr?.message);
+  const { error: tBErr } = await freelancer.from("tasks").insert({ project_id: pB.id, title: "Sneaky task" });
+  check("freelancer cannot add a task on another project", !!tBErr);
+  const { data: tB } = await member.from("tasks").insert({ project_id: pB.id, title: "Private task" }).select("id").single();
+  const { data: seeB } = await freelancer.from("tasks").select("id").eq("id", tB.id);
+  check("freelancer cannot see another project's tasks", (seeB ?? []).length === 0);
+  const { data: fUpd } = await freelancer.from("tasks").update({ status: "doing" }).eq("id", tA.id).select("status");
+  check("freelancer can move their task", fUpd?.[0]?.status === "doing");
+  const { error: phaseErr } = await freelancer.from("phases").insert({ project_id: pA.id, name: "Freelancer phase" });
+  check("freelancer cannot change phases", !!phaseErr);
+  const { error: cOk } = await freelancer.from("task_comments").insert({ task_id: tA.id, body: "Done the first pass" });
+  check("freelancer can comment on their task", !cOk, cOk?.message);
+  const { error: cSpoof } = await freelancer.from("task_comments").insert({ task_id: tA.id, body: "spoof", author_email: MEMBER });
+  check("comments can't be posted as someone else", !!cSpoof);
+  const { error: cB } = await freelancer.from("task_comments").insert({ task_id: tB.id, body: "hello" });
+  check("freelancer cannot comment on another project's task", !!cB);
+
+  const { error: vTask } = await viewer.from("tasks").insert({ project_id: pA.id, title: "Viewer task" });
+  check("viewer cannot create tasks", !!vTask);
+  const { data: vTasks } = await viewer.from("tasks").select("id").eq("project_id", pA.id);
+  check("viewer can read tasks", (vTasks ?? []).length === 1);
+  const { error: vComment } = await viewer.from("task_comments").insert({ task_id: tA.id, body: "viewer" });
+  check("viewer cannot comment", !!vComment);
+
+  // storage: only their project's folder
+  const okPath = `projects/${pA.id}/sec-${stamp}.txt`;
+  const badPath = `projects/${pB.id}/sec-${stamp}.txt`;
+  const { error: upOk } = await freelancer.storage.from("files").upload(okPath, new Blob(["ok"]), { contentType: "text/plain" });
+  check("freelancer can upload to their project", !upOk, upOk?.message);
+  if (!upOk) created.objects.push(okPath);
+  const { error: upBad } = await freelancer.storage.from("files").upload(badPath, new Blob(["no"]), { contentType: "text/plain" });
+  check("freelancer cannot upload to another project", !!upBad);
+  if (!upBad) created.objects.push(badPath);
+  await admin.storage.from("files").upload(badPath, new Blob(["secret"]), { contentType: "text/plain", upsert: true });
+  created.objects.push(badPath);
+  const { data: dl } = await freelancer.storage.from("files").download(badPath);
+  check("freelancer cannot download another project's file", !dl);
+  const { data: anonDl } = await anon.storage.from("files").download(okPath);
+  check("anon cannot download project files", !anonDl);
+
+  // notifications are private and can't be forged
+  await member.from("notifications").insert({ recipient_email: MEMBER, kind: "test", title: "private" });
+  const { data: fNotes } = await freelancer.from("notifications").select("id").eq("recipient_email", MEMBER);
+  check("people can't read others' notifications", (fNotes ?? []).length === 0);
+  const { error: forged } = await freelancer.from("notifications").insert({ recipient_email: MEMBER, kind: "test", title: "x", actor_email: VIEWER });
+  check("notifications can't be forged", !!forged);
+
+  const { data: dir, error: dirErr } = await freelancer.rpc("team_directory");
+  check("freelancer can see team names", !dirErr && (dir ?? []).some((d) => d.email === MEMBER) && !("cost_rate" in (dir?.[0] ?? {})));
+  const { error: anonDir } = await anon.rpc("team_directory");
+  check("anon cannot list the team", !!anonDir);
+  const { data: fAudit } = await freelancer.from("audit_events").select("entity");
+  check("freelancer's activity feed only shows their project's work", (fAudit ?? []).length > 0 && fAudit.every((a) => ["tasks", "task_comments", "files", "deliverables"].includes(a.entity)));
+
+  // 9. Removing a member ends their access.
   await admin.from("members").delete().eq("email", VIEWER);
   const { data: afterRemoval } = await viewer.from("clients").select("id");
   check("removed member loses access immediately", (afterRemoval ?? []).length === 0);
 } catch (e) {
   check("unexpected error", false, e.message);
 } finally {
+  if (created.objects.length) await admin.storage.from("files").remove([...new Set(created.objects)]);
+  if (created.projects.length) await admin.from("projects").delete().in("id", created.projects);
   if (created.documents.length) await admin.from("documents").delete().in("id", created.documents);
   if (created.clients.length) await admin.from("clients").delete().in("id", created.clients);
-  await admin.from("members").delete().in("email", [MEMBER, VIEWER]);
+  await admin.from("notifications").delete().in("recipient_email", [MEMBER, VIEWER, FREELANCER]);
+  await admin.from("members").delete().in("email", [MEMBER, VIEWER, FREELANCER]);
   for (const id of created.users.filter(Boolean)) await admin.auth.admin.deleteUser(id);
   // put the invoice counter back exactly as it was
   if (counterBefore) await admin.from("doc_counters").update({ next_seq: counterBefore.next_seq }).eq("doc_type", "invoice").eq("fy", "26-27");

@@ -13,10 +13,10 @@ export async function inviteMember(email: string, role: Exclude<Role, "admin">) 
   if (error) return { ok: false as const, message: error.message };
 
   const url = await siteUrl();
-  const text = `Hi,\n\nYou've been invited to Kora Kaagaz Invoices as a ${role}.\n\nSign in with your Google account (${clean}) here:\n${url}/login\n\nOnly this email address can sign in.\n\n— ${user.email}`;
+  const text = `Hi,\n\nYou've been invited to Kora Kaagaz Studio as a ${role}.\n\nSign in with your Google account (${clean}) here:\n${url}/login\n\nOnly this email address can sign in.\n\n— ${user.email}`;
   let mail: string = "skipped";
   if (data === "invited") {
-    const result = await sendMail({ to: [clean], subject: "You're invited to Kora Kaagaz Invoices", text });
+    const result = await sendMail({ to: [clean], subject: "You're invited to Kora Kaagaz Studio", text });
     mail = result.status;
     await supabase.from("email_log").insert({ kind: "invite", to_email: clean, subject: "Invite", status: result.status, error: result.status === "failed" ? result.error : result.status === "skipped" ? result.reason : "" });
   }
