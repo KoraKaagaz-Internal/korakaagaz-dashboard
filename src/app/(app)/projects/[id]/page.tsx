@@ -1,3 +1,4 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { Files } from "@/components/pm/Files";
 import { HealthPill, ProgressBar } from "@/components/pm/Pills";
@@ -9,12 +10,14 @@ import { displayName, progress, projectHealth } from "@/lib/pm";
 import { getProjectBundle, projectActivity, teamDirectory } from "@/lib/pm-data";
 import { projectTotals } from "@/lib/projects";
 import { DOC_LABELS } from "@/lib/types";
-import { Board } from "./Board";
 import { Overview } from "./Overview";
 import { ProjectTime } from "./ProjectTime";
 import { StatusSelect } from "./StatusSelect";
 import { TaskList } from "./TaskList";
 import { Timeline } from "./Timeline";
+
+// drag-and-drop code only loads with the board tab
+const Board = dynamic(() => import("./Board").then((m) => m.Board));
 
 const TABS = [
   { key: "board", label: "Board" },

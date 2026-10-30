@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { fetchNotifications, markNotificationsRead } from "@/app/actions/projects";
 import type { Notification } from "@/lib/pm";
@@ -14,9 +13,8 @@ function ago(iso: string) {
   return `${Math.round(m / 1440)}d`;
 }
 
-/** In-app notifications. Refreshes on navigation and every 2 minutes while the tab is visible. */
+/** In-app notifications. Loads once, when opened, and every 2 minutes while the tab is visible. */
 export function Bell() {
-  const path = usePathname();
   const [items, setItems] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
@@ -32,9 +30,6 @@ export function Bell() {
 
   useEffect(() => {
     load();
-  }, [path]);
-
-  useEffect(() => {
     const id = setInterval(() => document.visibilityState === "visible" && load(), 120000);
     const close = (e: MouseEvent) => box.current && !box.current.contains(e.target as Node) && setOpen(false);
     document.addEventListener("mousedown", close);
@@ -47,7 +42,8 @@ export function Bell() {
   const toggle = async () => {
     const next = !open;
     setOpen(next);
-    if (next && unread) {
+    if (next) {
+      await load();
       await markNotificationsRead();
       setUnread(0);
     }

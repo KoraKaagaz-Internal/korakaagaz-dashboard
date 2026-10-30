@@ -7,7 +7,7 @@ import { AvatarStack } from "@/components/pm/Avatar";
 import { PriorityFlag, TaskStatusPill } from "@/components/pm/Pills";
 import { formatInvoiceDate, todayIso } from "@/lib/money";
 import type { Person, Phase, Task } from "@/lib/pm";
-import { useOpenTask } from "./Board";
+import { useOpenTask } from "./useOpenTask";
 import { QuickAdd } from "./QuickAdd";
 
 /** Tasks grouped by phase, with a done checkbox and quick add per phase. */

@@ -17,7 +17,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { moveTask } from "@/app/actions/projects";
 import { AvatarStack } from "@/components/pm/Avatar";
@@ -25,6 +25,7 @@ import { PriorityFlag } from "@/components/pm/Pills";
 import { formatInvoiceDate, todayIso } from "@/lib/money";
 import { TASK_STATUSES, sortBetween, type Person, type Phase, type Task, type TaskStatus } from "@/lib/pm";
 import { QuickAdd } from "./QuickAdd";
+import { useOpenTask } from "./useOpenTask";
 
 type Columns = Record<TaskStatus, Task[]>;
 
@@ -40,17 +41,6 @@ function group(tasks: Task[]): Columns {
   for (const t of tasks) if (!t.parent_id) cols[t.status].push(t);
   for (const k of Object.keys(cols) as TaskStatus[]) cols[k].sort((a, b) => a.sort - b.sort);
   return cols;
-}
-
-export function useOpenTask() {
-  const router = useRouter();
-  const path = usePathname();
-  const params = useSearchParams();
-  return (id: string) => {
-    const sp = new URLSearchParams(params.toString());
-    sp.set("task", id);
-    router.push(`${path}?${sp.toString()}`, { scroll: false });
-  };
 }
 
 export function Board({ projectId, tasks, phases, people, canWork }: { projectId: string; tasks: Task[]; phases: Phase[]; people: Person[]; canWork: boolean }) {

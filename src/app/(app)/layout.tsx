@@ -1,3 +1,5 @@
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { requireTeam } from "@/lib/data";
 import { runningTimer } from "@/lib/time-data";
 import { signOut } from "../actions/auth";
@@ -6,9 +8,13 @@ import { Nav } from "./Nav";
 import { Shortcuts } from "./Shortcuts";
 import { TimerBar } from "./TimerBar";
 
+const FREELANCER_PATHS = ["/my-work", "/projects", "/calendar", "/time", "/team/leave"];
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, role, canEdit } = await requireTeam();
-  const timer = await runningTimer();
+  const [{ user, role, canEdit }, timer, h] = await Promise.all([requireTeam(), runningTimer(), headers()]);
+  // Freelancers only get these sections; everything else redirects before any streaming starts.
+  const path = h.get("x-path") ?? "/";
+  if (role === "freelancer" && !FREELANCER_PATHS.some((p) => path === p || path.startsWith(`${p}/`))) redirect("/my-work");
   return (
     <div className="min-h-screen md:pl-56 print:pl-0">
       <Nav role={role} />

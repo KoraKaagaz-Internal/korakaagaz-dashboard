@@ -8,7 +8,14 @@ export async function middleware(request: NextRequest) {
   if (process.env.NODE_ENV !== "production" && request.nextUrl.pathname.startsWith("/dev")) {
     return NextResponse.next({ request });
   }
-  let response = NextResponse.next({ request });
+  // Pass the path on so the app layout can gate whole sections by role with a real redirect
+  // (redirects thrown inside a streamed page arrive late, after the loading skeleton).
+  const next = () => {
+    const headers = new Headers(request.headers);
+    headers.set("x-path", request.nextUrl.pathname);
+    return NextResponse.next({ request: { headers } });
+  };
+  let response = next();
 
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     cookies: {
@@ -17,15 +24,15 @@ export async function middleware(request: NextRequest) {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
+        response = next();
         cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
       },
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Verifies the JWT locally (ES256 public key) and refreshes the session cookie when needed.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? data.claims : null;
 
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(`${p}/`));

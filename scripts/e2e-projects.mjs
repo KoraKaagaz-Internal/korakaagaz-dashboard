@@ -38,6 +38,21 @@ async function until(fn, ms = 15000) {
   return v;
 }
 
+/** Clicks an element, re-finding it if the page re-rendered underneath (loading skeleton → content). */
+async function tap(page, selector) {
+  for (let i = 0; ; i++) {
+    try {
+      const h = await page.waitForSelector(selector, { visible: true });
+      await h.evaluate((el) => el.scrollIntoView({ block: "center" }));
+      await h.click();
+      return;
+    } catch (e) {
+      if (i >= 4) throw e;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
+}
+
 const results = [];
 const check = (name, ok, extra = "") => {
   results.push(ok);
@@ -54,7 +69,13 @@ async function signInUrl(email) {
 
 function helpers(page) {
   page.setDefaultTimeout(45000);
-  const go = (path) => page.goto(path.startsWith("http") ? path : `${base}${path}`, { waitUntil: "load", timeout: 90000 });
+  // wait for the streamed page to replace the loading skeleton
+  const settled = () => page.waitForFunction(() => !document.querySelector("[aria-busy='true']"), { timeout: 60000 });
+  const go = async (path) => {
+    const r = await page.goto(path.startsWith("http") ? path : `${base}${path}`, { waitUntil: "load", timeout: 90000 });
+    await settled().catch(() => {});
+    return r;
+  };
   const centred = async (h) => {
     await h.evaluate((el) => el.scrollIntoView({ block: "center" }));
     return h;
@@ -86,11 +107,11 @@ try {
 
   // ------------------------------------------------------------ create from template
   await A.go(`/projects/new?client=${clientId}`);
-  await (await admin.waitForSelector("::-p-xpath(//button[.//div[normalize-space()='Product shoot']])")).click();
+  await tap(admin, "::-p-xpath(//button[.//div[normalize-space()='Product shoot']])");
   const name = await A.field("Project name");
   await name.click();
   await name.type(PROJECT);
-  await (await A.button("Create project")).click();
+  await tap(admin, `::-p-xpath(//button[normalize-space()='${"Create project"}'] | //a[normalize-space()='${"Create project"}'])`);
   await admin.waitForFunction(() => /\/projects\/[0-9a-f-]{36}/.test(location.pathname), { timeout: 60000 });
   projectId = admin.url().match(/projects\/([0-9a-f-]{36})/)[1];
   const tasks = await api(`/rest/v1/tasks?project_id=eq.${projectId}&select=id,title,status,sort`);
@@ -104,7 +125,7 @@ try {
   // ------------------------------------------------------------ drag a card to In progress
   const first = tasks.sort((a, b) => a.sort - b.sort)[0];
   await A.go(`/projects/${projectId}`);
-  const card = await admin.waitForSelector(`::-p-xpath(//section[@aria-label='To do']//span[normalize-space()='${first.title}'])`);
+  const card = await admin.waitForSelector(`::-p-xpath(//section[@aria-label='To do']//span[normalize-space()='${first.title}'])`, { visible: true });
   const from = await card.boundingBox();
   const target = await (await admin.$("section[aria-label='In progress']")).boundingBox();
   await admin.mouse.move(from.x + 20, from.y + 5);
@@ -121,9 +142,9 @@ try {
 
   // ------------------------------------------------------------ team: add the freelancer
   await A.go(`/projects/${projectId}?tab=overview`);
-  await (await admin.waitForSelector("::-p-xpath(//button[contains(., 'Change team')])")).click();
-  await (await admin.waitForSelector(`::-p-xpath(//label[contains(., 'Fiona')]//input)`)).click();
-  await (await A.button("Done")).click();
+  await tap(admin, "::-p-xpath(//button[contains(., 'Change team')])");
+  await tap(admin, `::-p-xpath(//label[contains(., 'Fiona')]//input)`);
+  await tap(admin, `::-p-xpath(//button[normalize-space()='${"Done"}'] | //a[normalize-space()='${"Done"}'])`);
   const pm = await until(async () => (await api(`/rest/v1/project_members?project_id=eq.${projectId}&member_email=eq.${encodeURIComponent(FREELANCER)}`)).length);
   check("admin adds the freelancer to the project", pm === 1);
   const added = await until(async () => (await api(`/rest/v1/notifications?recipient_email=eq.${encodeURIComponent(FREELANCER)}&kind=eq.project_added`)).length);
@@ -131,14 +152,14 @@ try {
 
   // deliverable
   await (await admin.waitForSelector("input[aria-label='Deliverable name']")).type("Cut-outs");
-  await (await admin.waitForSelector("::-p-xpath(//section[.//h2[normalize-space()='Deliverables']]//button[normalize-space()='Add' and not(@disabled)])")).click();
+  await tap(admin, "::-p-xpath(//section[.//h2[normalize-space()='Deliverables']]//button[normalize-space()='Add' and not(@disabled)])");
   const deliverable = await until(async () => (await api(`/rest/v1/deliverables?project_id=eq.${projectId}&name=eq.Cut-outs`)).length);
   check("add a deliverable", deliverable === 1);
 
   // ------------------------------------------------------------ list + task drawer
   await A.go(`/projects/${projectId}?tab=list`);
   const retouch = tasks.find((t) => t.title === "Retouching");
-  await (await admin.waitForSelector(`input[aria-label='Mark ${retouch.title} done']`)).click();
+  await tap(admin, `input[aria-label='Mark ${retouch.title} done']`);
   const ticked = await until(async () => {
     const [t] = await api(`/rest/v1/tasks?id=eq.${retouch.id}&select=status,completed_at`);
     return t.status === "done" && t.completed_at ? t : null;
@@ -146,14 +167,14 @@ try {
   check("ticking a task in the list marks it done", !!ticked);
 
   const callSheet = tasks.find((t) => t.title === "Call sheet");
-  await (await admin.waitForSelector(`::-p-xpath(//button[normalize-space()='${callSheet.title}'])`)).click();
+  await tap(admin, `::-p-xpath(//button[normalize-space()='${callSheet.title}'])`);
   await admin.waitForSelector("[role=dialog] input[aria-label='Task title']");
   check("clicking a task opens the side panel", admin.url().includes(`task=${callSheet.id}`));
 
   // assign the freelancer
-  await (await admin.waitForSelector("::-p-xpath(//div[@role='dialog']//button[contains(., 'Assign')])")).click();
-  await (await admin.waitForSelector(`::-p-xpath(//div[@role='dialog']//label[contains(., 'Fiona')]//input)`)).click();
-  await (await admin.waitForSelector("::-p-xpath(//div[@role='dialog']//button[normalize-space()='Done'])")).click();
+  await tap(admin, "::-p-xpath(//div[@role='dialog']//button[contains(., 'Assign')])");
+  await tap(admin, `::-p-xpath(//div[@role='dialog']//label[contains(., 'Fiona')]//input)`);
+  await tap(admin, "::-p-xpath(//div[@role='dialog']//button[normalize-space()='Done'])");
   const assigned = await until(async () => (await api(`/rest/v1/task_assignees?task_id=eq.${callSheet.id}&member_email=eq.${encodeURIComponent(FREELANCER)}`)).length);
   check("assign the task to the freelancer", assigned === 1);
 
@@ -165,7 +186,7 @@ try {
   check("add a checklist item", true);
   const box = await admin.waitForSelector("[role=dialog] textarea[aria-label='Comment']");
   await box.type("@fiona please draft this by Friday");
-  await (await admin.waitForSelector("::-p-xpath(//div[@role='dialog']//button[normalize-space()='Comment' and not(@disabled)])")).click();
+  await tap(admin, "::-p-xpath(//div[@role='dialog']//button[normalize-space()='Comment' and not(@disabled)])");
   await admin.waitForSelector("::-p-xpath(//div[@role='dialog']//p[contains(., 'please draft this by Friday')])");
   const mention = await until(async () => (await api(`/rest/v1/notifications?recipient_email=eq.${encodeURIComponent(FREELANCER)}&kind=eq.mention`)).length);
   check("an @mention notifies the freelancer", mention === 1, mention === 1 ? "" : JSON.stringify(await api(`/rest/v1/notifications?recipient_email=eq.${encodeURIComponent(FREELANCER)}&select=kind,title`)) + JSON.stringify(await api(`/rest/v1/task_comments?task_id=eq.${callSheet.id}&select=body`)));
@@ -173,12 +194,12 @@ try {
 
   // ------------------------------------------------------------ timer from the task panel
   await A.go(`/projects/${projectId}?tab=list&task=${callSheet.id}`);
-  await (await admin.waitForSelector("::-p-xpath(//div[@role='dialog']//button[contains(., 'Start timer')])")).click();
+  await tap(admin, "::-p-xpath(//div[@role='dialog']//button[contains(., 'Start timer')])");
   await admin.waitForSelector("::-p-xpath(//div[@role='status']//button[normalize-space()='Stop'])");
   check("starting a timer shows it in the header", true);
   await admin.keyboard.press("Escape"); // close the task panel; its backdrop covers the header
   await admin.waitForFunction(() => !document.querySelector("[role=dialog]"));
-  await (await admin.waitForSelector("::-p-xpath(//div[@role='status']//button[normalize-space()='Stop'])")).click();
+  await tap(admin, "::-p-xpath(//div[@role='status']//button[normalize-space()='Stop'])");
   const timed = await until(async () => {
     const r = await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&select=minutes,timer_started_at,status`);
     return r.length && !r[0].timer_started_at ? r[0] : null;
@@ -206,11 +227,11 @@ try {
     return r.length === 1 && r[0].minutes === 90 ? r[0] : null;
   });
   check("typing 1:30 in the timesheet saves 90 minutes", !!ninety, JSON.stringify(await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&select=minutes,status`)));
-  await (await admin.waitForSelector("::-p-xpath(//button[starts-with(normalize-space(), 'Submit week') and not(@disabled)])")).click();
+  await tap(admin, "::-p-xpath(//button[starts-with(normalize-space(), 'Submit week') and not(@disabled)])");
   const submitted = await until(async () => (await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&status=eq.submitted`)).length);
   check("submit the week for approval", submitted === 1);
   await A.go("/time?tab=approve");
-  await (await admin.waitForSelector("::-p-xpath(//button[starts-with(normalize-space(), 'Approve selected') and not(@disabled)])")).click();
+  await tap(admin, "::-p-xpath(//button[starts-with(normalize-space(), 'Approve selected') and not(@disabled)])");
   const approved = await until(async () => (await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&status=eq.approved`)).length);
   check("admin approves submitted time", approved === 1);
 
@@ -219,7 +240,7 @@ try {
   await A.go(`/projects/${projectId}?tab=time`);
   await A.waitText("1.5 h ready to bill");
   await admin.screenshot({ path: ".visual/e2e-project-time.png" });
-  await (await admin.waitForSelector("::-p-xpath(//button[normalize-space()='Draft invoice from approved time' and not(@disabled)])")).click();
+  await tap(admin, "::-p-xpath(//button[normalize-space()='Draft invoice from approved time' and not(@disabled)])");
   await admin.waitForFunction(() => /\/documents\/[0-9a-f-]{36}\/edit/.test(location.pathname), { timeout: 60000 });
   const docId = admin.url().match(/documents\/([0-9a-f-]{36})/)[1];
   const [doc] = await api(`/rest/v1/documents?id=eq.${docId}&select=status,project_id,taxable,document_items(title,qty,unit_price)`);
@@ -235,11 +256,11 @@ try {
   await A.go(`/calendar/new?date=${shootDay}`);
   await (await A.field("Title")).type(`E2E shoot day ${stamp}`);
   await (await A.field("Project")).select(projectId);
-  await (await admin.waitForSelector("::-p-xpath(//button[contains(., 'Book team members')])")).click();
-  await (await admin.waitForSelector(`::-p-xpath(//label[contains(., 'Fiona')]//input)`)).click();
-  await (await A.button("Done")).click();
-  await (await admin.waitForSelector(`::-p-xpath(//label[contains(., 'E2E camera ${stamp}')]//input)`)).click();
-  await (await A.button("Save event")).click();
+  await tap(admin, "::-p-xpath(//button[contains(., 'Book team members')])");
+  await tap(admin, `::-p-xpath(//label[contains(., 'Fiona')]//input)`);
+  await tap(admin, `::-p-xpath(//button[normalize-space()='${"Done"}'] | //a[normalize-space()='${"Done"}'])`);
+  await tap(admin, `::-p-xpath(//label[contains(., 'E2E camera ${stamp}')]//input)`);
+  await tap(admin, `::-p-xpath(//button[normalize-space()='${"Save event"}'] | //a[normalize-space()='${"Save event"}'])`);
   await admin.waitForFunction(() => /\/calendar\/[0-9a-f-]{36}$/.test(location.pathname), { timeout: 60000 });
   await admin.waitForSelector(`::-p-xpath(//h1[contains(., 'E2E shoot day ${stamp}')])`);
   const [ev] = await api(`/rest/v1/events?title=eq.${encodeURIComponent(`E2E shoot day ${stamp}`)}&select=id,project_id,event_people(member_email),event_kit(kit_id)`);
@@ -249,7 +270,7 @@ try {
 
   await A.go(`/calendar/new?date=${shootDay}`);
   await (await A.field("Title")).type("Clashing shoot");
-  await (await admin.waitForSelector(`::-p-xpath(//label[contains(., 'E2E camera ${stamp}')]//input)`)).click();
+  await tap(admin, `::-p-xpath(//label[contains(., 'E2E camera ${stamp}')]//input)`);
   await A.waitText("Double booking");
   check("the form warns when kit is double-booked", (await A.body()).includes(`E2E camera ${stamp}`));
   await A.go(`/calendar?date=${shootDay}`);
@@ -266,10 +287,10 @@ try {
 
   // ------------------------------------------------------------ files
   await A.go(`/projects/${projectId}?tab=files`);
-  await (await A.button("add a Drive link")).click();
+  await tap(admin, `::-p-xpath(//button[normalize-space()='${"add a Drive link"}'] | //a[normalize-space()='${"add a Drive link"}'])`);
   await (await admin.waitForSelector("input[aria-label='Link']")).type("https://drive.google.com/drive/folders/e2e-raws");
   await (await admin.waitForSelector("input[aria-label='Link name']")).type("Raw files");
-  await (await A.button("Add link")).click();
+  await tap(admin, `::-p-xpath(//button[normalize-space()='${"Add link"}'] | //a[normalize-space()='${"Add link"}'])`);
   await A.waitText("Raw files");
   check("add a Google Drive link", true);
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64");
@@ -323,13 +344,13 @@ try {
   await F.go("/team/workload");
   check("freelancer is kept out of workload", new URL(fl.url()).pathname === "/my-work");
   await F.go("/team/leave");
-  await (await F.button("Request")).click();
+  await tap(fl, `::-p-xpath(//button[normalize-space()='${"Request"}'] | //a[normalize-space()='${"Request"}'])`);
   const leave = await until(async () => (await api(`/rest/v1/leave_requests?member_email=eq.${encodeURIComponent(FREELANCER)}&select=id,status`))[0]);
   check("freelancer requests leave", leave?.status === "pending");
   await ctx.close();
 
   await A.go("/team/leave");
-  await (await admin.waitForSelector("::-p-xpath(//section[.//h2[starts-with(normalize-space(), 'Waiting for you')]]//button[normalize-space()='Approve'])")).click();
+  await tap(admin, "::-p-xpath(//section[.//h2[starts-with(normalize-space(), 'Waiting for you')]]//button[normalize-space()='Approve'])");
   const decided = await until(async () => (await api(`/rest/v1/leave_requests?member_email=eq.${encodeURIComponent(FREELANCER)}&status=eq.approved`)).length);
   check("admin approves the leave", decided === 1);
 

@@ -44,7 +44,14 @@ async function signInUrl(email) {
 const existing = [
   ...((await api("/rest/v1/documents?select=id&limit=1")) ?? []),
   ...((await api("/rest/v1/clients?select=id&limit=1")) ?? []),
+  ...((await api("/rest/v1/projects?select=id&limit=1")) ?? []),
 ];
+// Real team members joined: this test deletes members, so never run it then.
+const people = ((await api("/rest/v1/members?select=email")) ?? []).filter((m) => m.email !== ADMIN_EMAIL);
+if (people.length) {
+  console.error(`Refusing to run: ${people.length} real team member(s) exist and this test removes members. Use scripts/e2e-projects.mjs, which cleans up only its own data.`);
+  process.exit(2);
+}
 if (existing.length && process.env.E2E_FORCE_RESET !== "1") {
   console.error("Refusing to run: the workspace already has clients or documents, and this test wipes them afterwards.\nRun it against an empty project, or set E2E_FORCE_RESET=1 if this is only leftover test data.");
   process.exit(2);

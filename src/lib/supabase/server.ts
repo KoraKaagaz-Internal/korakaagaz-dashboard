@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import type { Role } from "../types";
 
 export async function createClient() {
@@ -27,13 +28,23 @@ export function createAnonClient() {
   });
 }
 
-/** Signed-in user plus their workspace role (null when not a member). */
-export async function getUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { supabase, user: null, role: null as Role | null };
-  const { data: role } = await supabase.rpc("my_role");
-  return { supabase, user: role ? user : null, role: (role as Role | null) ?? null };
+export interface SessionUser {
+  id: string;
+  email?: string;
 }
+
+/**
+ * Signed-in user plus their workspace role (null when not a member), once per request.
+ * getClaims() verifies the JWT locally against the project's ES256 public key (no Auth
+ * round trip); the role is read from `members` on every request, so removing someone
+ * still takes effect immediately.
+ */
+export const getUser = cache(async () => {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) return { supabase, user: null as SessionUser | null, role: null as Role | null };
+  const { data: role } = await supabase.rpc("my_role");
+  const user: SessionUser = { id: claims.sub, email: typeof claims.email === "string" ? claims.email : undefined };
+  return { supabase, user: role ? user : null, role: (role as Role | null) ?? null };
+});
