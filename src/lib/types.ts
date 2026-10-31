@@ -27,6 +27,7 @@ export interface Member {
 }
 
 export interface Settings {
+  gst_filing: "monthly" | "qrmp" | "none";
   business_name: string;
   legal_name: string;
   address: string;
@@ -64,6 +65,9 @@ export interface BankAccount {
   iban: string;
   upi_id: string;
   is_default: boolean;
+  kind: "bank" | "cash";
+  opening_balance: number;
+  opening_date: string | null;
 }
 
 export interface Client {
@@ -96,7 +100,7 @@ export interface SupplierSnapshot {
   signature_url?: string | null;
   query_email: string;
   query_phone: string;
-  bank: Omit<BankAccount, "id" | "is_default" | "label"> | null;
+  bank: Omit<BankAccount, "id" | "is_default" | "label" | "kind" | "opening_balance" | "opening_date"> | null;
 }
 
 export type ProjectStatus = "planned" | "active" | "on_hold" | "review" | "done" | "cancelled";

@@ -276,7 +276,59 @@ try {
   check("staff can see team leave", (mSeesLeave ?? []).length === 1);
   await admin.from("leave_requests").delete().in("id", [fLeave.id, mLeave.id]);
 
-  // 12. Removing a member ends their access.
+  // 12. Expenses: freelancers file their own claims only; only the admin approves and reimburses.
+  const { data: cat } = await admin.from("expense_categories").select("id").eq("name", "Props & sets").single();
+  const { data: vendor, error: vErr2 } = await member.from("vendors").insert({ name: "Sec Vendor", gstin: "" }).select("id").single();
+  check("member can add a vendor", !vErr2 && !!vendor, vErr2?.message);
+  const { data: fVendors } = await freelancer.from("vendors").select("id");
+  check("freelancer cannot see vendors", (fVendors ?? []).length === 0);
+  const { data: bill, error: billErr } = await member.from("expenses").insert({ kind: "bill", vendor_id: vendor.id, category_id: cat.id, expense_date: today, taxable: 1000, total: 1180, cgst: 90, sgst: 90 }).select("id").single();
+  check("member can add a bill", !billErr && !!bill, billErr?.message);
+  const { data: fBills } = await freelancer.from("expenses").select("id").eq("id", bill.id);
+  check("freelancer cannot see studio bills", (fBills ?? []).length === 0);
+  const { error: fBill } = await freelancer.from("expenses").insert({ kind: "bill", vendor_name: "x", category_id: cat.id, expense_date: today, taxable: 1, total: 1 });
+  check("freelancer cannot add a bill", !!fBill);
+  const { data: claim, error: claimErr } = await freelancer.from("expenses").insert({ kind: "claim", category_id: cat.id, expense_date: today, taxable: 500, total: 500, paid_from: "member", paid_by_email: FREELANCER, approval: "submitted", project_id: pA.id }).select("id").single();
+  check("freelancer can file a claim", !claimErr && !!claim, claimErr?.message);
+  const { error: claimOther } = await freelancer.from("expenses").insert({ kind: "claim", category_id: cat.id, expense_date: today, taxable: 5, total: 5, paid_from: "member", paid_by_email: FREELANCER, approval: "submitted", project_id: pB.id });
+  check("freelancer cannot claim against another project", !!claimOther);
+  const { error: preApprovedClaim } = await freelancer.from("expenses").insert({ kind: "claim", category_id: cat.id, expense_date: today, taxable: 5, total: 5, paid_from: "member", paid_by_email: FREELANCER, approval: "approved" });
+  check("claims can't be filed already approved", !!preApprovedClaim);
+  const { error: selfApproveClaim } = await freelancer.from("expenses").update({ approval: "approved" }).eq("id", claim.id);
+  const { data: stillSubmitted } = await admin.from("expenses").select("approval").eq("id", claim.id).single();
+  check("people cannot approve their own claim", stillSubmitted.approval === "submitted", selfApproveClaim?.message);
+  const { error: memberApprove } = await member.from("expenses").update({ approval: "approved" }).eq("id", claim.id);
+  check("members cannot approve claims", !!memberApprove);
+  const { data: mSeesClaim } = await member.from("expenses").select("id").eq("id", claim.id);
+  check("staff can see team claims", (mSeesClaim ?? []).length === 1);
+  await admin.from("expenses").update({ approval: "approved" }).eq("id", claim.id);
+  const { error: memberPaysClaim } = await member.from("expense_payments").insert({ expense_id: claim.id, paid_on: today, amount: 500 });
+  check("members cannot reimburse claims", !!memberPaysClaim);
+  const { error: memberPaysBill } = await member.from("expense_payments").insert({ expense_id: bill.id, paid_on: today, amount: 100 });
+  check("members can pay bills", !memberPaysBill, memberPaysBill?.message);
+  const { error: fPays } = await freelancer.from("expense_payments").insert({ expense_id: claim.id, paid_on: today, amount: 500 });
+  check("freelancer cannot pay themselves", !!fPays);
+  const { data: fEditApproved } = await freelancer.from("expenses").update({ taxable: 9999 }).eq("id", claim.id).select("id");
+  check("approved claims are locked for their owner", !fEditApproved || fEditApproved.length === 0);
+  const { error: delPaid } = await member.from("expenses").delete().eq("id", bill.id);
+  check("expenses with payments can't be deleted", !!delPaid);
+  const receiptPath = `expenses/${claim.id}/sec-${stamp}.txt`;
+  await admin.storage.from("files").upload(receiptPath, new Blob(["r"]), { contentType: "text/plain" });
+  created.objects.push(receiptPath);
+  const { data: vDl } = await viewer.storage.from("files").download(receiptPath);
+  check("staff can open claim receipts", !!vDl);
+  const otherReceipt = `expenses/${bill.id}/sec-${stamp}.txt`;
+  await admin.storage.from("files").upload(otherReceipt, new Blob(["r"]), { contentType: "text/plain" });
+  created.objects.push(otherReceipt);
+  const { data: fDl2 } = await freelancer.storage.from("files").download(otherReceipt);
+  check("freelancer cannot open studio receipts", !fDl2);
+  const { error: fCat } = await freelancer.from("expense_categories").insert({ name: `Sec cat ${stamp}` });
+  check("only the admin edits categories", !!fCat);
+  await admin.from("expense_payments").delete().in("expense_id", [bill.id, claim.id]);
+  await admin.from("expenses").delete().in("id", [bill.id, claim.id]);
+  await admin.from("vendors").delete().eq("id", vendor.id);
+
+  // 13. Removing a member ends their access.
   await admin.from("members").delete().eq("email", VIEWER);
   const { data: afterRemoval } = await viewer.from("clients").select("id");
   check("removed member loses access immediately", (afterRemoval ?? []).length === 0);
@@ -285,6 +337,8 @@ try {
 } finally {
   if (created.objects.length) await admin.storage.from("files").remove([...new Set(created.objects)]);
   await admin.from("events").delete().like("title", "Sec %");
+  await admin.from("expenses").delete().in("created_by", [MEMBER, VIEWER, FREELANCER]);
+  await admin.from("vendors").delete().eq("name", "Sec Vendor");
   await admin.from("leave_requests").delete().in("member_email", [MEMBER, VIEWER, FREELANCER]);
   if (created.projects.length) await admin.from("projects").delete().in("id", created.projects);
   if (created.documents.length) await admin.from("documents").delete().in("id", created.documents);

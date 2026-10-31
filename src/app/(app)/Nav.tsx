@@ -17,6 +17,7 @@ function groups(role: Role): Group[] {
           { href: "/projects", label: "Projects" },
           { href: "/calendar", label: "Calendar" },
           { href: "/time", label: "Time" },
+          { href: "/expenses/claims", label: "My claims" },
         ],
       },
     ];
@@ -48,9 +49,10 @@ function groups(role: Role): Group[] {
       items: [{ href: "/clients", label: "Clients" }],
     },
     {
-      title: "Billing",
+      title: "Money",
       items: [
         { href: "/documents", label: "Invoices & quotes" },
+        { href: "/expenses", label: "Expenses" },
         { href: "/items", label: "Items" },
         { href: "/reports", label: "Reports" },
       ],

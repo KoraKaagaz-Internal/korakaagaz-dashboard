@@ -5,7 +5,7 @@ import { SettingsForm } from "./SettingsForm";
 
 export default async function SettingsPage() {
   await requireMember("admin");
-  const [settings, banks] = await Promise.all([getSettings(), listBankAccounts()]);
+  const [settings, banks] = await Promise.all([getSettings(), listBankAccounts(true)]);
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <h1 className="text-2xl font-semibold">Settings</h1>

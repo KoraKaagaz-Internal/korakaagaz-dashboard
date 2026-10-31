@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSettings, listDocuments, requireMember } from "@/lib/data";
 import { GSTR1_SECTIONS, gstr1Section, toCsv, type Gstr1Section, type Row } from "@/lib/gstr1";
+import { listExpenses, listVendors } from "@/lib/expense-data";
+import { tdsNature } from "@/lib/expenses";
 import { buildLedger } from "@/lib/ledger";
 import { formatInvoiceDate } from "@/lib/money";
 import { DOC_LABELS, DOC_TYPES, type DocType } from "@/lib/types";
@@ -85,6 +87,51 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
     rows = gstr1Section(section, full, settings.state_code);
     name = `gstr1-${section}`;
+  } else if (report === "purchases" || report === "tds-payable") {
+    const all = await listExpenses({ from, to }, 5000);
+    const list = report === "tds-payable" ? all.filter((e) => e.tds_amount > 0) : all.filter((e) => !e.is_draft && e.approval !== "rejected");
+    const vendors = new Map((await listVendors()).map((v) => [v.id, v]));
+    rows = list.map((e): Row => {
+      const v = e.vendor_id ? vendors.get(e.vendor_id) : undefined;
+      return report === "tds-payable"
+        ? {
+            Date: e.expense_date,
+            Deductee: e.vendor,
+            PAN: v?.pan ?? "",
+            "Deductee type": v?.is_company ? "Company/firm" : "Individual/HUF",
+            Nature: tdsNature(e.tds_nature).label,
+            "Amount paid/credited": e.taxable,
+            "TDS rate %": e.tds_rate,
+            "TDS amount": e.tds_amount,
+            "Bill no.": e.bill_no,
+            Deposited: e.tds_challan_id ? "Yes" : "No",
+          }
+        : {
+            Date: e.expense_date,
+            Type: e.kind === "claim" ? "Team claim" : e.kind === "bill" ? "Bill" : "Paid",
+            "Bill no.": e.bill_no,
+            Vendor: e.vendor,
+            "Vendor GSTIN": v?.gstin ?? "",
+            "Vendor state": v?.state_code ?? "",
+            Category: e.category,
+            Description: e.description,
+            Project: e.project_code,
+            Currency: e.currency,
+            "Taxable value": e.taxable,
+            "GST rate %": e.gst_rate,
+            CGST: e.cgst,
+            SGST: e.sgst,
+            IGST: e.igst,
+            "Reverse charge": e.rcm ? "Y" : "N",
+            Total: e.total,
+            "Input credit": e.itc_status,
+            "GSTR-2B": e.gstr2b.replace("_", " "),
+            TDS: e.tds_amount,
+            Paid: e.paid,
+            Balance: e.balance,
+          };
+    });
+    name = report;
   } else {
     return NextResponse.json({ error: "unknown report" }, { status: 404 });
   }

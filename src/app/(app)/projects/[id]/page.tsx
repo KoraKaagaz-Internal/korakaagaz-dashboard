@@ -7,9 +7,11 @@ import { Card, StatusPill, displayStatus } from "@/components/ui";
 import { listClients, listDocuments, requireTeam } from "@/lib/data";
 import { formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
 import { displayName, progress, projectHealth } from "@/lib/pm";
+import { listExpenses } from "@/lib/expense-data";
 import { getProjectBundle, projectActivity, teamDirectory } from "@/lib/pm-data";
 import { projectTotals } from "@/lib/projects";
 import { DOC_LABELS } from "@/lib/types";
+import { InvoiceFromExpenses } from "./InvoiceFromExpenses";
 import { Overview } from "./Overview";
 import { ProjectTime } from "./ProjectTime";
 import { StatusSelect } from "./StatusSelect";
@@ -124,7 +126,9 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
 }
 
 async function Billing({ projectId, budget, canEdit }: { projectId: string; budget: number; canEdit: boolean }) {
-  const docs = await listDocuments({ project: projectId });
+  const [docs, expenses] = await Promise.all([listDocuments({ project: projectId }), listExpenses({ project: projectId }, 500)]);
+  const unbilled = expenses.filter((e) => e.billable && !e.invoiced_document_id && (e.kind !== "claim" || e.approval === "approved"));
+  const spent = expenses.filter((e) => e.approval !== "rejected").reduce((s, e) => s + e.total * e.fx_rate, 0);
   const t = projectTotals(docs);
   const pct = (n: number) => (budget > 0 ? `${Math.round((n / budget) * 100)}% of budget` : "");
   return (
@@ -176,6 +180,40 @@ async function Billing({ projectId, budget, canEdit }: { projectId: string; budg
               </li>
             ))}
           </ul>
+        )}
+      </Card>
+      <Card
+        title={`Expenses · ${formatMoney(spent)}`}
+        actions={
+          canEdit ? (
+            <Link href={`/expenses/new?project=${projectId}`} className="text-sm text-navy hover:underline">
+              Add expense
+            </Link>
+          ) : undefined
+        }
+      >
+        {expenses.length ? (
+          <ul className="divide-y divide-neutral-100 text-sm">
+            {expenses.map((e) => (
+              <li key={e.id}>
+                <Link href={`/expenses/${e.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
+                  <span className="w-24 text-neutral-500">{formatInvoiceDate(e.expense_date).replace(/, \d{4}$/, "")}</span>
+                  <span className="min-w-0 flex-1 truncate">
+                    {e.vendor || e.description} <span className="text-neutral-500">· {e.category}</span>
+                  </span>
+                  {e.billable && <span className="text-xs text-blue-800">{e.invoiced_document_id ? "billed" : "to bill"}</span>}
+                  <span className="tabular-nums">{formatMoney(e.total, e.currency)}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-neutral-500">No expenses on this project. Freelancer fees, props and studio hire logged here show up in the project&apos;s margin.</p>
+        )}
+        {canEdit && unbilled.length > 0 && (
+          <div className="mt-3">
+            <InvoiceFromExpenses projectId={projectId} count={unbilled.length} />
+          </div>
         )}
       </Card>
     </div>

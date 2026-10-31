@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { BarChart } from "@/components/BarChart";
 import { Card, StatusPill, displayStatus } from "@/components/ui";
-import { listDocuments, requireMember } from "@/lib/data";
+import { upcoming } from "@/lib/compliance";
+import { getSettings, listDocuments, requireMember } from "@/lib/data";
+import { addDays, daysBetween } from "@/lib/money";
+import { listEvents } from "@/lib/time-data";
 import { financialYear, formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
 import { ageing, kpis, revenueByMonth } from "@/lib/reports";
 import { DOC_LABELS } from "@/lib/types";
@@ -11,10 +14,15 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const { denied } = await searchParams;
   const today = todayIso();
   const fy = financialYear(today);
-  const [docs, { data: pays }] = await Promise.all([
+  const [docs, { data: pays }, settings, events, { count: tdsLines }] = await Promise.all([
     listDocuments(),
     supabase.from("payments").select("*, documents(currency, fx_rate)").order("paid_on", { ascending: false }).limit(1000),
+    getSettings(),
+    listEvents(today, addDays(today, 7)),
+    supabase.from("expenses").select("id", { count: "exact", head: true }).gt("tds_amount", 0),
   ]);
+  const dues = upcoming(today, 30, { gstFiling: settings.gst_filing ?? "monthly", stateCode: settings.state_code, tds: !!tdsLines });
+  const shoots = events.filter((e) => e.status !== "cancelled" && e.type !== "deadline");
   const payments = (pays ?? []).map((p) => ({ ...p, amount: Number(p.amount), tds_amount: Number(p.tds_amount), currency: p.documents?.currency ?? "INR", fx_rate: Number(p.documents?.fx_rate ?? 1) }));
   const k = kpis(docs, payments, fy, today);
   const revenue = revenueByMonth(docs, today);
@@ -62,6 +70,12 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </Card>
       )}
 
+      <p className="text-sm">
+        <Link href="/reports" className="text-navy hover:underline">
+          Full reports: profit, cash forecast, clients, team →
+        </Link>
+      </p>
+
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
         <Card title="Revenue by month (last 12 months)">
           <div className="pl-10">
@@ -84,6 +98,37 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 </li>
               );
             })}
+          </ul>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card title="This week's shoots and meetings" actions={<Link href="/calendar?view=week" className="text-sm text-navy hover:underline">Calendar</Link>}>
+          {shoots.length ? (
+            <ul className="divide-y divide-neutral-100 text-sm">
+              {shoots.map((e) => (
+                <li key={e.id}>
+                  <Link href={`/calendar/${e.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
+                    <span className="w-24 text-xs text-neutral-500">{new Date(e.starts_at).toLocaleString("en-IN", { weekday: "short", day: "numeric", hour: e.all_day ? undefined : "numeric", minute: e.all_day ? undefined : "2-digit", timeZone: "Asia/Kolkata" })}</span>
+                    <span className="min-w-0 flex-1 truncate">{e.title}</span>
+                    <span className="text-xs text-neutral-500">{e.project_code}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Empty text="Nothing booked in the next 7 days." />
+          )}
+        </Card>
+        <Card title="Filing due in the next 30 days" actions={<Link href="/expenses/gst" className="text-sm text-navy hover:underline">GST &amp; TDS</Link>}>
+          <ul className="divide-y divide-neutral-100 text-sm">
+            {dues.map((d) => (
+              <li key={`${d.date}${d.title}`} className="flex items-center gap-3 py-2">
+                <span className={`w-24 text-xs ${daysBetween(today, d.date) <= 5 ? "font-semibold text-red-700" : "text-neutral-500"}`}>{formatInvoiceDate(d.date).replace(/, \d{4}$/, "")}</span>
+                <span className="flex-1">{d.title}</span>
+                <span className="text-xs text-neutral-500">{d.detail}</span>
+              </li>
+            ))}
           </ul>
         </Card>
       </div>

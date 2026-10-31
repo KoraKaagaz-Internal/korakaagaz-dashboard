@@ -3,7 +3,8 @@ import { DEFAULT_PREFIXES, toDocument } from "@/lib/data";
 import { copyDocumentToDraft } from "@/lib/doc-copy";
 import { sendMail, splitEmails, textToHtml } from "@/lib/mail";
 import { DEFAULT_MESSAGES, fillTemplate, messageValues } from "@/lib/messages";
-import { addMonths, daysBetween, todayIso } from "@/lib/money";
+import { nextRecurring } from "@/lib/expenses";
+import { addDays, addMonths, daysBetween, todayIso } from "@/lib/money";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Settings } from "@/lib/types";
 
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
   const dry = request.nextUrl.searchParams.get("dry") === "1";
   const today = request.nextUrl.searchParams.get("today") ?? todayIso();
   const supabase = createAdminClient();
-  const report: Record<string, unknown[]> = { expired: [], reminders: [], recurring: [], errors: [] };
+  const report: Record<string, unknown[]> = { expired: [], reminders: [], recurring: [], recurringExpenses: [], errors: [] };
 
   const { data: settingsRow } = await supabase.from("settings").select("*").eq("id", 1).single();
   const settings = { ...(settingsRow as Settings), prefixes: { ...DEFAULT_PREFIXES, ...(settingsRow?.prefixes ?? {}) } };
@@ -89,6 +90,32 @@ export async function GET(request: NextRequest) {
     await supabase.from("documents").update({ recurring: { ...rule, next: addMonths(rule.next, rule.every === "quarter" ? 3 : 1) } }).eq("id", r.id);
     const note = `A draft for the next ${rule.every}ly invoice (from ${r.number ?? "a recurring invoice"}) is ready to review:\n${site}/documents/${copy.id}`;
     await sendMail({ to: [process.env.SMTP_USER || "team@korakaagaz.co"], subject: `Recurring draft ready: ${r.number ?? ""}`, text: note });
+  }
+
+  // 4. Recurring expenses (rent, subscriptions): a draft copy for a person to confirm.
+  const { data: repeating } = await supabase.from("expenses").select("*").not("recurring", "is", null);
+  for (const e of repeating ?? []) {
+    const rule = e.recurring as { every: "month" | "quarter" | "year"; next: string };
+    if (!rule?.next || rule.next > today) continue;
+    report.recurringExpenses.push({ from: e.id, date: rule.next });
+    if (dry) continue;
+    const { id, created_at: _c, updated_at: _u, recurring: _r, receipt_path: _p, receipt_name: _n, gstr2b: _g, itc_month: _m, tds_challan_id: _t, invoiced_document_id: _i, approval: _a, decided_by: _d, decided_at: _da, ...copy } = e;
+    void [_c, _u, _r, _p, _n, _g, _m, _t, _i, _a, _d, _da];
+    const { error } = await supabase.from("expenses").insert({
+      ...copy,
+      expense_date: rule.next,
+      due_date: e.due_date ? addDays(rule.next, Math.max(0, daysBetween(e.expense_date, e.due_date))) : null,
+      recurring_source_id: id,
+      is_draft: true,
+      bill_no: "",
+    });
+    if (error) {
+      report.errors.push({ recurringExpense: id, error: error.message });
+      continue;
+    }
+    await supabase.from("expenses").update({ recurring: { ...rule, next: nextRecurring(rule.next, rule.every) } }).eq("id", id);
+    const { data: admin } = await supabase.from("members").select("email").eq("role", "admin").maybeSingle();
+    if (admin) await supabase.from("notifications").insert({ recipient_email: admin.email, actor_email: admin.email, kind: "recurring_expense", title: `Recurring expense ready to confirm: ${e.description || e.vendor_name || "expense"}`, link: "/expenses?status=draft" });
   }
 
   return NextResponse.json({ ok: true, dry, today, ...report });

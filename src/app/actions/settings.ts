@@ -25,6 +25,7 @@ const settingsSchema = z.object({
   default_sac: z.string().trim().regex(/^\d{4,8}$/, "SAC must be 4–8 digits"),
   default_gst_rate: z.coerce.number().min(0).max(28),
   require_approval: z.coerce.boolean(),
+  gst_filing: z.enum(["monthly", "qrmp", "none"]).default("monthly"),
   reminders_enabled: z.coerce.boolean(),
   prefixes: z.object({ invoice: prefix, quote: prefix, proforma: prefix, receipt: prefix, credit_note: prefix }),
   terms: z.record(z.string(), z.string()),
@@ -78,6 +79,8 @@ const bankSchema = z.object({
   iban: z.string().trim().toUpperCase(),
   upi_id: z.string().trim(),
   is_default: z.boolean(),
+  opening_balance: z.coerce.number().default(0),
+  opening_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().or(z.literal("").transform(() => null)).default(null),
 });
 
 export async function saveBankAccount(input: z.input<typeof bankSchema>) {

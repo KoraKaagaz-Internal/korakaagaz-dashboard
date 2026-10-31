@@ -63,10 +63,13 @@ export async function getSettings(): Promise<Settings> {
   };
 }
 
-export async function listBankAccounts(): Promise<BankAccount[]> {
+/** Bank accounts for documents; `withCash` adds the petty-cash account (Settings, expenses). */
+export async function listBankAccounts(withCash = false): Promise<BankAccount[]> {
   const { supabase } = await requireMember();
-  const { data } = await supabase.from("bank_accounts").select("*").order("is_default", { ascending: false }).order("created_at");
-  return (data ?? []) as BankAccount[];
+  let q = supabase.from("bank_accounts").select("*").order("is_default", { ascending: false }).order("created_at");
+  if (!withCash) q = q.neq("kind", "cash");
+  const { data } = await q;
+  return ((data ?? []) as BankAccount[]).map((b) => ({ ...b, opening_balance: Number(b.opening_balance ?? 0) }));
 }
 
 export function supplierSnapshot(s: Settings, bank: BankAccount | null): SupplierSnapshot {

@@ -136,6 +136,13 @@ export function SettingsForm({ settings, mailReady }: { settings: Settings; mail
           <Field label="Default GST %">
             <Input type="number" min={0} step="any" value={s.default_gst_rate} onChange={(e) => set("default_gst_rate", e.target.valueAsNumber || 0)} />
           </Field>
+          <Field label="GST returns">
+            <Select value={s.gst_filing ?? "monthly"} onChange={(e) => set("gst_filing", e.target.value as "monthly" | "qrmp" | "none")}>
+              <option value="monthly">Monthly</option>
+              <option value="qrmp">Quarterly (QRMP)</option>
+              <option value="none">Not registered</option>
+            </Select>
+          </Field>
         </div>
         <div className="mt-4 space-y-2 text-sm">
           <label className="flex items-center gap-2">

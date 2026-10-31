@@ -9,13 +9,9 @@ export interface Bar {
   detail?: string;
 }
 
-/** Rupees in short form for axis ticks and tooltips: ₹4.2L, ₹1.1Cr, ₹850. */
-export function compactInr(n: number): string {
-  const sign = n < 0 ? "−" : "";
-  const a = Math.abs(n);
-  const body = a >= 10000000 ? `${(a / 10000000).toFixed(1)}Cr` : a >= 100000 ? `${(a / 100000).toFixed(1)}L` : a >= 1000 ? `${Math.round(a / 1000)}k` : `${Math.round(a)}`;
-  return `${sign}₹${body}`;
-}
+import { compactInr } from "@/lib/format";
+
+export { compactInr };
 
 /**
  * Single-series column chart: thin bars, 4px rounded tops on a baseline, recessive grid,

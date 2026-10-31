@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  // lets test builds live beside a running `next dev` (NEXT_DIST_DIR=.next-e2e)
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Chromium ships its own binaries; keep it out of the bundle.
   serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core", "puppeteer"],
   // Every route that renders a PDF needs the Chromium binary: downloads, share links, and the

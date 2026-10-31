@@ -84,11 +84,29 @@
 
 <main>
 <section id="overview">
-  <span class="pill">Last updated 2026-10-30</span>
+  <span class="pill">Last updated 2026-11-01</span>
   <h1>Kora Kaagaz Studio</h1>
   <p><b>Live:</b> <a href="https://app.korakaagaz.co">app.korakaagaz.co</a> (also <a href="https://invoice-generator-flax-pi.vercel.app">invoice-generator-flax-pi.vercel.app</a>) · Supabase project <code>invoice-generator</code> (ref <code>komdaeylldwknhwcjevv</code>, Mumbai) · Vercel project <code>invoice-generator</code> · Market research: <a href="market-research.html">market-research.html</a></p>
-  <p><b>Where it's going:</b> one tool for the whole studio. Invoicing was first; projects and tasks, then time, team and calendar are now live. Next, in order: CRM; documents with e-signatures; client onboarding and a client portal; proofing; then a studio dashboard with automations. The plan and research are in <a href="market-research.html#agency">market-research.html</a>.</p>
+  <p><b>Where it's going:</b> one tool for the whole studio. Live so far: invoicing; projects and tasks; time, team and calendar; expenses with GST credit and TDS; and a full analytics page. Next, in order: CRM; documents with e-signatures; client onboarding and a client portal; proofing; then a studio dashboard with automations. The plan and research are in <a href="market-research.html#agency">market-research.html</a>.</p>
   <p><b>Projects (live):</b> start a project from a studio template (brand identity, product shoot, campaign shoot, social retainer, packaging, website). Then work it on a board, list or timeline, with a task side panel for assignees, dates, estimates, checklist, comments with @mentions and files. Each project also has deliverables with revision limits, a team, a staff-only budget, a billing tab and an activity feed. "My work" lists everyone's tasks, and a bell shows notifications. <b>Freelancers</b> see only the projects they're added to and never see clients or money.</p>
+  <p><b>Expenses (live):</b></p>
+  <ul>
+    <li><b>Bills, receipts and team claims.</b> Each records the vendor (GSTIN, PAN, TDS type), category, receipt photo or PDF, project and payment.</li>
+    <li><b>GST.</b> The split (CGST/SGST vs IGST) is automatic. Input credit rules follow the category, for example meals are blocked under s.17(5). Reverse charge is supported.</li>
+    <li><b>TDS.</b> The app suggests TDS from each vendor's running total for the financial year.</li>
+    <li><b>Claims and bills.</b> Claims go through admin approval and are reimbursed in a batch. Bills to pay have due dates and an MSME 45-day flag.</li>
+    <li><b>Re-billing and recurring costs.</b> Billable expenses can be re-billed to the client with a markup. Recurring rent and subscriptions are drafted by the daily job.</li>
+    <li><b>GST &amp; TDS page.</b> Input credit in GSTR-3B Table 4 form, GSTR-2B matching from the portal's CSV, TDS deposits, and a purchase register plus TDS CSVs. Filing due dates appear on Home and Reports.</li>
+  </ul>
+  <p><b>Reports (rebuilt):</b> period, comparison, basis and client filters, then eight headline numbers (revenue, gross income, profit, cash and runway, money owed and days to get paid, utilisation, biggest-client share, quote win rate), then:</p>
+  <ul>
+    <li><b>Profit &amp; loss:</b> monthly bars, a waterfall, margin trend, spend by category, budget vs actual.</li>
+    <li><b>Clients &amp; services:</b> top clients against a 20% risk line, revenue by service, new vs returning, retention cohorts, client value.</li>
+    <li><b>Cash &amp; collections:</b> billed vs collected, days-to-get-paid trend against 45 days, a 13-week cash forecast, ageing, TDS both ways.</li>
+    <li><b>Projects &amp; team:</b> profitability with ₹ per hour, a utilisation heatmap, realisation, on-time %, the quote funnel.</li>
+  </ul>
+  <p>Every chart has a tooltip, a legend and a "View as table" option.</p>
+  <p><b>Speed:</b> pages load in about 0.2–0.5 s, down from 2–3.5 s. Functions now run in Mumbai next to the database, and the login check runs once per page.</p>
   <p><b>Time, team and calendar (live):</b></p>
   <ul>
     <li><b>Time:</b> a timer (from a task or the Time page; it shows in the header) and a weekly timesheet. People submit their week and the admin approves it.</li>
@@ -162,6 +180,10 @@
     <tr><td>Create events, book crew and kit, edit the kit list</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>See events</td><td>all</td><td>all</td><td>all</td><td>their projects' events + ones they're booked on</td><td>✗</td><td>✗</td></tr>
     <tr><td>Draft an invoice from approved time</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Add bills and receipts, vendors, pay bills, re-bill expenses, GST &amp; TDS page</td><td>✓</td><td>✓</td><td>read only</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>File own expense claims (with receipt)</td><td>✓</td><td>✓</td><td>✗</td><td>✓ (own projects)</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Approve and reimburse claims, record TDS deposits, edit categories</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Reports (team cost, margins and realisation need cost rates)</td><td>✓ (everything)</td><td>✓ (without team cost)</td><td>✓ (without team cost)</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Delete a project</td><td>✓ (only if nothing issued or approved time is tagged to it)</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Settings, bank accounts, Team (invite/remove)</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
   </table></div>
@@ -186,6 +208,12 @@
     <tr><td><code>members</code> (new columns)</td><td><code>cost_rate</code>, <code>bill_rate</code>, <code>weekly_capacity_hours</code>, <code>ics_token</code></td><td>Rates only via admin RPCs (<code>admin_member_rates</code>, <code>admin_project_costs</code>). Capacity via <code>team_capacity()</code> for staff.</td></tr>
     <tr><td><code>events</code>, <code>event_people</code>, <code>event_kit</code>, <code>kit</code></td><td>Shoots, meetings, deadlines with times, location, map link, tentative/confirmed/cancelled, call time, shot list, contacts; crew (team or outside, with role/phone); kit bookings</td><td>Editors write. Freelancers see events on their projects or ones they're booked on (<code>on_event()</code>).</td></tr>
     <tr><td><code>leave_requests</code>, <code>holidays</code></td><td>Leave (dates, half day, type, status) and studio holidays</td><td>Anyone requests their own; only the admin decides. Staff see all leave; freelancers their own.</td></tr>
+    <tr><td><code>vendors</code></td><td>Name, type, GSTIN, PAN, state, contact, bank/UPI, default category, TDS nature, company flag, MSME flag</td><td>Staff read; editors write. GSTIN checked by checksum; state and PAN derived from it.</td></tr>
+    <tr><td><code>expense_categories</code></td><td>19 seeded: input-credit rule (claimable / blocked s.17(5) / none), project cost vs overhead, TDS nature, reverse charge, monthly budget</td><td>Everyone on the team reads; admin edits.</td></tr>
+    <tr><td><code>expenses</code></td><td>Bills, receipts, claims: amounts, CGST/SGST/IGST, RCM, input-credit status, GSTR-2B status, TDS nature/rate/amount, paid from, approval, due date, billable + markup, invoice it was billed on, recurring rule, receipt path</td><td>Staff see all; people see their own claims. Only the admin approves claims (trigger). Paid or invoiced expenses are locked.</td></tr>
+    <tr><td><code>expense_payments</code>, <code>expense_balances</code> view</td><td>Payments (date, amount, mode, account, reference); payable = total − TDS, paid, balance</td><td>Editors pay bills; only the admin reimburses claims.</td></tr>
+    <tr><td><code>tds_challans</code></td><td>Monthly TDS deposits (CIN, BSR, date), linked to the deductions</td><td>Admin writes.</td></tr>
+    <tr><td><code>bank_accounts</code> (new columns)</td><td><code>kind</code> (bank / petty cash), opening balance and date</td><td>Drives cash in hand and runway in Reports. Petty cash never shows on invoices.</td></tr>
     <tr><td><code>notifications</code></td><td>Assigned, mentioned, commented, status changes, added to project</td><td>Each person reads only their own; can't be forged (actor must be you).</td></tr>
     <tr><td><code>documents</code> + <code>document_items</code></td><td>All five document types, snapshots of client + supplier, totals, share token, status</td><td>Unique <code>(doc_type, fy, number)</code>. Triggers lock issued documents and block deleting them.</td></tr>
     <tr><td><code>payments</code></td><td>Amount, TDS + section, mode, reference</td><td>Feeds the <code>document_balances</code> view (paid / partial / unpaid / overdue).</td></tr>
@@ -194,6 +222,7 @@
     <tr><td><code>audit_events</code></td><td>Who did what, with field-level diffs; <code>project_id</code> for the project activity feed</td><td>Append-only for users (no update/delete grants). Freelancers see only their projects' task/comment/file/deliverable events. Sort-only changes (board reordering) aren't logged.</td></tr>
     <tr><td>Storage <code>invoices/documents/…pdf</code></td><td>Latest PDF of issued documents</td><td>Private bucket; members read.</td></tr>
     <tr><td>Storage <code>files/projects/&lt;id&gt;/…</code></td><td>Project and task uploads</td><td>Private; 50 MB per file; access follows project membership; 5-minute signed download links.</td></tr>
+    <tr><td>Storage <code>files/expenses/&lt;id&gt;/…</code></td><td>Receipts</td><td>Staff, or the person who filed the claim. Photos shrink to WebP in the browser.</td></tr>
   </table></div>
   <h3>Secrets</h3>
   <p>Kept in <code>.env.local</code> (git-ignored) and Vercel env vars only: Supabase service-role key (used by the daily cron only), <code>CRON_SECRET</code>, Gmail app password (<code>SMTP_PASS</code>), DB password. The anon key is public by design; RLS protects the data.</p>
@@ -209,7 +238,7 @@
   <h2>Limits and cost (₹0)</h2>
   <div class="tablewrap"><table>
     <tr><th>Service</th><th>Plan</th><th>What could bite</th></tr>
-    <tr><td>Vercel</td><td>Hobby (free)</td><td>Hobby is officially for non-commercial use: a risk for a business tool, but the app isn't tied to Vercel. Crons run at most once a day. PDF function up to 60 s.</td></tr>
+    <tr><td>Vercel</td><td>Hobby (free)</td><td>Hobby is officially for non-commercial use: a risk for a business tool, but the app isn't tied to Vercel. Crons run at most once a day. PDF function up to 60 s. Functions are pinned to <b>bom1 (Mumbai)</b> in <code>vercel.json</code>, next to Supabase. Before this they ran in Washington DC, and every database call crossed the world.</td></tr>
     <tr><td>Supabase</td><td>Free</td><td>500 MB DB, 1 GB storage shared by invoice PDFs (~0.75 MB each) and project files. Photos over 2.5 MB are re-encoded to WebP (max 3000 px) in the browser; keep raws on Google Drive and add them as links. Pauses after 7 idle days; the daily cron touches it, so it stays awake. Free plan allows 2 active projects (this + jhalak).</td></tr>
     <tr><td>Gmail SMTP</td><td>Workspace account</td><td>About 2,000 emails/day. Needs 2-step verification + an app password.</td></tr>
     <tr><td>FX rates</td><td>frankfurter (free, keyless)</td><td>ECB reference rate; falls back to manual entry.</td></tr>
@@ -243,9 +272,13 @@
   <pre>npm install
 npm run dev                                   # http://localhost:3000 (needs .env.local)
 npm test                                      # unit tests: GST, money, words, numbering, pagination, reports, GSTR-1
-node scripts/security-test.mjs                # 98 database permission checks, as anon/viewer/member/freelancer
-node scripts/e2e.mjs http://localhost:3000    # 32 billing end-to-end checks; refuses to run if the workspace has data
+node scripts/security-test.mjs                # 117 database permission checks, as anon/viewer/member/freelancer
+node scripts/e2e.mjs http://localhost:3000    # 32 billing checks; WIPES the workspace, so it refuses to run once real data or team members exist
 node scripts/e2e-projects.mjs http://localhost:3000   # 44 project/time/calendar checks; safe on real data
+node scripts/e2e-money.mjs http://localhost:3000      # 25 expenses/claims/GST/Reports checks; safe on real data
+node scripts/perf-check.mjs https://app.korakaagaz.co  # page timings (median of 3)
+# Local test build that won't clash with a running `next dev`:
+NEXT_DIST_DIR=.next-e2e npm run build && NEXT_DIST_DIR=.next-e2e npx next start -p 3457
 node scripts/visual-diff.mjs public/dev-reference.png http://localhost:3000
 /dev/sample?full=1 | ?type=quote | ?export=1 | ?items=15   # template previews (dev only)</pre>
   <h3>Deploy</h3>
@@ -259,6 +292,39 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-01</td><td><b>Speed, expenses, analytics.</b>
+      <ul>
+        <li><b>Speed.</b> Functions moved to Mumbai (<code>vercel.json</code> regions bom1). Login is verified locally from the JWT (ES256 <code>getClaims</code>) and cached once per request with the role. The layout gates freelancers before streaming, pages get a loading skeleton, the board code is lazy-loaded, and the bell fetches less.
+          <ul>
+            <li>Measured on production with <code>perf-check.mjs</code>: page load went from 2.1–3.5 s to 0.16–0.46 s.</li>
+            <li>The region header went from <code>bom1::iad1</code> to <code>bom1::bom1</code>.</li>
+          </ul>
+        </li>
+        <li><b>Expenses</b> (migrations 0009–0010).
+          <ul>
+            <li>Vendors with GSTIN/PAN/TDS type.</li>
+            <li>19 categories carrying input-credit, TDS and reverse-charge defaults.</li>
+            <li>Bills, receipts and claims with receipts; automatic CGST/SGST/IGST split; TDS suggestions against FY limits.</li>
+            <li>Claims approved and reimbursed by the admin; payments; MSME and 180-day input-credit warnings.</li>
+            <li>Re-billing with markup to an invoice draft.</li>
+            <li>Recurring expenses drafted by the daily job.</li>
+            <li>GST &amp; TDS page: GSTR-3B Table 4, GSTR-2B matching, TDS deposits, CSVs.</li>
+            <li>Filing calendar on Home.</li>
+            <li>Opening balances and petty cash in Settings.</li>
+          </ul>
+        </li>
+        <li><b>Reports rebuilt</b> (migration 0011) with filters, health strip, and P&amp;L, clients, cash and team sections, using an SVG chart kit with tooltips, legends and table views. The palette was validated with the dataviz checker.</li>
+        <li><b>Fixed during testing</b>:
+          <ul>
+            <li>Formatting functions passed from server to client charts crashed Reports. They now use format names from a shared module.</li>
+            <li>Claims were charging GST on top of what people paid.</li>
+            <li>Empty charts showed duplicate axis labels.</li>
+            <li>A running <code>next dev</code> was clobbering the local test build. Tests now build into <code>.next-e2e</code>.</li>
+          </ul>
+        </li>
+        <li>The billing e2e now refuses to run once real team members exist.</li>
+        <li><b>Tests</b>: 103 unit tests; security test 98 → 117; new 25-check money e2e; projects e2e 44/44.</li>
+      </ul></td></tr>
     <tr><td>2026-10-31</td><td>Moved to <b>app.korakaagaz.co</b>: Namecheap CNAME to Vercel, <code>NEXT_PUBLIC_SITE_URL</code> updated and redeployed, Supabase Site URL and redirect list updated. Verified sign-in links land on the new address, other redirect targets are refused, and the 44 e2e checks pass there.</td></tr>
     <tr><td>2026-10-31</td><td>Google sign-in enabled: an OAuth client in team@korakaagaz.co's Google Cloud, with the Google provider switched on in Supabase. Checked that Supabase redirects to Google with the client and that Google accepts the callback URI.</td></tr>
     <tr><td>2026-10-30</td><td><b>Phase 2: time, team and calendar.</b>
@@ -362,6 +428,23 @@ vercel deploy --prod
       "Mark it Tentative while you wait for the client, then Confirmed.",
       "Open the event for the <b>call sheet</b>: crew, call time, location, kit checklist, shot list, contacts. Print it or save it as PDF.",
     ],
+    "Pay and claim expenses": [
+      "Add a vendor once (GSTIN → state and PAN fill in; choose its TDS type, e.g. contract work).",
+      "<b>Expenses → Add bill</b>: pick the vendor and category, type the amount. GST splits into CGST+SGST or IGST by state. The category decides whether input credit is claimable (meals and cabs are blocked). TDS is suggested once the vendor crosses its limit this year.",
+      "Attach the receipt (phone camera works), tag a project, tick <b>Bill this to the client</b> with a markup if it's a pass-through cost.",
+      "Pay it later from the bill's page. The amount owed is the total minus TDS deducted.",
+      "Team members file <b>claims</b> for money they spent. The admin approves and reimburses them in one batch, and everyone is notified at each step.",
+      "On the project's Billing tab, <b>Draft invoice from billable expenses</b> adds them at cost plus markup, and they can't be billed twice.",
+      "Month end: <b>GST &amp; TDS</b> shows input credit for GSTR-3B. Upload the portal's GSTR-2B CSV to match bills, record the TDS deposit, and download the purchase register and TDS CSVs for your CA.",
+    ],
+    "Read the numbers": [
+      "<b>Reports</b>: pick a period (month, quarter, FY or custom), what to compare with, invoiced or received, and optionally one client.",
+      "The top row has the eight numbers that matter, each with its change and a 12-month sparkline.",
+      "Profit &amp; loss: where the money went (waterfall), margin trend, spend by category and budget.",
+      "Clients: concentration risk, services, new vs returning, retention cohorts.",
+      "Cash: days to get paid, billed vs collected, and a 13-week forecast. Set opening bank balances in Settings so it starts from real cash.",
+      "Team: utilisation heatmap, project profitability and ₹ per hour, on-time delivery, quote funnel.",
+    ],
     "Bring in a freelancer": [
       "Admin: <b>Team</b> → invite their email as <b>Freelancer</b>.",
       "Add them to a project (Overview → Team) or just assign them a task.",
@@ -423,6 +506,15 @@ vercel deploy --prod
     ["src/app/(app)/my-work/*", "My tasks by due date"],
     ["src/components/pm/*", "TaskDrawer side panel, Files (direct-to-storage upload, Drive links), PeoplePicker, Avatar, Pills"],
     ["src/app/(app)/Nav.tsx · Bell.tsx · Shortcuts.tsx", "Sidebar + phone bottom bar by role, notifications bell, keyboard shortcuts (g h / g w / g p, n, q, p, /)"],
+    ["supabase/migrations/0009_expenses.sql · 0010 · 0011_analytics.sql", "Vendors, categories (seeded), expenses, payments, TDS challans, balances view, guard trigger, receipt storage rules, cash accounts; monthly time-cost RPC for analytics"],
+    ["src/lib/expenses.ts", "Purchase GST split, TDS natures + suggestion with limits, GSTR-3B Table 4 input-credit buckets, re-bill lines with markup, recurring dates, GSTR-2B CSV reader + matcher"],
+    ["src/lib/compliance.ts", "GST/TDS/income-tax due dates (monthly or QRMP, state-wise 22nd/24th, March TDS on 30 April)"],
+    ["src/lib/analytics.ts · analytics-data.ts", "Periods and comparisons, accrual/cash revenue, P&L + waterfall, categories, concentration, new vs returning, cohorts, DSO, collection effectiveness, cash + 13-week forecast, project profit, utilisation, realisation, on-time, quote funnel; one batched loader"],
+    ["src/lib/expense-data.ts · src/app/actions/expenses.ts", "Expense reads; vendor/category/expense/claim/payment/receipt/re-bill/2B/challan actions"],
+    ["src/app/(app)/expenses/* · vendors/*", "Expenses list, form, detail, claims, GST &amp; TDS, categories; vendors and vendor ledger"],
+    ["src/components/charts/Charts.tsx · src/lib/format.ts", "SVG chart kit (columns, lines, waterfall, ranked bars, heatmap, funnel, bullet, KPI + sparkline), validated palette, shared number formats"],
+    ["src/app/(app)/reports/page.tsx", "Analytics page"],
+    ["scripts/e2e-money.mjs · scripts/perf-check.mjs", "25 end-to-end checks of expenses, claims, GST/TDS, re-billing and Reports (safe on real data); page timing on production"],
     ["supabase/migrations/0007_time_calendar.sql · 0008_time_invoicing.sql", "Time entries with approval + locks, rates/capacity/feed token on members, admin cost RPCs, events/crew/kit, leave, holidays; editors can link approved time to invoices"],
     ["src/lib/time.ts", "Durations, timer rounding, weeks, available days, weekly load, retainer burn, invoice lines from time"],
     ["src/lib/calendar.ts", "IST conversions, event days, overlap + conflict detection, month grid, iCalendar feed writer"],
@@ -461,7 +553,7 @@ vercel deploy --prod
     ["src/app/api/fx", "Free FX rate fetch"],
     ["src/app/login · auth/callback", "Google sign-in and callback (handles \"not invited\")"],
     ["src/components/BarChart.tsx · NumberInput.tsx · ClientForm.tsx · ui.tsx", "Shared UI"],
-    ["scripts/security-test.mjs", "98 database permission checks as anon, viewer, member and freelancer (incl. storage, time, calendar, leave)"],
+    ["scripts/security-test.mjs", "117 database permission checks as anon, viewer, member and freelancer (incl. storage, time, calendar, leave, expenses)"],
     ["scripts/e2e.mjs", "32 end-to-end checks (refuses to run over real data)"],
     ["scripts/visual-diff.mjs", "Template vs reference image"],
     ["vercel.json", "Cron schedule (03:30 UTC = 09:00 IST)"],

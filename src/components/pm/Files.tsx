@@ -12,7 +12,7 @@ const MAX = 50 * 1024 * 1024; // Supabase free-tier per-file limit
 const SHRINK_OVER = 2.5 * 1024 * 1024;
 
 /** Big photos are re-encoded to WebP (max 3000px) so the 1 GB free storage lasts. */
-async function shrinkImage(file: File): Promise<File> {
+export async function shrinkImage(file: File): Promise<File> {
   if (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size <= SHRINK_OVER) return file;
   try {
     const bmp = await createImageBitmap(file);
@@ -29,7 +29,7 @@ async function shrinkImage(file: File): Promise<File> {
   }
 }
 
-function safeName(name: string) {
+export function safeName(name: string) {
   return name.normalize("NFKD").replace(/[^\w.-]+/g, "-").replace(/-+/g, "-").slice(-80) || "file";
 }
 
