@@ -46,7 +46,10 @@ function groups(role: Role): Group[] {
     },
     {
       title: "Clients",
-      items: [{ href: "/clients", label: "Clients" }],
+      items: [
+        { href: "/crm", label: "Leads" },
+        { href: "/clients", label: "Clients" },
+      ],
     },
     {
       title: "Money",

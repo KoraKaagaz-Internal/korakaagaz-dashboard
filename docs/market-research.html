@@ -265,8 +265,8 @@
       <tr><td>Calendar</td><td>Shoots with crew + kit, conflict warnings, call sheets</td><td>Gap</td><td class="y">✓</td><td>Tentative vs confirmed; call sheet PDF</td></tr>
       <tr><td>Calendar</td><td>Google Calendar sync</td><td>T</td><td class="y">✓</td><td>Private ICS feed per person (no API)</td></tr>
       <tr><td>Team</td><td>Workload incl. leave and holidays</td><td>D</td><td class="y">✓</td><td>Capacity − leave vs estimates + bookings</td></tr>
-      <tr><td>CRM</td><td>Lead pipeline, enquiry form, convert to client + project</td><td>T</td><td class="p">◐ 3</td><td>Honeypot + rate limit instead of paid CAPTCHA</td></tr>
-      <tr><td>CRM</td><td>Discovery-call booking page</td><td>D</td><td class="p">◐ 3</td><td>Slots minus calendar; .ics invite by email</td></tr>
+      <tr><td>CRM</td><td>Lead pipeline, enquiry form, convert to client + project</td><td>T</td><td class="y">✓</td><td>Honeypot + rate limit instead of paid CAPTCHA</td></tr>
+      <tr><td>CRM</td><td>Discovery-call booking page</td><td>D</td><td class="y">✓</td><td>Slots minus calendar; .ics invite by email</td></tr>
       <tr><td>Documents</td><td>Templates with merge fields + clause library</td><td>T</td><td class="p">◐ 4</td><td>Rendered to PDF with the existing Puppeteer pipeline</td></tr>
       <tr><td>Documents</td><td>Interactive proposal with optional add-ons → accept → quote/invoice/project</td><td>D</td><td class="p">◐ 4</td><td>Same share-token pattern as invoices</td></tr>
       <tr><td>Documents</td><td>Click-to-sign with email OTP, audit trail, certificate, hash check</td><td>T</td><td class="p">◐ 4</td><td>SHA-256, append-only events, pdf-lib certificate page</td></tr>
@@ -300,7 +300,7 @@
   <ol class="recs">
     <li><b>Projects and tasks, with freelancer access.</b> <span class="y">Live</span> (phase 1). Six studio templates, board/list/timeline, task panel, files and links, notifications, "My work".</li>
     <li><b>Time, team and calendar.</b> <span class="y">Live</span> (phase 2). Timer, timesheets with approval, invoice from time, margins, retainer burn, shoots with crew/kit, conflicts and call sheets, Google Calendar feed, leave and workload.</li>
-    <li><b>CRM.</b> Pipeline, enquiry form, convert to client + project, booking page.</li>
+    <li><b>CRM.</b> <span class="y">Live</span> (phase 3). Pipeline board, embeddable enquiry form with source tags, convert to client + project, discovery-call booking page, follow-ups, pipeline analytics.</li>
     <li><b>Documents.</b> Templates, interactive proposals, click-to-sign, document hub with renewals.</li>
     <li><b>Onboarding and client portal.</b> Magic-link portal, briefs, asset chasers.</li>
     <li><b>Proofing.</b> Pins, versions, approvals, revision counter.</li>
@@ -422,7 +422,7 @@
     <li><b>Employee records:</b> onboarding checklist, documents, equipment issued. Strict access.</li>
     <li><b>Goals/OKRs</b> on the dashboard, and 1:1 notes.</li>
   </ol>
-  <p><b>Already planned:</b> CRM, then documents and e-sign, then onboarding and client portal, then proofing, then automations.</p>
+  <p><b>Decision (2026-11-02):</b> build all ten, after the planned phases. CRM is done. Next: documents and e-sign, then onboarding and client portal, then proofing, then automations, then these ten in the order above.</p>
   <p><b>Skip:</b></p>
   <ul>
     <li>team chat (WhatsApp does it)</li>

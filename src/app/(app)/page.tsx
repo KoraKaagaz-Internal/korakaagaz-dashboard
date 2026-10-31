@@ -14,12 +14,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const { denied } = await searchParams;
   const today = todayIso();
   const fy = financialYear(today);
-  const [docs, { data: pays }, settings, events, { count: tdsLines }] = await Promise.all([
+  const [docs, { data: pays }, settings, events, { count: tdsLines }, { data: followUps }] = await Promise.all([
     listDocuments(),
     supabase.from("payments").select("*, documents(currency, fx_rate)").order("paid_on", { ascending: false }).limit(1000),
     getSettings(),
     listEvents(today, addDays(today, 7)),
     supabase.from("expenses").select("id", { count: "exact", head: true }).gt("tds_amount", 0),
+    supabase.from("leads").select("id, name, company, stage, follow_up_on, service").in("stage", ["enquiry", "discovery", "proposal", "negotiation"]).lte("follow_up_on", today).order("follow_up_on").limit(8),
   ]);
   const dues = upcoming(today, 30, { gstFiling: settings.gst_filing ?? "monthly", stateCode: settings.state_code, tds: !!tdsLines });
   const shoots = events.filter((e) => e.status !== "cancelled" && e.type !== "deadline");
@@ -101,6 +102,22 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           </ul>
         </Card>
       </div>
+
+      {(followUps ?? []).length > 0 && (
+        <Card title={`Leads to follow up · ${followUps!.length}`} actions={<Link href="/crm" className="text-sm text-navy hover:underline">Leads</Link>}>
+          <ul className="divide-y divide-neutral-100 text-sm">
+            {followUps!.map((l) => (
+              <li key={l.id}>
+                <Link href={`/crm/${l.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
+                  <span className={`w-24 text-xs ${l.follow_up_on < today ? "font-semibold text-red-700" : "text-neutral-500"}`}>{l.follow_up_on < today ? `${daysBetween(l.follow_up_on, today)}d overdue` : "Today"}</span>
+                  <span className="min-w-0 flex-1 truncate">{l.company || l.name}</span>
+                  <span className="text-xs text-neutral-500">{l.service}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="This week's shoots and meetings" actions={<Link href="/calendar?view=week" className="text-sm text-navy hover:underline">Calendar</Link>}>

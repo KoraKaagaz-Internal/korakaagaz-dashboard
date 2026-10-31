@@ -35,6 +35,7 @@ import {
 } from "@/lib/analytics";
 import { loadAnalytics, serviceLines } from "@/lib/analytics-data";
 import { upcoming } from "@/lib/compliance";
+import { leadFunnel, pipeline } from "@/lib/crm";
 import { getSettings, requireMember } from "@/lib/data";
 import { GSTR1_SECTIONS } from "@/lib/gstr1";
 import { addDays, daysBetween, formatInvoiceDate, todayIso } from "@/lib/money";
@@ -137,6 +138,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const real = isAdmin ? realisation(costs, accrual, cur.from, cur.to) : null;
   const ot = onTime(data.tasks, cur.from, cur.to);
   const funnel = quoteFunnel(docs, cur.from, cur.to);
+  const leadsF = leadFunnel(data.leads, cur.from, cur.to);
+  const leadsPrev = leadFunnel(data.leads, prev.from, prev.to);
+  const pipe = pipeline(data.leads);
   const funnelPrev = quoteFunnel(docs, prev.from, prev.to);
   const svc = byService(services);
   const monthsInPeriod = months(cur.from, cur.to).length;
@@ -697,6 +701,34 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           <p className="mt-3 text-xs text-neutral-500">
             Win rate counts decided quotes only (accepted ÷ accepted + declined + expired). Leads will join this funnel when the CRM arrives.
           </p>
+        </Frame>
+      </div>
+
+      {/* ------------------------------------------------------------- pipeline */}
+      <h2 className="pt-2 text-lg font-semibold">Pipeline &amp; leads</h2>
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Kpi label="New enquiries" value={String(leadsF.stages[0].count)} delta={delta(leadsF.stages[0].count, leadsPrev.stages[0].count)} />
+        <Kpi label="Lead win rate" value={pct(leadsF.winRate)} sub="won ÷ (won + lost)" />
+        <Kpi label="Open pipeline" value={compactInr(pipe.openValue)} sub={`likely ${compactInr(pipe.weighted)}`} />
+        <Kpi label="Days to win" value={leadsF.avgDaysToWin === null ? "—" : `${leadsF.avgDaysToWin}`} sub="enquiry to won, average" upIsGood={false} />
+      </section>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Frame title="Lead funnel" subtitle={`Leads that came in during ${cur.label}, by how far they got`} table={{ columns: ["Stage", "Leads"], rows: leadsF.stages.map((s) => [s.stage, s.count]) }}>
+          <Funnel stages={leadsF.stages} />
+        </Frame>
+        <Frame
+          title="Where leads come from"
+          subtitle="Leads and wins by source"
+          table={{ columns: ["Source", "Leads", "Won", "Win rate", "Won value"], rows: leadsF.sources.map((s) => [s.source, s.leads, s.won, s.winRate === null ? "—" : `${s.winRate}%`, inrFull(s.value)]) }}
+        >
+          {leadsF.sources.length ? (
+            <HBars rows={leadsF.sources.map((s) => ({ label: s.source, value: s.leads, extra: `${s.won} won${s.winRate !== null ? ` · ${s.winRate}%` : ""}` }))} format="num" color={SERIES[2]} />
+          ) : (
+            <p className="text-sm text-neutral-500">No leads in this period.</p>
+          )}
+        </Frame>
+        <Frame title="Open pipeline by stage" subtitle="Today, at full value" table={{ columns: ["Stage", "Leads", "Value"], rows: pipe.by.filter((b) => b.stage !== "won" && b.stage !== "lost").map((b) => [b.label, b.count, inrFull(b.value)]) }}>
+          <HBars rows={pipe.by.filter((b) => b.stage !== "won" && b.stage !== "lost").map((b) => ({ label: b.label, value: b.value, extra: `${b.count}` }))} />
         </Frame>
       </div>
 

@@ -76,7 +76,7 @@
 <body>
 <header class="top"><div class="in">
   <strong>KORA KAAGAZ · Invoices</strong>
-  <a href="#overview">Overview</a><a href="#map">System map</a><a href="#flows">Flows</a><a href="#roles">Roles</a>
+  <a href="#overview">Overview</a><a href="#roadmap">Roadmap</a><a href="#map">System map</a><a href="#flows">Flows</a><a href="#roles">Roles</a>
   <a href="#data">Data</a><a href="#limits">Limits</a><a href="#code">Code map</a><a href="#run">Run</a>
   <a href="#changelog">Change log</a><a href="market-research.html">Research</a><a href="#glossary">Glossary</a>
   <button id="theme" type="button" aria-label="Toggle theme">◐</button>
@@ -84,11 +84,20 @@
 
 <main>
 <section id="overview">
-  <span class="pill">Last updated 2026-11-01</span>
+  <span class="pill">Last updated 2026-11-02</span>
   <h1>Kora Kaagaz Studio</h1>
   <p><b>Live:</b> <a href="https://app.korakaagaz.co">app.korakaagaz.co</a> (also <a href="https://invoice-generator-flax-pi.vercel.app">invoice-generator-flax-pi.vercel.app</a>) · Supabase project <code>invoice-generator</code> (ref <code>komdaeylldwknhwcjevv</code>, Mumbai) · Vercel project <code>invoice-generator</code> · Market research: <a href="market-research.html">market-research.html</a></p>
-  <p><b>Where it's going:</b> one tool for the whole studio. Live so far: invoicing; projects and tasks; time, team and calendar; expenses with GST credit and TDS; and a full analytics page. Next, in order: CRM; documents with e-signatures; client onboarding and a client portal; proofing; then a studio dashboard with automations. The plan and research are in <a href="market-research.html#agency">market-research.html</a>.</p>
+  <p><b>Where it's going:</b> one tool for the whole studio. Live so far: invoicing; projects and tasks; time, team and calendar; expenses with GST credit and TDS; analytics; and the CRM. Next, in order: documents with e-signatures; client onboarding and a client portal; proofing; then a studio dashboard with automations. The plan and research are in <a href="market-research.html#agency">market-research.html</a>.</p>
   <p><b>Projects (live):</b> start a project from a studio template (brand identity, product shoot, campaign shoot, social retainer, packaging, website). Then work it on a board, list or timeline, with a task side panel for assignees, dates, estimates, checklist, comments with @mentions and files. Each project also has deliverables with revision limits, a team, a staff-only budget, a billing tab and an activity feed. "My work" lists everyone's tasks, and a bell shows notifications. <b>Freelancers</b> see only the projects they're added to and never see clients or money.</p>
+  <p><b>CRM (live):</b></p>
+  <ul>
+    <li><b>Leads board</b> with stages Enquiry → Discovery call → Proposal sent → Negotiation → Won / Lost. Lost asks for a reason, and each lead remembers how far it got.</li>
+    <li><b>Each lead has a page</b> with a history of calls, WhatsApp, email and notes, a next follow-up date, and buttons to email, WhatsApp or call.</li>
+    <li><b>Won → set up</b> creates the client (or links one with the same email) and a project from a template. A quote is then one click away.</li>
+    <li><b>Enquiry form</b> at <code>/enquire</code>: public, embeddable with <code>?embed=1</code>, and tags the source with <code>?source=instagram</code>. Spam is caught with a hidden field, a 3-second minimum, and 5 per hour from one hashed address.</li>
+    <li><b>Booking page</b> at <code>/book/&lt;slug&gt;</code>: free times come from working hours minus calendar events (with a buffer). A booking creates a calendar meeting, moves the lead to Discovery call, and emails an .ics invite.</li>
+    <li><b>Follow-ups</b> show on Home and as daily notifications. Reports gains a pipeline section: lead funnel, sources, and open pipeline by stage.</li>
+  </ul>
   <p><b>Expenses (live):</b></p>
   <ul>
     <li><b>Bills, receipts and team claims.</b> Each records the vendor (GSTIN, PAN, TDS type), category, receipt photo or PDF, project and payment.</li>
@@ -121,6 +130,28 @@
     <li><b>Template:</b> one fixed 852 × 1278 px React template (<code>DocumentTemplate</code>) renders the editor preview, the client share page, the print page and the PDF, so they always match.</li>
   </ul>
   <div class="callout"><b>Setup left for you</b>: a Gmail app password for team@korakaagaz.co so emails actually send (until then they're logged as "skipped" and invites show a message you can copy); Google sign-in and app.korakaagaz.co are live (2026-10-31).</div>
+</section>
+
+<section id="roadmap">
+  <h2>Roadmap</h2>
+  <p class="muted">Agreed with the owner on 2026-11-02: everything below gets built, in this order.</p>
+  <ol>
+    <li><s>Invoicing, projects &amp; tasks, time/team/calendar, expenses, analytics, CRM</s> (live)</li>
+    <li>Documents: proposal and contract templates, click-to-sign with email OTP and audit certificate, document hub with renewals</li>
+    <li>Client onboarding and magic-link client portal</li>
+    <li>Proofing and approvals on creative work</li>
+    <li>Automations (fixed rules with toggles) and a studio dashboard</li>
+    <li>Bank statement CSV import and reconciliation</li>
+    <li>Asset/kit register with depreciation, insurance and service dates</li>
+    <li>Client feedback (NPS) → testimonials → case studies / portfolio</li>
+    <li>Installable phone app (PWA) with offline call sheets and timer</li>
+    <li>Internal wiki / SOPs linked to project templates</li>
+    <li>Client brand-asset library (guidelines, colours, fonts, Drive links)</li>
+    <li>Client request intake / tickets through the portal</li>
+    <li>Payroll basics: salary slips, Professional Tax; PF/ESI optional</li>
+    <li>Employee records and onboarding checklist</li>
+    <li>Goals/OKRs and 1:1 notes</li>
+  </ol>
 </section>
 
 <section id="map">
@@ -184,6 +215,9 @@
     <tr><td>File own expense claims (with receipt)</td><td>✓</td><td>✓</td><td>✗</td><td>✓ (own projects)</td><td>✗</td><td>✗</td></tr>
     <tr><td>Approve and reimburse claims, record TDS deposits, edit categories</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Reports (team cost, margins and realisation need cost rates)</td><td>✓ (everything)</td><td>✓ (without team cost)</td><td>✓ (without team cost)</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Leads: add, move, log activity, convert to client + project</td><td>✓</td><td>✓</td><td>read only</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Enquiry form &amp; booking page settings; delete leads</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Send an enquiry / book a call (public pages)</td><td colspan="5">anyone with the link, with no login; spam-limited</td><td>✓</td></tr>
     <tr><td>Delete a project</td><td>✓ (only if nothing issued or approved time is tagged to it)</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Settings, bank accounts, Team (invite/remove)</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
   </table></div>
@@ -208,6 +242,9 @@
     <tr><td><code>members</code> (new columns)</td><td><code>cost_rate</code>, <code>bill_rate</code>, <code>weekly_capacity_hours</code>, <code>ics_token</code></td><td>Rates only via admin RPCs (<code>admin_member_rates</code>, <code>admin_project_costs</code>). Capacity via <code>team_capacity()</code> for staff.</td></tr>
     <tr><td><code>events</code>, <code>event_people</code>, <code>event_kit</code>, <code>kit</code></td><td>Shoots, meetings, deadlines with times, location, map link, tentative/confirmed/cancelled, call time, shot list, contacts; crew (team or outside, with role/phone); kit bookings</td><td>Editors write. Freelancers see events on their projects or ones they're booked on (<code>on_event()</code>).</td></tr>
     <tr><td><code>leave_requests</code>, <code>holidays</code></td><td>Leave (dates, half day, type, status) and studio holidays</td><td>Anyone requests their own; only the admin decides. Staff see all leave; freelancers their own.</td></tr>
+    <tr><td><code>leads</code></td><td>Name, company, contact, source, service, budget, value, stage, furthest stage, lost reason, owner, follow-up, message, linked client/project, hashed IP (form rate limit), won/lost dates</td><td>Staff read; editors write; never readable by freelancers or anon. Public submissions go through validated server code with the service key.</td></tr>
+    <tr><td><code>lead_activities</code></td><td>Calls, WhatsApp, email, meetings, notes, stage changes</td><td>Authors can only post as themselves.</td></tr>
+    <tr><td><code>settings.booking</code>, <code>settings.enquiry_services</code></td><td>Booking page (slug, length, days, hours, buffer, notice, horizon, location) and the form's service list</td><td>Admin edits in Leads → Enquiry form &amp; booking.</td></tr>
     <tr><td><code>vendors</code></td><td>Name, type, GSTIN, PAN, state, contact, bank/UPI, default category, TDS nature, company flag, MSME flag</td><td>Staff read; editors write. GSTIN checked by checksum; state and PAN derived from it.</td></tr>
     <tr><td><code>expense_categories</code></td><td>19 seeded: input-credit rule (claimable / blocked s.17(5) / none), project cost vs overhead, TDS nature, reverse charge, monthly budget</td><td>Everyone on the team reads; admin edits.</td></tr>
     <tr><td><code>expenses</code></td><td>Bills, receipts, claims: amounts, CGST/SGST/IGST, RCM, input-credit status, GSTR-2B status, TDS nature/rate/amount, paid from, approval, due date, billable + markup, invoice it was billed on, recurring rule, receipt path</td><td>Staff see all; people see their own claims. Only the admin approves claims (trigger). Paid or invoiced expenses are locked.</td></tr>
@@ -272,10 +309,11 @@
   <pre>npm install
 npm run dev                                   # http://localhost:3000 (needs .env.local)
 npm test                                      # unit tests: GST, money, words, numbering, pagination, reports, GSTR-1
-node scripts/security-test.mjs                # 117 database permission checks, as anon/viewer/member/freelancer
+node scripts/security-test.mjs                # 125 database permission checks, as anon/viewer/member/freelancer
 node scripts/e2e.mjs http://localhost:3000    # 32 billing checks; WIPES the workspace, so it refuses to run once real data or team members exist
 node scripts/e2e-projects.mjs http://localhost:3000   # 44 project/time/calendar checks; safe on real data
 node scripts/e2e-money.mjs http://localhost:3000      # 25 expenses/claims/GST/Reports checks; safe on real data
+node scripts/e2e-crm.mjs http://localhost:3000        # 21 CRM checks incl. public enquiry + booking; safe on real data
 node scripts/perf-check.mjs https://app.korakaagaz.co  # page timings (median of 3)
 # Local test build that won't clash with a running `next dev`:
 NEXT_DIST_DIR=.next-e2e npm run build && NEXT_DIST_DIR=.next-e2e npx next start -p 3457
@@ -292,6 +330,23 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-02</td><td><b>Phase 3: CRM.</b>
+      <ul>
+        <li>Migrations 0012–0013: leads, lead activities, booking and enquiry settings, furthest-stage tracking.</li>
+        <li>Leads board, list and lead page with history, follow-ups and convert (client + templated project).</li>
+        <li>Public <code>/enquire</code> form (embeddable, source-tagged, spam-limited) and <code>/book/&lt;slug&gt;</code> discovery-call booking from calendar availability with an .ics invite.</li>
+        <li>Follow-ups on Home and in the daily job. Pipeline section in Reports.</li>
+        <li>Roadmap now includes all ten additions the user asked for (see below).</li>
+        <li>Fixed during testing:
+          <ul>
+            <li>Spam submissions got a visible validation error instead of a silent drop.</li>
+            <li>The follow-up date used the UTC day.</li>
+            <li>The stage menu didn't update after converting.</li>
+            <li>Form leads had no owner.</li>
+          </ul>
+        </li>
+        <li>Tests: 108 unit tests; security 117 → 125; new 21-check CRM e2e.</li>
+      </ul></td></tr>
     <tr><td>2026-11-01</td><td><b>Speed, expenses, analytics.</b>
       <ul>
         <li><b>Speed.</b> Functions moved to Mumbai (<code>vercel.json</code> regions bom1). Login is verified locally from the JWT (ES256 <code>getClaims</code>) and cached once per request with the role. The layout gates freelancers before streaming, pages get a loading skeleton, the board code is lazy-loaded, and the bell fetches less.
@@ -386,7 +441,7 @@ vercel deploy --prod
 <script>
   const NODES = {
     browser: ["Team", "The admin (team@korakaagaz.co) plus invited Members, Viewers and Freelancers, in a browser or on a phone (bottom bar on small screens). Navigation and buttons adapt to the role. Freelancers only get My work and Projects."],
-    middleware: ["Middleware", "<code>src/middleware.ts</code> refreshes the Supabase session and sends signed-out visitors to <code>/login</code>. Public paths: <code>/login</code>, <code>/auth</code>, <code>/d</code> (share links), <code>/print/share</code>, <code>/api/share</code>, <code>/api/cron</code>, <code>/api/ics</code> (token-checked calendar feeds)."],
+    middleware: ["Middleware", "<code>src/middleware.ts</code> refreshes the Supabase session and sends signed-out visitors to <code>/login</code>. Public paths: <code>/login</code>, <code>/auth</code>, <code>/enquire</code>, <code>/book</code>, <code>/d</code> (share links), <code>/print/share</code>, <code>/api/share</code>, <code>/api/cron</code>, <code>/api/ics</code> (token-checked calendar feeds)."],
     auth: ["Google sign-in + invite gate", "Supabase Google OAuth (PKCE). The <code>gate_new_user</code> trigger on <code>auth.users</code> raises an error unless the email is in <code>members</code>, so uninvited people never get an account. <code>/auth/callback</code> shows \"isn't invited\" in that case."],
     pages: ["Pages + server actions", "Server components read via <code>src/lib/data.ts</code> (<code>requireMember(role)</code> for staff pages; <code>requireTeam()</code> for pages freelancers may open) and <code>src/lib/pm-data.ts</code> for projects. Mutations live in <code>src/app/actions/*.ts</code>: zod validation, server-side totals, then RLS applies."],
     db: ["Postgres", "Workspace-wide tables with RLS by role. <code>next_doc_number()</code> gives FY series per type. Triggers lock issued documents, block deleting them, and write the append-only <code>audit_events</code>. <code>document_balances</code> view computes paid/partial/overdue."],
@@ -427,6 +482,14 @@ vercel deploy --prod
       "If someone or some kit is already booked at that time, the form warns before you save. The Crew &amp; kit view shows the whole week.",
       "Mark it Tentative while you wait for the client, then Confirmed.",
       "Open the event for the <b>call sheet</b>: crew, call time, location, kit checklist, shot list, contacts. Print it or save it as PDF.",
+    ],
+    "Win new work": [
+      "A brand fills the enquiry form on your site (or you add a lead by hand from a referral or Instagram DM). It lands in <b>Leads → Enquiry</b> with a follow-up for tomorrow, and the studio is notified.",
+      "Or they book a discovery call on your booking page. It appears in the calendar and the lead moves to <b>Discovery call</b>.",
+      "Log every call or WhatsApp with the next follow-up date. Due follow-ups show on Home and as notifications each morning.",
+      "Send a quote, then drag to <b>Proposal sent</b> and <b>Negotiation</b>.",
+      "Drop on <b>Won</b>: the client and a project (from a studio template) are created. Drop on <b>Lost</b>: pick the reason.",
+      "Reports → Pipeline shows the lead funnel, which sources win, and the open pipeline.",
     ],
     "Pay and claim expenses": [
       "Add a vendor once (GSTIN → state and PAN fill in; choose its TDS type, e.g. contract work).",
@@ -506,6 +569,11 @@ vercel deploy --prod
     ["src/app/(app)/my-work/*", "My tasks by due date"],
     ["src/components/pm/*", "TaskDrawer side panel, Files (direct-to-storage upload, Drive links), PeoplePicker, Avatar, Pills"],
     ["src/app/(app)/Nav.tsx · Bell.tsx · Shortcuts.tsx", "Sidebar + phone bottom bar by role, notifications bell, keyboard shortcuts (g h / g w / g p, n, q, p, /)"],
+    ["supabase/migrations/0012_crm.sql · 0013_lead_furthest_stage.sql", "Leads, activities, booking/enquiry settings, stage dates + furthest stage trigger"],
+    ["src/lib/crm.ts · crm-data.ts · src/app/actions/crm.ts", "Stages, sources, pipeline/funnel maths, free booking slots; lead reads; lead, activity, convert, settings, public enquiry and booking actions"],
+    ["src/app/(app)/crm/*", "Leads board (dnd-kit) and list, lead page with history and convert, enquiry form &amp; booking settings"],
+    ["src/app/enquire · src/app/book/[slug]", "Public enquiry form (embeddable) and discovery-call booking page"],
+    ["scripts/e2e-crm.mjs", "21 end-to-end CRM checks incl. public pages; safe on real data (restores booking settings)"],
     ["supabase/migrations/0009_expenses.sql · 0010 · 0011_analytics.sql", "Vendors, categories (seeded), expenses, payments, TDS challans, balances view, guard trigger, receipt storage rules, cash accounts; monthly time-cost RPC for analytics"],
     ["src/lib/expenses.ts", "Purchase GST split, TDS natures + suggestion with limits, GSTR-3B Table 4 input-credit buckets, re-bill lines with markup, recurring dates, GSTR-2B CSV reader + matcher"],
     ["src/lib/compliance.ts", "GST/TDS/income-tax due dates (monthly or QRMP, state-wise 22nd/24th, March TDS on 30 April)"],
@@ -553,7 +621,7 @@ vercel deploy --prod
     ["src/app/api/fx", "Free FX rate fetch"],
     ["src/app/login · auth/callback", "Google sign-in and callback (handles \"not invited\")"],
     ["src/components/BarChart.tsx · NumberInput.tsx · ClientForm.tsx · ui.tsx", "Shared UI"],
-    ["scripts/security-test.mjs", "117 database permission checks as anon, viewer, member and freelancer (incl. storage, time, calendar, leave, expenses)"],
+    ["scripts/security-test.mjs", "125 database permission checks as anon, viewer, member and freelancer (incl. storage, time, calendar, leave, expenses, leads)"],
     ["scripts/e2e.mjs", "32 end-to-end checks (refuses to run over real data)"],
     ["scripts/visual-diff.mjs", "Template vs reference image"],
     ["vercel.json", "Cron schedule (03:30 UTC = 09:00 IST)"],

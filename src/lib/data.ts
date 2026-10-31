@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { DEFAULT_BOOKING } from "./crm";
 import { getUser } from "./supabase/server";
 import type {
   AuditEvent,
@@ -60,6 +61,8 @@ export async function getSettings(): Promise<Settings> {
     default_gst_rate: Number(data?.default_gst_rate ?? 18),
     terms: data?.terms ?? {},
     message_templates: data?.message_templates ?? {},
+    booking: { ...DEFAULT_BOOKING, ...(data?.booking ?? {}) },
+    enquiry_services: data?.enquiry_services ?? [],
   };
 }
 

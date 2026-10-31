@@ -1,5 +1,6 @@
 import "server-only";
 import type { ACost, ADoc, AExp, APay } from "./analytics";
+import type { Lead } from "./crm";
 import { requireMember } from "./data";
 import { addDays } from "./money";
 
@@ -12,7 +13,7 @@ const n = (v: unknown) => Number(v ?? 0);
  */
 export async function loadAnalytics(opts: { since: string; until: string; weeksFrom: string }) {
   const { supabase, isAdmin } = await requireMember();
-  const [docs, bals, pays, exps, expBals, expPays, accounts, projects, tasks, time, capacity, leave, holidays, costs] = await Promise.all([
+  const [docs, bals, pays, exps, expBals, expPays, accounts, projects, tasks, time, capacity, leave, holidays, costs, leads] = await Promise.all([
     supabase.from("documents").select("id, doc_type, status, client_id, client_snapshot, project_id, issue_date, due_date, currency, fx_rate, taxable, total, source_id, source_relation, recurring").neq("status", "draft"),
     supabase.from("document_balances").select("id, balance"),
     supabase.from("payments").select("document_id, paid_on, amount, tds_amount"),
@@ -27,6 +28,7 @@ export async function loadAnalytics(opts: { since: string; until: string; weeksF
     supabase.from("leave_requests").select("member_email, from_date, to_date, half_day, status").eq("status", "approved").gte("to_date", opts.weeksFrom),
     supabase.from("holidays").select("day"),
     isAdmin ? supabase.rpc("admin_time_costs_by_month", { p_from: opts.since, p_to: opts.until }) : Promise.resolve({ data: [] }),
+    supabase.from("leads").select("stage, furthest_stage, source, value, created_at, won_at"),
   ]);
 
   const balance = new Map(((bals.data ?? []) as Row[]).map((b) => [b.id as string, n(b.balance)]));
@@ -78,6 +80,7 @@ export async function loadAnalytics(opts: { since: string; until: string; weeksF
   const openingDates = acc.map((a) => a.opening_date as string | null).filter(Boolean) as string[];
   return {
     isAdmin,
+    leads: ((leads.data ?? []) as Row[]).map((l) => ({ ...(l as unknown as Pick<Lead, "stage" | "furthest_stage" | "source" | "created_at" | "won_at">), value: n(l.value) })),
     docs: aDocs,
     pays: aPays,
     exps: aExps,

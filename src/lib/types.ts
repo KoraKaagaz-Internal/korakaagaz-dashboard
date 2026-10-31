@@ -28,6 +28,8 @@ export interface Member {
 
 export interface Settings {
   gst_filing: "monthly" | "qrmp" | "none";
+  booking: import("./crm").BookingSettings;
+  enquiry_services: string[];
   business_name: string;
   legal_name: string;
   address: string;

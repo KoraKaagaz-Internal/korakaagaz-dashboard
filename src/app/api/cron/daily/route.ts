@@ -118,5 +118,15 @@ export async function GET(request: NextRequest) {
     if (admin) await supabase.from("notifications").insert({ recipient_email: admin.email, actor_email: admin.email, kind: "recurring_expense", title: `Recurring expense ready to confirm: ${e.description || e.vendor_name || "expense"}`, link: "/expenses?status=draft" });
   }
 
+  // 5. Lead follow-ups due today: a nudge to each owner (overdue ones are on Home already).
+  report.followUps = [];
+  const { data: due } = await supabase.from("leads").select("id, name, company, owner_email").eq("follow_up_on", today).in("stage", ["enquiry", "discovery", "proposal", "negotiation"]);
+  for (const l of due ?? []) {
+    if (!l.owner_email) continue;
+    report.followUps.push({ lead: l.id });
+    if (dry) continue;
+    await supabase.from("notifications").insert({ recipient_email: l.owner_email, actor_email: l.owner_email, kind: "follow_up", title: `Follow up today: ${l.company || l.name}`, link: `/crm/${l.id}` });
+  }
+
   return NextResponse.json({ ok: true, dry, today, ...report });
 }

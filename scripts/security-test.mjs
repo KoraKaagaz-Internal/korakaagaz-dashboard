@@ -328,7 +328,28 @@ try {
   await admin.from("expenses").delete().in("id", [bill.id, claim.id]);
   await admin.from("vendors").delete().eq("id", vendor.id);
 
-  // 13. Removing a member ends their access.
+  // 13. CRM: staff only; viewers read; freelancers and anon see nothing.
+  const { data: lead, error: leadErr } = await member.from("leads").insert({ name: "Sec Lead", email: "sec-lead@example.com" }).select("id, furthest_stage").single();
+  check("member can add a lead", !leadErr && !!lead, leadErr?.message);
+  await member.from("leads").update({ stage: "proposal" }).eq("id", lead.id);
+  await member.from("leads").update({ stage: "lost", lost_reason: "Budget" }).eq("id", lead.id);
+  const { data: lostLead } = await admin.from("leads").select("furthest_stage, lost_at").eq("id", lead.id).single();
+  check("a lost lead remembers how far it got", lostLead.furthest_stage === "proposal" && !!lostLead.lost_at, JSON.stringify(lostLead));
+  const { data: vLeads } = await viewer.from("leads").select("id").eq("id", lead.id);
+  check("viewer can read leads", (vLeads ?? []).length === 1);
+  const { error: vLead } = await viewer.from("leads").insert({ name: "x" });
+  check("viewer cannot add leads", !!vLead);
+  const { data: fLeads } = await freelancer.from("leads").select("id");
+  check("freelancer cannot see leads", (fLeads ?? []).length === 0);
+  const { data: aLeads } = await anon.from("leads").select("id");
+  check("anon cannot read leads", (aLeads ?? []).length === 0);
+  const { error: aLeadIns } = await anon.from("leads").insert({ name: "spam" });
+  check("anon cannot insert leads directly", !!aLeadIns);
+  const { error: spoofAct } = await member.from("lead_activities").insert({ lead_id: lead.id, body: "x", author_email: VIEWER });
+  check("lead notes can't be posted as someone else", !!spoofAct);
+  await admin.from("leads").delete().eq("id", lead.id);
+
+  // 14. Removing a member ends their access.
   await admin.from("members").delete().eq("email", VIEWER);
   const { data: afterRemoval } = await viewer.from("clients").select("id");
   check("removed member loses access immediately", (afterRemoval ?? []).length === 0);
@@ -339,6 +360,7 @@ try {
   await admin.from("events").delete().like("title", "Sec %");
   await admin.from("expenses").delete().in("created_by", [MEMBER, VIEWER, FREELANCER]);
   await admin.from("vendors").delete().eq("name", "Sec Vendor");
+  await admin.from("leads").delete().eq("name", "Sec Lead");
   await admin.from("leave_requests").delete().in("member_email", [MEMBER, VIEWER, FREELANCER]);
   if (created.projects.length) await admin.from("projects").delete().in("id", created.projects);
   if (created.documents.length) await admin.from("documents").delete().in("id", created.documents);
