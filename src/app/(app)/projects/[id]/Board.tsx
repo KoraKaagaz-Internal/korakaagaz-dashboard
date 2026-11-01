@@ -53,10 +53,7 @@ export function Board({ projectId, tasks, phases, people, canWork }: { projectId
   useEffect(() => setCols(group(tasks)), [tasks]);
   const phaseName = useMemo(() => new Map(phases.map((p) => [p.id, p.name])), [phases]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   const columnOf = (id: string): TaskStatus | null => {
     if ((TASK_STATUSES.map((s) => s.key) as string[]).includes(id)) return id as TaskStatus;
@@ -115,7 +112,11 @@ export function Board({ projectId, tasks, phases, people, canWork }: { projectId
 
   return (
     <div>
-      {error && <p className="mb-2 text-sm text-red-700" role="alert">{error}</p>}
+      {error && (
+        <p className="mb-2 text-sm text-red-700" role="alert">
+          {error}
+        </p>
+      )}
       <DndContext sensors={sensors} collisionDetection={collision} onDragStart={onStart} onDragOver={onOver} onDragEnd={onEnd} onDragCancel={() => setCols(group(tasks))}>
         <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-4">
           {TASK_STATUSES.map((s) => (
@@ -131,7 +132,9 @@ export function Board({ projectId, tasks, phases, people, canWork }: { projectId
             </Column>
           ))}
         </div>
-        <DragOverlay>{active ? <Card task={active} phase={active.phase_id ? phaseName.get(active.phase_id) : undefined} people={people} today={today} lifted /> : null}</DragOverlay>
+        <DragOverlay>
+          {active ? <Card task={active} phase={active.phase_id ? phaseName.get(active.phase_id) : undefined} people={people} today={today} lifted /> : null}
+        </DragOverlay>
       </DndContext>
     </div>
   );

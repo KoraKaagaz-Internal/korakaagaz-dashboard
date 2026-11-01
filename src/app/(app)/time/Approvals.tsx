@@ -12,7 +12,6 @@ interface Row {
   member_email: string;
   work_date: string;
   minutes: number;
-  billable: boolean;
   note: string;
   project_code: string;
   project_name: string;
@@ -41,7 +40,12 @@ export function Approvals({ rows, names }: { rows: Row[]; names: Record<string, 
       router.refresh();
     });
 
-  if (!rows.length) return <Card><p className="text-sm text-neutral-500">Nothing waiting for approval.</p></Card>;
+  if (!rows.length)
+    return (
+      <Card>
+        <p className="text-sm text-neutral-500">Nothing waiting for approval.</p>
+      </Card>
+    );
 
   return (
     <div className="space-y-4">
@@ -90,7 +94,6 @@ export function Approvals({ rows, names }: { rows: Row[]; names: Record<string, 
                     {r.project_code} · {r.task_title || r.project_name}
                     {r.note && <span className="text-neutral-500"> · {r.note}</span>}
                   </span>
-                  {!r.billable && <span className="text-xs text-neutral-500">non-billable</span>}
                   <span className="w-14 text-right tabular-nums">{hhmm(r.minutes)}</span>
                 </li>
               ))}
@@ -106,7 +109,11 @@ export function Approvals({ rows, names }: { rows: Row[]; names: Record<string, 
         <button className={btn.secondary} disabled={!sel.size || pending} onClick={() => decide(false)}>
           Send back
         </button>
-        {msg && <span className="text-sm text-neutral-600" role="status">{msg}</span>}
+        {msg && (
+          <span className="text-sm text-neutral-600" role="status">
+            {msg}
+          </span>
+        )}
       </div>
     </div>
   );

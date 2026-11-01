@@ -2,11 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getSettings, requireMember, requireTeam } from "@/lib/data";
-import { OUTSIDE_INDIA, autoGstMode } from "@/lib/gst";
-import { addDays, todayIso } from "@/lib/money";
-import { invoiceLinesFromTime, timerMinutes, weekDays } from "@/lib/time";
-import { saveDocument } from "./documents";
+import { requireMember, requireTeam } from "@/lib/data";
+import { todayIso } from "@/lib/money";
+import { timerMinutes, weekDays } from "@/lib/time";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; message: string };
 const fail = (message: string) => ({ ok: false as const, message });
@@ -108,7 +106,6 @@ const entrySchema = z.object({
   task_id: uuid.nullable().or(z.literal("").transform(() => null)).default(null),
   work_date: isoDate,
   minutes: z.number().int().min(1, "Enter some time").max(1440),
-  billable: z.boolean().default(true),
   note: z.string().trim().max(500).default(""),
 });
 
@@ -182,76 +179,15 @@ export async function decideTime(ids: string[], approve: boolean, reason = ""): 
   return { ok: true, count: data?.length ?? 0 };
 }
 
-/** Admin: cost rate (₹/h, private), bill rate and weekly capacity. */
-export async function setRates(email: string, cost: number, bill: number, capacity: number): Promise<Result> {
+/** Admin: weekly hours per person (drives workload and utilisation). */
+export async function setCapacity(email: string, hours: number): Promise<Result> {
   const { supabase } = await requireMember("admin");
-  if ([cost, bill].some((n) => !(n >= 0)) || !(capacity >= 0 && capacity <= 80)) return fail("Rates must be ≥ 0 and capacity 0–80 h");
-  const { error } = await supabase.rpc("admin_set_rates", { p_email: email, p_cost: cost, p_bill: bill, p_capacity: capacity });
+  if (!(hours >= 0 && hours <= 80)) return fail("Weekly hours must be 0–80");
+  const { error } = await supabase.rpc("admin_set_capacity", { p_email: email, p_hours: hours });
   if (error) return fail(error.message);
   revalidatePath("/team");
   revalidatePath("/team/workload");
   return { ok: true };
-}
-
-/** Drafts a GST invoice from a project's approved, billable, not-yet-invoiced time. */
-export async function invoiceFromTime(projectId: string): Promise<Result<{ id: string; hours: number }>> {
-  const { supabase } = await requireMember("member");
-  const [{ data: project }, { data: fin }, { data: entries }, settings] = await Promise.all([
-    supabase.from("projects").select("id, name, code, client_id").eq("id", projectId).single(),
-    supabase.from("project_finance").select("hourly_rate").eq("project_id", projectId).maybeSingle(),
-    supabase.from("time_entries").select("id, minutes, billable, status, invoiced_document_id, task_id, timer_started_at, tasks(title)").eq("project_id", projectId).eq("status", "approved").eq("billable", true).is("invoiced_document_id", null),
-    getSettings(),
-  ]);
-  if (!project) return fail("Project not found");
-  if (!project.client_id) return fail("Pick a client for this project first (Overview → Edit).");
-  const rate = Number(fin?.hourly_rate ?? 0);
-  if (!rate) return fail("Set an hourly rate on the project first (Overview → Budget).");
-  const rows = (entries ?? []).map((e) => ({ ...e, minutes: Number(e.minutes), task_title: (e.tasks as { title?: string } | null)?.title }));
-  const items = invoiceLinesFromTime(rows as never, rate, project.name as string, settings.default_sac);
-  if (!items.length) return fail("No approved, billable time left to invoice.");
-
-  const { data: client } = await supabase.from("clients").select("*").eq("id", project.client_id).single();
-  if (!client) return fail("Client not found");
-  const abroad = client.country !== "India";
-  const place = abroad ? OUTSIDE_INDIA : client.state_code || settings.state_code;
-  const exportType = abroad ? (settings.lut_number ? "lut" : "igst") : "none";
-  const today = todayIso();
-  const res = await saveDocument({
-    doc_type: "invoice",
-    number: null,
-    client_id: client.id,
-    client: { name: client.name, email: client.email, phone: client.phone, address: client.address, city: client.city, pin: client.pin, state_code: client.state_code, country: client.country, gstin: client.gstin },
-    bank_account_id: null,
-    project_id: projectId,
-    source_id: null,
-    source_relation: null,
-    issue_date: today,
-    due_date: addDays(today, settings.default_due_days),
-    valid_until: null,
-    currency: "INR",
-    fx_rate: 1,
-    place_of_supply: place,
-    reverse_charge: false,
-    export_type: exportType,
-    gst_mode: autoGstMode(settings.state_code, place, exportType),
-    gst_rate: settings.default_gst_rate,
-    discount_type: "none",
-    discount_value: 0,
-    round_off: true,
-    notes: `Time for ${project.code} · ${project.name}.`,
-    terms: settings.terms.invoice ?? "",
-    payment_terms: settings.default_due_days === 0 ? "Due on receipt" : `Net ${settings.default_due_days}`,
-    custom_fields: [],
-    reminders_enabled: true,
-    recurring: null,
-    items,
-  });
-  if (!res.ok) return fail(res.message);
-  const ids = rows.filter((r) => !r.timer_started_at).map((r) => r.id as string);
-  const { error } = await supabase.from("time_entries").update({ invoiced_document_id: res.id }).in("id", ids);
-  if (error) return fail(`Invoice drafted, but linking the time failed: ${error.message}`);
-  revalidatePath(`/projects/${projectId}`);
-  return { ok: true, id: res.id, hours: Math.round((rows.reduce((s, r) => s + r.minutes, 0) / 60) * 100) / 100 };
 }
 
 // ---------------------------------------------------------------------------

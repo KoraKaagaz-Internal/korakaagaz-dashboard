@@ -107,3 +107,13 @@ export async function deleteBankAccount(id: string) {
   revalidatePath("/settings");
   return { ok: true as const };
 }
+
+/** Timesheet approval: on = people submit weeks and the admin approves; off = hours count as logged. */
+export async function setTimeApproval(on: boolean) {
+  const { supabase } = await requireMember("admin");
+  const { error } = await supabase.from("settings").update({ time_approval: !!on }).eq("id", 1);
+  if (error) return { ok: false as const, message: error.message };
+  revalidatePath("/settings");
+  revalidatePath("/time");
+  return { ok: true as const };
+}

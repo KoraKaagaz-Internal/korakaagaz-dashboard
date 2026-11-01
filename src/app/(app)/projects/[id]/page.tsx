@@ -107,16 +107,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
           <Files projectId={p.id} files={bundle.files} canWork={canWork} />
         </Card>
       )}
-      {tab === "time" && (
-        <ProjectTime
-          project={p}
-          finance={bundle.finance}
-          people={people}
-          isAdmin={isAdmin}
-          canEdit={canEdit}
-          billed={isAdmin ? projectTotals(await listDocuments({ project: p.id })).billed : null}
-        />
-      )}
+      {tab === "time" && <ProjectTime project={p} people={people} />}
       {tab === "billing" && isStaff && <Billing projectId={p.id} budget={bundle.finance?.budget ?? 0} canEdit={canEdit} />}
       {tab === "activity" && <Activity projectId={p.id} people={people} />}
 
@@ -232,9 +223,24 @@ async function Activity({ projectId, people }: { projectId: string; people: { em
     const d = e.diff as Record<string, unknown>;
     const raw = d.title ?? d.name ?? d.body;
     const title = String((Array.isArray(raw) ? raw[1] : raw) ?? "").slice(0, 80);
-    const entity = { tasks: "task", task_comments: "comment", files: "file", deliverables: "deliverable", projects: "project", project_finance: "budget", documents: "document", phases: "phase" }[e.entity] ?? e.entity;
+    const entity =
+      {
+        tasks: "task",
+        task_comments: "comment",
+        files: "file",
+        deliverables: "deliverable",
+        projects: "project",
+        project_finance: "budget",
+        documents: "document",
+        phases: "phase",
+      }[e.entity] ?? e.entity;
     if (e.action.startsWith("status_")) return `moved ${entity} to ${e.action.slice(7).replace("_", " ")}`;
-    const keys = e.action === "update" ? Object.keys(d).filter((k) => k !== "id").join(", ") : "";
+    const keys =
+      e.action === "update"
+        ? Object.keys(d)
+            .filter((k) => k !== "id")
+            .join(", ")
+        : "";
     return `${ACTION_TEXT[e.action] ?? e.action} ${entity}${title ? ` “${title}”` : ""}${keys ? ` (${keys.replace(/_/g, " ")})` : ""}`;
   };
   return (
@@ -245,7 +251,9 @@ async function Activity({ projectId, people }: { projectId: string; people: { em
         <ul className="space-y-2 text-sm">
           {events.map((e) => (
             <li key={e.id} className="flex gap-3">
-              <span className="w-36 shrink-0 text-xs text-neutral-500">{new Date(e.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}</span>
+              <span className="w-36 shrink-0 text-xs text-neutral-500">
+                {new Date(e.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}
+              </span>
               <span>
                 <span className="font-medium">{e.actor_email ? displayName(e.actor_email, people) : "System"}</span> {what(e)}
               </span>

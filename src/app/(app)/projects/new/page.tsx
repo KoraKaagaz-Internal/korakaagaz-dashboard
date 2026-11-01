@@ -17,7 +17,15 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
         <h1 className="text-2xl font-semibold">New project</h1>
       </div>
       <NewProjectForm
-        templates={templates.map((t) => ({ id: t.id, name: t.name, description: t.description, billing: t.billing, budget_hours: t.budget_hours, task_count: t.task_count, type: t.type }))}
+        templates={templates.map((t) => ({
+          id: t.id,
+          name: t.name,
+          description: t.description,
+          billing: t.billing,
+          budget_hours: t.budget_hours,
+          task_count: t.task_count,
+          type: t.type,
+        }))}
         clients={clients.map((c) => ({ id: c.id, name: c.name }))}
         people={people}
         me={email}

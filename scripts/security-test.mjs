@@ -200,7 +200,7 @@ try {
   check("notifications can't be forged", !!forged);
 
   const { data: dir, error: dirErr } = await freelancer.rpc("team_directory");
-  check("freelancer can see team names", !dirErr && (dir ?? []).some((d) => d.email === MEMBER) && !("cost_rate" in (dir?.[0] ?? {})));
+  check("freelancer can see team names", !dirErr && (dir ?? []).some((d) => d.email === MEMBER) && !("weekly_capacity_hours" in (dir?.[0] ?? {})));
   const { error: anonDir } = await anon.rpc("team_directory");
   check("anon cannot list the team", !!anonDir);
   const { data: fAudit } = await freelancer.from("audit_events").select("entity");
@@ -229,14 +229,18 @@ try {
   check("approved time can't be deleted by its owner", !fDel || fDel.length === 0);
   const { error: memberEdit } = await member.from("time_entries").update({ minutes: 1 }).eq("id", fTime.id);
   check("approved time is locked for members", !!memberEdit);
-  const { error: rates } = await member.rpc("admin_member_rates");
-  check("members cannot read cost rates", !!rates);
-  const { error: costs } = await member.rpc("admin_project_costs", {});
-  check("members cannot read project costs", !!costs);
+  const { error: rates } = await admin.rpc("admin_member_rates");
+  check("hourly rate functions are gone", !!rates && !!(await admin.rpc("admin_time_costs_by_month", { p_from: today, p_to: today })).error);
   const { error: cap } = await freelancer.rpc("team_capacity");
   check("freelancers cannot read team capacity", !!cap);
-  const { error: setRate } = await member.rpc("admin_set_rates", { p_email: MEMBER, p_cost: 1, p_bill: 1, p_capacity: 40 });
-  check("members cannot set rates", !!setRate);
+  const { error: setCap } = await member.rpc("admin_set_capacity", { p_email: MEMBER, p_hours: 10 });
+  check("members cannot set weekly hours", !!setCap);
+  const { error: viewerCap } = await viewer.rpc("admin_set_capacity", { p_email: VIEWER, p_hours: 10 });
+  check("viewers cannot set weekly hours", !!viewerCap);
+  const { data: fApproval, error: fApprovalErr } = await freelancer.rpc("time_approval_on");
+  check("freelancers can read whether approval is on", !fApprovalErr && typeof fApproval === "boolean", fApprovalErr?.message);
+  const { error: anonApproval } = await anon.rpc("time_approval_on");
+  check("anon cannot call time_approval_on", !!anonApproval);
   const { data: tok1 } = await freelancer.rpc("my_ics_token", { p_rotate: false });
   const { data: tok2 } = await member.rpc("my_ics_token", { p_rotate: false });
   check("everyone gets their own private calendar token", /^[0-9a-f]{32}$/.test(tok1 ?? "") && tok1 !== tok2);

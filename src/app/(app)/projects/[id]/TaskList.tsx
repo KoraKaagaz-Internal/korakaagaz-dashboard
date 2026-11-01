@@ -45,16 +45,32 @@ export function TaskList({ projectId, tasks, phases, people, canWork }: { projec
                 const overdue = t.due_date && t.status !== "done" && t.due_date < today;
                 return (
                   <li key={t.id} className="flex items-center gap-3 px-4 py-2 text-sm">
-                    <input type="checkbox" className="size-4" checked={t.status === "done"} disabled={!canWork || pending} onChange={() => toggle(t)} aria-label={`Mark ${t.title} ${t.status === "done" ? "not done" : "done"}`} />
-                    <button onClick={() => openTask(t.id)} className={`min-w-0 flex-1 truncate text-left hover:text-navy ${t.status === "done" ? "text-neutral-400 line-through" : ""}`}>
+                    <input
+                      type="checkbox"
+                      className="size-4"
+                      checked={t.status === "done"}
+                      disabled={!canWork || pending}
+                      onChange={() => toggle(t)}
+                      aria-label={`Mark ${t.title} ${t.status === "done" ? "not done" : "done"}`}
+                    />
+                    <button
+                      onClick={() => openTask(t.id)}
+                      className={`min-w-0 flex-1 truncate text-left hover:text-navy ${t.status === "done" ? "text-neutral-400 line-through" : ""}`}
+                    >
                       {t.title}
                     </button>
                     <PriorityFlag priority={t.priority} />
-                    {t.subtasks && <span className="hidden text-xs text-neutral-500 sm:inline">☑ {t.subtasks.done}/{t.subtasks.total}</span>}
+                    {t.subtasks && (
+                      <span className="hidden text-xs text-neutral-500 sm:inline">
+                        ☑ {t.subtasks.done}/{t.subtasks.total}
+                      </span>
+                    )}
                     <span className="hidden sm:inline">
                       <TaskStatusPill status={t.status} />
                     </span>
-                    <span className={`w-20 text-right text-xs ${overdue ? "font-medium text-red-700" : "text-neutral-500"}`}>{t.due_date ? formatInvoiceDate(t.due_date).replace(/, \d{4}$/, "") : ""}</span>
+                    <span className={`w-20 text-right text-xs ${overdue ? "font-medium text-red-700" : "text-neutral-500"}`}>
+                      {t.due_date ? formatInvoiceDate(t.due_date).replace(/, \d{4}$/, "") : ""}
+                    </span>
                     <span className="hidden w-12 text-right text-xs text-neutral-500 tabular-nums md:inline">{t.estimate_hours ? `${t.estimate_hours}h` : ""}</span>
                     <AvatarStack emails={t.assignees} people={people} max={2} />
                   </li>

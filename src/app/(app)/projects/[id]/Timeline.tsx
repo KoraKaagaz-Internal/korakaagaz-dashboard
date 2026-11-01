@@ -10,7 +10,10 @@ export function Timeline({ tasks, phases, today, projectId }: { tasks: Task[]; p
   const undated = tasks.filter((t) => !t.parent_id && !t.due_date && !t.start_date).length;
   if (!top.length) return <p className="rounded-2xl bg-white p-6 text-sm text-neutral-500 shadow-sm ring-1 ring-black/5">Give tasks a due date to see them here.</p>;
 
-  const range = timelineRange(top.flatMap((t) => [t.start_date, t.due_date]), today);
+  const range = timelineRange(
+    top.flatMap((t) => [t.start_date, t.due_date]),
+    today,
+  );
   const width = range.days * DAY;
   const x = (d: string) => daysBetween(range.from, d) * DAY;
   const weeks: string[] = [];
@@ -46,7 +49,11 @@ export function Timeline({ tasks, phases, today, projectId }: { tasks: Task[]; p
                 const late = t.status !== "done" && e < today;
                 return (
                   <div key={t.id} className="flex h-8 items-center border-b border-neutral-50">
-                    <Link href={`/projects/${projectId}?tab=timeline&task=${t.id}`} scroll={false} className="sticky left-0 z-10 w-[220px] shrink-0 truncate bg-white px-4 text-sm hover:text-navy">
+                    <Link
+                      href={`/projects/${projectId}?tab=timeline&task=${t.id}`}
+                      scroll={false}
+                      className="sticky left-0 z-10 w-[220px] shrink-0 truncate bg-white px-4 text-sm hover:text-navy"
+                    >
                       {t.title}
                     </Link>
                     <div className="relative h-full" style={{ width }}>

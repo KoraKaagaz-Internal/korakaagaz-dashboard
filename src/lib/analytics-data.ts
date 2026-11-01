@@ -1,5 +1,5 @@
 import "server-only";
-import type { ACost, ADoc, AExp, APay } from "./analytics";
+import type { ADoc, AExp, APay } from "./analytics";
 import type { Lead } from "./crm";
 import { requireMember } from "./data";
 import { addDays } from "./money";
@@ -7,27 +7,32 @@ import { addDays } from "./money";
 type Row = Record<string, unknown>;
 const n = (v: unknown) => Number(v ?? 0);
 
-/**
- * Everything Reports needs, in one round of parallel queries. Money that needs cost rates
- * (team cost, realisation) is only loaded for the admin.
- */
+/** Everything Reports needs, in one round of parallel queries. */
 export async function loadAnalytics(opts: { since: string; until: string; weeksFrom: string }) {
   const { supabase, isAdmin } = await requireMember();
-  const [docs, bals, pays, exps, expBals, expPays, accounts, projects, tasks, time, capacity, leave, holidays, costs, leads] = await Promise.all([
-    supabase.from("documents").select("id, doc_type, status, client_id, client_snapshot, project_id, issue_date, due_date, currency, fx_rate, taxable, total, source_id, source_relation, recurring").neq("status", "draft"),
+  const [docs, bals, pays, exps, expBals, expPays, accounts, projects, tasks, time, capacity, leave, holidays, projectTime, leads] = await Promise.all([
+    supabase
+      .from("documents")
+      .select("id, doc_type, status, client_id, client_snapshot, project_id, issue_date, due_date, currency, fx_rate, taxable, total, source_id, source_relation, recurring")
+      .neq("status", "draft"),
     supabase.from("document_balances").select("id, balance"),
     supabase.from("payments").select("document_id, paid_on, amount, tds_amount"),
-    supabase.from("expenses").select("id, expense_date, project_id, taxable, total, itc_status, rcm, fx_rate, kind, approval, is_draft, due_date, recurring, tds_amount, tds_challan_id, expense_categories(name, kind, budget_month)").limit(10000),
+    supabase
+      .from("expenses")
+      .select(
+        "id, expense_date, project_id, taxable, total, itc_status, rcm, fx_rate, kind, approval, is_draft, due_date, recurring, tds_amount, tds_challan_id, expense_categories(name, kind, budget_month)",
+      )
+      .limit(10000),
     supabase.from("expense_balances").select("expense_id, balance"),
     supabase.from("expense_payments").select("paid_on, amount"),
     supabase.from("bank_accounts").select("opening_balance, opening_date"),
     supabase.from("projects").select("id, code, name, status, budget_hours"),
     supabase.from("tasks").select("due_date, completed_at").not("completed_at", "is", null).gte("completed_at", `${opts.since}T00:00:00Z`),
-    supabase.from("time_entries").select("member_email, work_date, minutes, billable").is("timer_started_at", null).gte("work_date", opts.weeksFrom),
+    supabase.from("time_entries").select("member_email, work_date, minutes").is("timer_started_at", null).neq("status", "rejected").gte("work_date", opts.weeksFrom),
     supabase.rpc("team_capacity"),
     supabase.from("leave_requests").select("member_email, from_date, to_date, half_day, status").eq("status", "approved").gte("to_date", opts.weeksFrom),
     supabase.from("holidays").select("day"),
-    isAdmin ? supabase.rpc("admin_time_costs_by_month", { p_from: opts.since, p_to: opts.until }) : Promise.resolve({ data: [] }),
+    supabase.from("time_entries").select("project_id, minutes").is("timer_started_at", null).neq("status", "rejected").limit(50000),
     supabase.from("leads").select("stage, furthest_stage, source, value, created_at, won_at"),
   ]);
 
@@ -50,7 +55,12 @@ export async function loadAnalytics(opts: { since: string; until: string; weeksF
     recurring: (d.recurring as ADoc["recurring"]) ?? null,
     balance: balance.has(d.id as string) ? balance.get(d.id as string)! : null,
   }));
-  const aPays: APay[] = ((pays.data ?? []) as Row[]).map((p) => ({ document_id: p.document_id as string, paid_on: p.paid_on as string, amount: n(p.amount), tds_amount: n(p.tds_amount) }));
+  const aPays: APay[] = ((pays.data ?? []) as Row[]).map((p) => ({
+    document_id: p.document_id as string,
+    paid_on: p.paid_on as string,
+    amount: n(p.amount),
+    tds_amount: n(p.tds_amount),
+  }));
   const expBalance = new Map(((expBals.data ?? []) as Row[]).map((b) => [b.expense_id as string, n(b.balance)]));
   const budgets = new Map<string, number>();
   const aExps: AExp[] = ((exps.data ?? []) as Row[]).map((e) => {
@@ -86,14 +96,27 @@ export async function loadAnalytics(opts: { since: string; until: string; weeksF
     exps: aExps,
     budgets,
     payouts: ((expPays.data ?? []) as Row[]).map((p) => ({ date: p.paid_on as string, amount: n(p.amount) })),
-    opening: { amount: acc.reduce((s, a) => s + n(a.opening_balance), 0), date: openingDates.length ? openingDates.sort()[0] : null, set: acc.some((a) => n(a.opening_balance) !== 0) },
-    projects: ((projects.data ?? []) as Row[]).map((p) => ({ id: p.id as string, code: p.code as string, name: p.name as string, status: p.status as string, budget_hours: n(p.budget_hours) })),
+    opening: {
+      amount: acc.reduce((s, a) => s + n(a.opening_balance), 0),
+      date: openingDates.length ? openingDates.sort()[0] : null,
+      set: acc.some((a) => n(a.opening_balance) !== 0),
+    },
+    projects: ((projects.data ?? []) as Row[]).map((p) => ({
+      id: p.id as string,
+      code: p.code as string,
+      name: p.name as string,
+      status: p.status as string,
+      budget_hours: n(p.budget_hours),
+    })),
     tasks: (tasks.data ?? []) as { due_date: string | null; completed_at: string | null }[],
-    time: ((time.data ?? []) as Row[]).map((t) => ({ member_email: t.member_email as string, work_date: t.work_date as string, minutes: n(t.minutes), billable: !!t.billable })),
+    time: ((time.data ?? []) as Row[]).map((t) => ({ member_email: t.member_email as string, work_date: t.work_date as string, minutes: n(t.minutes) })),
     capacity: new Map(((capacity.data ?? []) as Row[]).map((c) => [c.email as string, n(c.weekly_capacity_hours)])),
     leave: (leave.data ?? []) as { member_email: string; from_date: string; to_date: string; half_day: boolean; status: "approved" }[],
     holidays: ((holidays.data ?? []) as Row[]).map((h) => h.day as string),
-    costs: ((costs.data ?? []) as Row[]).map((c): ACost => ({ month: c.month as string, project_id: c.project_id as string, member_email: c.member_email as string, minutes: n(c.minutes), billable_minutes: n(c.billable_minutes), cost: n(c.cost), bill_value: n(c.bill_value) })),
+    projectMinutes: ((projectTime.data ?? []) as Row[]).reduce(
+      (m, t) => m.set(t.project_id as string, (m.get(t.project_id as string) ?? 0) + n(t.minutes)),
+      new Map<string, number>(),
+    ),
   };
 }
 

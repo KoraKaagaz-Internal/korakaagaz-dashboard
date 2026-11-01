@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import type { StudioEvent } from "./calendar";
 import { requireTeam } from "./data";
 import { addDays } from "./money";
@@ -75,28 +76,33 @@ export async function loggableProjects(): Promise<{ id: string; code: string; na
   }));
 }
 
-export interface Rate {
+export interface Capacity {
   email: string;
   name: string;
   role: string;
-  cost_rate: number;
-  bill_rate: number;
   weekly_capacity_hours: number;
 }
 
-export async function adminRates(): Promise<Rate[]> {
+/** Admin: everyone's weekly hours. */
+export async function adminCapacity(): Promise<Capacity[]> {
   const { supabase, isAdmin } = await requireTeam();
   if (!isAdmin) return [];
-  const { data } = await supabase.rpc("admin_member_rates");
-  return ((data ?? []) as Row[]).map((r) => ({ ...(r as unknown as Rate), cost_rate: Number(r.cost_rate), bill_rate: Number(r.bill_rate), weekly_capacity_hours: Number(r.weekly_capacity_hours) }));
+  const [{ data: people }, { data: cap }] = await Promise.all([supabase.rpc("team_members"), supabase.rpc("team_capacity")]);
+  const hours = new Map(((cap ?? []) as Row[]).map((r) => [r.email as string, Number(r.weekly_capacity_hours)]));
+  return ((people ?? []) as Row[]).map((p) => ({
+    email: p.email as string,
+    name: (p.name as string) ?? "",
+    role: p.role as string,
+    weekly_capacity_hours: hours.get(p.email as string) ?? 40,
+  }));
 }
 
-export async function projectCosts(from?: string, to?: string) {
-  const { supabase, isAdmin } = await requireTeam();
-  if (!isAdmin) return [];
-  const { data } = await supabase.rpc("admin_project_costs", { p_from: from ?? null, p_to: to ?? null });
-  return ((data ?? []) as Row[]).map((r) => ({ project_id: r.project_id as string, member_email: r.member_email as string, minutes: Number(r.minutes), billable_minutes: Number(r.billable_minutes), cost: Number(r.cost) }));
-}
+/** Whether hours need submitting and approving (Settings). Off: logged hours count straight away. */
+export const timeApprovalOn = cache(async (): Promise<boolean> => {
+  const { supabase } = await requireTeam();
+  const { data } = await supabase.rpc("time_approval_on");
+  return !!data;
+});
 
 export async function teamCapacity(): Promise<Map<string, number>> {
   const { supabase, isStaff } = await requireTeam();

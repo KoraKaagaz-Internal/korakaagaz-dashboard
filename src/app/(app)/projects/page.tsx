@@ -55,7 +55,12 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
           ))}
         </div>
         <input type="hidden" name="show" value={show} />
-        <input name="q" defaultValue={q} placeholder="Search projects  /" className="w-56 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-navy" />
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Search projects  /"
+          className="w-56 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-navy"
+        />
       </form>
 
       {shown.length === 0 ? (

@@ -230,7 +230,7 @@ try {
   const rep = await A.body();
   const sections = ["Profit & loss", "Clients & services", "Cash & collections", "Projects & team", "GST & exports"];
   check("reports show every section", sections.every((s) => rep.includes(s)), sections.filter((s) => !rep.includes(s)).join(","));
-  check("health strip shows revenue, cash and win rate", ["Revenue", "Cash in hand", "Quote win rate", "Billable utilisation"].every((s) => rep.includes(s)));
+  check("health strip shows revenue, cash and win rate", ["Revenue", "Cash in hand", "Quote win rate", "Team hours used"].every((s) => rep.includes(s)));
   await admin.screenshot({ path: ".visual/e2e-reports.png", fullPage: true });
   await A.tap("::-p-xpath(//button[normalize-space()='View as table'])");
   await admin.waitForSelector("::-p-xpath(//button[normalize-space()='View as chart'])");

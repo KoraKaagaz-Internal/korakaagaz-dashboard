@@ -57,7 +57,6 @@ function toFinance(f: Row | null | undefined): ProjectFinance | null {
   return {
     budget: Number(f.budget ?? 0),
     billing: (f.billing as ProjectFinance["billing"]) ?? "fixed",
-    hourly_rate: Number(f.hourly_rate ?? 0),
     retainer_amount_month: Number(f.retainer_amount_month ?? 0),
   };
 }

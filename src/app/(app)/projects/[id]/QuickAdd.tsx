@@ -6,7 +6,19 @@ import { createTask } from "@/app/actions/projects";
 import type { TaskStatus } from "@/lib/pm";
 
 /** One-line task creation: type a title, press Enter. */
-export function QuickAdd({ projectId, status = "todo", phaseId = null, parentId = null, placeholder = "Add a task" }: { projectId: string; status?: TaskStatus; phaseId?: string | null; parentId?: string | null; placeholder?: string }) {
+export function QuickAdd({
+  projectId,
+  status = "todo",
+  phaseId = null,
+  parentId = null,
+  placeholder = "Add a task",
+}: {
+  projectId: string;
+  status?: TaskStatus;
+  phaseId?: string | null;
+  parentId?: string | null;
+  placeholder?: string;
+}) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [open, setOpen] = useState(false);

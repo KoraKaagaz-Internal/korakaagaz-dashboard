@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { availableDays, hhmm, invoiceLinesFromTime, monthRange, parseDuration, retainerBurn, timerMinutes, weekCapacity, weekLoad, weekStart } from "./time";
+import { availableDays, hhmm, monthRange, parseDuration, retainerBurn, timerMinutes, weekCapacity, weekLoad, weekStart } from "./time";
 
 describe("durations", () => {
   it("formats minutes", () => {
@@ -81,25 +81,3 @@ describe("retainer and months", () => {
   });
 });
 
-describe("invoiceLinesFromTime", () => {
-  it("groups approved, billable, uninvoiced time by task", () => {
-    const base = { billable: true, status: "approved", invoiced_document_id: null, timer_started_at: null } as const;
-    const lines = invoiceLinesFromTime(
-      [
-        { ...base, minutes: 90, task_id: "t1", task_title: "Retouching" },
-        { ...base, minutes: 30, task_id: "t1", task_title: "Retouching" },
-        { ...base, minutes: 60, task_id: null },
-        { ...base, minutes: 60, task_id: "t2", billable: false },
-        { ...base, minutes: 60, task_id: "t3", status: "submitted" },
-        { ...base, minutes: 60, task_id: "t4", invoiced_document_id: "d" },
-      ] as never,
-      1500,
-      "Acme shoot",
-      "998391",
-    );
-    expect(lines).toEqual([
-      { title: "Retouching", description: "2:00 h", sac: "998391", qty: 2, unit_price: 1500 },
-      { title: "Acme shoot", description: "1:00 h", sac: "998391", qty: 1, unit_price: 1500 },
-    ]);
-  });
-});

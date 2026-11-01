@@ -30,6 +30,7 @@ export interface Settings {
   gst_filing: "monthly" | "qrmp" | "none";
   booking: import("./crm").BookingSettings;
   enquiry_services: string[];
+  time_approval: boolean;
   business_name: string;
   legal_name: string;
   address: string;
@@ -106,7 +107,7 @@ export interface SupplierSnapshot {
 }
 
 export type ProjectStatus = "planned" | "active" | "on_hold" | "review" | "done" | "cancelled";
-export type Billing = "fixed" | "hourly" | "retainer";
+export type Billing = "fixed" | "retainer";
 
 export interface Project {
   id: string;
@@ -130,7 +131,6 @@ export interface Project {
 export interface ProjectFinance {
   budget: number;
   billing: Billing;
-  hourly_rate: number;
   retainer_amount_month: number;
 }
 

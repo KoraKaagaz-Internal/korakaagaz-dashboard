@@ -63,6 +63,7 @@ export async function getSettings(): Promise<Settings> {
     message_templates: data?.message_templates ?? {},
     booking: { ...DEFAULT_BOOKING, ...(data?.booking ?? {}) },
     enquiry_services: data?.enquiry_services ?? [],
+    time_approval: !!data?.time_approval,
   };
 }
 

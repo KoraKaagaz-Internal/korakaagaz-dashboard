@@ -36,8 +36,18 @@ export function NewProjectForm({
 }) {
   const router = useRouter();
   const [tpl, setTpl] = useState<string>("");
-  const [p, setP] = useState({ name: "", client_id: clientId, type: "", description: "", start_date: today, due_date: "", owner_email: me, budget_hours: 0, retainer_hours_month: 0 });
-  const [fin, setFin] = useState({ budget: 0, billing: "fixed" as Billing, hourly_rate: 0, retainer_amount_month: 0 });
+  const [p, setP] = useState({
+    name: "",
+    client_id: clientId,
+    type: "",
+    description: "",
+    start_date: today,
+    due_date: "",
+    owner_email: me,
+    budget_hours: 0,
+    retainer_hours_month: 0,
+  });
+  const [fin, setFin] = useState({ budget: 0, billing: "fixed" as Billing, retainer_amount_month: 0 });
   const [members, setMembers] = useState<string[]>([me]);
   const [msg, setMsg] = useState("");
   const [pending, start] = useTransition();
@@ -128,7 +138,12 @@ export function NewProjectForm({
             <Input type="date" value={p.due_date} onChange={(e) => setP({ ...p, due_date: e.target.value })} />
           </Field>
           <Field label="Brief" className="sm:col-span-2">
-            <Textarea rows={3} value={p.description} onChange={(e) => setP({ ...p, description: e.target.value })} placeholder="What we're making, for whom, and what done looks like." />
+            <Textarea
+              rows={3}
+              value={p.description}
+              onChange={(e) => setP({ ...p, description: e.target.value })}
+              placeholder="What we're making, for whom, and what done looks like."
+            />
           </Field>
           <div className="sm:col-span-2">
             <span className="mb-1 block text-xs font-medium tracking-wide text-neutral-500 uppercase">Team on this project</span>
@@ -143,7 +158,6 @@ export function NewProjectForm({
           <Field label="Billing">
             <Select value={fin.billing} onChange={(e) => setFin({ ...fin, billing: e.target.value as Billing })}>
               <option value="fixed">Fixed fee</option>
-              <option value="hourly">Hourly</option>
               <option value="retainer">Monthly retainer</option>
             </Select>
           </Field>
@@ -157,16 +171,9 @@ export function NewProjectForm({
               </Field>
             </>
           ) : (
-            <>
-              <Field label={fin.billing === "hourly" ? "Cap (₹, optional)" : "Fee (₹)"}>
-                <NumberInput value={fin.budget} onValue={(v) => setFin({ ...fin, budget: v })} min={0} />
-              </Field>
-              {fin.billing === "hourly" && (
-                <Field label="Rate ₹ / hour">
-                  <NumberInput value={fin.hourly_rate} onValue={(v) => setFin({ ...fin, hourly_rate: v })} min={0} />
-                </Field>
-              )}
-            </>
+            <Field label="Fee (₹)">
+              <NumberInput value={fin.budget} onValue={(v) => setFin({ ...fin, budget: v })} min={0} />
+            </Field>
           )}
           <Field label="Budget hours">
             <NumberInput value={p.budget_hours} onValue={(v) => setP({ ...p, budget_hours: v })} min={0} />
@@ -178,7 +185,11 @@ export function NewProjectForm({
         <button className={btn.primary} disabled={pending || !p.name.trim()} onClick={submit}>
           {pending ? "Creating…" : "Create project"}
         </button>
-        {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+        {msg && (
+          <p className="text-sm text-red-700" role="alert">
+            {msg}
+          </p>
+        )}
       </div>
     </div>
   );

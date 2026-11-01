@@ -18,11 +18,9 @@ import {
   pnl,
   projectTable,
   quoteFunnel,
-  realisation,
   receivablesAt,
   utilisation,
   waterfall,
-  type ACost,
   type ADoc,
   type AExp,
 } from "./analytics";
@@ -78,10 +76,9 @@ describe("revenue, costs and P&L", () => {
   it("builds the P&L and its waterfall", () => {
     const rev = accrualRevenue(docs);
     const costs = expenseCosts([exp({ taxable: 20000, total: 23600 }), exp({ category: "Rent", category_kind: "overhead", taxable: 30000, total: 35400 })]);
-    const team: ACost[] = [{ month: "2026-10-01", project_id: "p", member_email: "x", minutes: 6000, billable_minutes: 5000, cost: 50000, bill_value: 150000 }];
-    const p = pnl(rev, costs, team, "2026-10-01", "2026-10-31");
-    expect(p).toEqual({ revenue: 174000, passThrough: 20000, agi: 154000, teamCost: 50000, overhead: 30000, net: 74000, grossMargin: 67.53, netMargin: 48.05, overheadRatio: 19.48 });
-    expect(waterfall(p).map((s) => s.value)).toEqual([174000, -20000, 154000, -50000, -30000, 74000]);
+    const p = pnl(rev, costs, "2026-10-01", "2026-10-31");
+    expect(p).toEqual({ revenue: 174000, passThrough: 20000, agi: 154000, overhead: 30000, net: 124000, grossMargin: 88.51, netMargin: 80.52, overheadRatio: 19.48 });
+    expect(waterfall(p).map((s) => s.value)).toEqual([174000, -20000, 154000, -30000, 124000]);
   });
 });
 
@@ -150,30 +147,30 @@ describe("cash and collections", () => {
 });
 
 describe("projects and team", () => {
-  it("project profit and effective hourly rate", () => {
+  it("project profit and hours against the budget", () => {
     const t = projectTable(
       [{ id: "p", code: "KK-1", name: "Shoot", status: "active", budget_hours: 10 }],
       [{ date: "2026-10-01", client: "A", project_id: "p", amount: 50000 }],
       [{ date: "2026-10-01", category: "Props", kind: "pass_through", project_id: "p", amount: 10000 }],
-      [{ month: "2026-10-01", project_id: "p", member_email: "x", minutes: 1200, billable_minutes: 1200, cost: 12000, bill_value: 40000 }],
+      new Map([["p", 1200]]),
     );
-    expect(t[0]).toMatchObject({ revenue: 50000, expenses: 10000, hours: 20, timeCost: 12000, profit: 28000, margin: 56, ehr: 2000, overBudget: true });
+    expect(t[0]).toMatchObject({ revenue: 50000, expenses: 10000, hours: 20, profit: 40000, margin: 80, overBudget: true });
+    expect(t[0]).not.toHaveProperty("ehr");
   });
   it("utilisation per week against capacity after leave", () => {
     const u = utilisation(
       [
-        { member_email: "a", work_date: "2026-11-03", minutes: 1200, billable: true },
-        { member_email: "a", work_date: "2026-11-04", minutes: 600, billable: false },
+        { member_email: "a", work_date: "2026-11-03", minutes: 1200 },
+        { member_email: "a", work_date: "2026-11-04", minutes: 600 },
       ],
       [{ email: "a", capacity: 40 }],
       ["2026-11-02"],
       [{ member_email: "a", from_date: "2026-11-06", to_date: "2026-11-06", half_day: false, status: "approved" }],
       [],
     );
-    expect(u[0].weeks[0]).toEqual({ week: "2026-11-02", billable: 20, logged: 30, capacity: 32, pct: 63 });
+    expect(u[0].weeks[0]).toEqual({ week: "2026-11-02", logged: 30, capacity: 32, pct: 94 });
   });
-  it("realisation, on-time and the quote funnel", () => {
-    expect(realisation([{ month: "2026-10-01", project_id: "p", member_email: "x", minutes: 60, billable_minutes: 60, cost: 0, bill_value: 1000 }], [{ date: "2026-10-09", client: "A", project_id: "p", amount: 900 }], "2026-10-01", "2026-10-31")).toBe(90);
+  it("on-time and the quote funnel", () => {
     expect(onTime([{ due_date: "2026-10-10", completed_at: "2026-10-09T10:00:00Z" }, { due_date: "2026-10-10", completed_at: "2026-10-12T10:00:00Z" }, { due_date: null, completed_at: "2026-10-12T10:00:00Z" }], "2026-10-01", "2026-10-31")).toEqual({ done: 2, late: 1, pct: 50 });
     const f = quoteFunnel(
       [doc({ id: "q1", doc_type: "quote", status: "accepted" }), doc({ id: "q2", doc_type: "quote", status: "declined" }), doc({ id: "q3", doc_type: "quote", status: "issued" }), doc({ id: "i1", source_id: "q1", source_relation: "converted_from" })],

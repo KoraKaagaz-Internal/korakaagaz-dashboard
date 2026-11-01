@@ -41,8 +41,7 @@ const projectSchema = z.object({
 
 const financeSchema = z.object({
   budget: z.coerce.number().min(0).default(0),
-  billing: z.enum(["fixed", "hourly", "retainer"]).default("fixed"),
-  hourly_rate: z.coerce.number().min(0).default(0),
+  billing: z.enum(["fixed", "retainer"]).default("fixed"),
   retainer_amount_month: z.coerce.number().min(0).default(0),
 });
 

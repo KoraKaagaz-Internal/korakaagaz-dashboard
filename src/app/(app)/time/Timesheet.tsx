@@ -29,7 +29,21 @@ const key = (p: string, t: string | null) => `${p}|${t ?? ""}`;
 const DAY = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const shortDate = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
 
-export function Timesheet({ monday, entries, projects, today, canWork }: { monday: string; entries: Entry[]; projects: Proj[]; today: string; canWork: boolean }) {
+export function Timesheet({
+  monday,
+  entries,
+  projects,
+  today,
+  canWork,
+  approval,
+}: {
+  monday: string;
+  entries: Entry[];
+  projects: Proj[];
+  today: string;
+  canWork: boolean;
+  approval: boolean;
+}) {
   const router = useRouter();
   const days = weekDays(monday);
   const [extraRows, setExtraRows] = useState<{ project_id: string; task_id: string | null }[]>([]);
@@ -161,7 +175,9 @@ export function Timesheet({ monday, entries, projects, today, canWork }: { monda
             </tfoot>
           </table>
         </div>
-        <p className="mt-3 text-xs text-neutral-500">Type 1:30, 1.5, 90m or 2h. Amber cells were sent back by the admin: fix and submit again.</p>
+        <p className="mt-3 text-xs text-neutral-500">
+          Type 1:30, 1.5, 90m or 2h.{approval ? " Amber cells were sent back by the admin: fix and submit again." : " Hours save as you type."}
+        </p>
       </Card>
 
       {canWork && (
@@ -198,21 +214,23 @@ export function Timesheet({ monday, entries, projects, today, canWork }: { monda
           >
             Start timer
           </button>
-          <div className="ml-auto">
-            <button
-              className={btn.primary}
-              disabled={!drafts || pending}
-              onClick={() =>
-                start(async () => {
-                  const r = await submitWeek(monday);
-                  setMsg(r.ok ? { ok: true, text: `Sent ${r.count} entr${r.count === 1 ? "y" : "ies"} for approval.` } : { ok: false, text: r.message });
-                  router.refresh();
-                })
-              }
-            >
-              Submit week for approval{drafts ? ` (${drafts})` : ""}
-            </button>
-          </div>
+          {approval && (
+            <div className="ml-auto">
+              <button
+                className={btn.primary}
+                disabled={!drafts || pending}
+                onClick={() =>
+                  start(async () => {
+                    const r = await submitWeek(monday);
+                    setMsg(r.ok ? { ok: true, text: `Sent ${r.count} entr${r.count === 1 ? "y" : "ies"} for approval.` } : { ok: false, text: r.message });
+                    router.refresh();
+                  })
+                }
+              >
+                Submit week for approval{drafts ? ` (${drafts})` : ""}
+              </button>
+            </div>
+          )}
         </div>
       )}
       {msg && (

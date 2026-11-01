@@ -112,14 +112,14 @@
     <li><b>Profit &amp; loss:</b> monthly bars, a waterfall, margin trend, spend by category, budget vs actual.</li>
     <li><b>Clients &amp; services:</b> top clients against a 20% risk line, revenue by service, new vs returning, retention cohorts, client value.</li>
     <li><b>Cash &amp; collections:</b> billed vs collected, days-to-get-paid trend against 45 days, a 13-week cash forecast, ageing, TDS both ways.</li>
-    <li><b>Projects &amp; team:</b> profitability with ₹ per hour, a utilisation heatmap, realisation, on-time %, the quote funnel.</li>
+    <li><b>Projects &amp; team:</b> project profit (revenue − expenses) with hours against budget, a team-hours heatmap (hours logged ÷ available), on-time %, the quote funnel.</li>
   </ul>
   <p>Every chart has a tooltip, a legend and a "View as table" option.</p>
   <p><b>Speed:</b> pages load in about 0.2–0.5 s, down from 2–3.5 s. Functions now run in Mumbai next to the database, and the login check runs once per page.</p>
   <p><b>Time, team and calendar (live):</b></p>
   <ul>
-    <li><b>Time:</b> a timer (from a task or the Time page; it shows in the header) and a weekly timesheet. People submit their week and the admin approves it.</li>
-    <li><b>Project Time tab:</b> hours against budget, this month's retainer use, and, for the admin only, cost and margin from private cost rates. "Draft invoice from approved time" turns approved billable hours into a GST invoice draft.</li>
+    <li><b>Time:</b> a timer (from a task or the Time page; it shows in the header) and a weekly timesheet. Approval is optional (Settings → Timesheets, off by default): when on, people submit their week and the admin approves it; when off, hours count as soon as they're logged.</li>
+    <li><b>Project Time tab:</b> hours against budget, this month's retainer use, and hours by person. No money: the studio never bills or costs by the hour.</li>
     <li><b>Calendar:</b> month, week, and crew &amp; kit views for shoots, meetings and deadlines. You book team, outside crew and kit, double bookings are flagged, and each shoot has a printable call sheet. Everyone gets a private feed for Google Calendar.</li>
     <li><b>People:</b> leave requests with admin approval, studio holidays, and a 6-week workload view of booked hours against capacity.</li>
   </ul>
@@ -207,14 +207,14 @@
     <tr><td>Log time (timer, timesheet), submit the week</td><td>✓</td><td>✓</td><td>✗</td><td>on their projects</td><td>✗</td><td>✗</td></tr>
     <tr><td>Approve time, approve leave, set rates and capacity, holidays</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>See everyone's time, leave and the workload view</td><td>✓</td><td>✓</td><td>✓</td><td>own only</td><td>✗</td><td>✗</td></tr>
-    <tr><td>See cost rates and project margins</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Set weekly hours and turn timesheet approval on/off</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Create events, book crew and kit, edit the kit list</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>See events</td><td>all</td><td>all</td><td>all</td><td>their projects' events + ones they're booked on</td><td>✗</td><td>✗</td></tr>
     <tr><td>Draft an invoice from approved time</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Add bills and receipts, vendors, pay bills, re-bill expenses, GST &amp; TDS page</td><td>✓</td><td>✓</td><td>read only</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>File own expense claims (with receipt)</td><td>✓</td><td>✓</td><td>✗</td><td>✓ (own projects)</td><td>✗</td><td>✗</td></tr>
     <tr><td>Approve and reimburse claims, record TDS deposits, edit categories</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Reports (team cost, margins and realisation need cost rates)</td><td>✓ (everything)</td><td>✓ (without team cost)</td><td>✓ (without team cost)</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Reports</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Leads: add, move, log activity, convert to client + project</td><td>✓</td><td>✓</td><td>read only</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Enquiry form &amp; booking page settings; delete leads</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Send an enquiry / book a call (public pages)</td><td colspan="5">anyone with the link, with no login; spam-limited</td><td>✓</td></tr>
@@ -233,13 +233,13 @@
     <tr><td><code>bank_accounts</code></td><td>Account, IFSC, SWIFT, UPI ID, default flag</td><td>Admin-only writes.</td></tr>
     <tr><td><code>clients</code>, <code>items</code></td><td>Clients (state, GSTIN, country), services catalog with SAC</td><td>Members write, viewers read. Freelancers can't read them.</td></tr>
     <tr><td><code>projects</code></td><td>Code (<code>KK-0001</code>), client (optional), type, status, dates, lead, budget hours, template</td><td>Staff read all; freelancers read projects they're on.</td></tr>
-    <tr><td><code>project_finance</code></td><td>Fee/cap, billing type (fixed/hourly/retainer), hourly rate, retainer per month</td><td>Staff only. Kept apart so RLS can hide money from freelancers.</td></tr>
+    <tr><td><code>project_finance</code></td><td>Fee, billing type (fixed fee or monthly retainer), retainer per month</td><td>Staff only. Kept apart so RLS can hide money from freelancers.</td></tr>
     <tr><td><code>project_members</code></td><td>Who is on each project</td><td>Decides what freelancers can see.</td></tr>
     <tr><td><code>project_templates</code></td><td>Six studio templates: phases, tasks with hours and day offsets, deliverables</td><td>Applied by <code>apply_project_template()</code>.</td></tr>
     <tr><td><code>phases</code>, <code>tasks</code>, <code>task_assignees</code>, <code>task_comments</code>, <code>deliverables</code></td><td>Plan and work items. Tasks have status, priority, dates, estimate, labels, subtasks (<code>parent_id</code>), "client can see" flag, fractional <code>sort</code></td><td>Everyone on the project reads; editors and that project's freelancers change tasks; only editors change phases and deliverables.</td></tr>
     <tr><td><code>files</code></td><td>Uploads (Storage path) or links (Drive etc.) on a project or task</td><td>Same project rules; uploader or editor deletes.</td></tr>
-    <tr><td><code>time_entries</code></td><td>Person, project, task, date, minutes, billable, note, status (draft → submitted → approved/rejected), running timer start, invoice it was billed on</td><td>People see their own; staff see all. Owners edit only draft or sent-back time. Only the admin approves. Approved time can't be deleted, and once invoiced its hours are locked (trigger). One running timer per person (unique index).</td></tr>
-    <tr><td><code>members</code> (new columns)</td><td><code>cost_rate</code>, <code>bill_rate</code>, <code>weekly_capacity_hours</code>, <code>ics_token</code></td><td>Rates only via admin RPCs (<code>admin_member_rates</code>, <code>admin_project_costs</code>). Capacity via <code>team_capacity()</code> for staff.</td></tr>
+    <tr><td><code>time_entries</code></td><td>Person, project, task, date, minutes, note, status (draft → submitted → approved/rejected), running timer start, invoice it was billed on</td><td>People see their own; staff see all. Owners edit only draft or sent-back time. Only the admin approves. Approved time can't be deleted, and once invoiced its hours are locked (trigger). One running timer per person (unique index).</td></tr>
+    <tr><td><code>members</code> (new columns)</td><td><code>weekly_capacity_hours</code>, <code>ics_token</code></td><td>Capacity read via <code>team_capacity()</code> (staff), set via <code>admin_set_capacity()</code> (admin). No hourly rates (removed in 0014).</td></tr>
     <tr><td><code>events</code>, <code>event_people</code>, <code>event_kit</code>, <code>kit</code></td><td>Shoots, meetings, deadlines with times, location, map link, tentative/confirmed/cancelled, call time, shot list, contacts; crew (team or outside, with role/phone); kit bookings</td><td>Editors write. Freelancers see events on their projects or ones they're booked on (<code>on_event()</code>).</td></tr>
     <tr><td><code>leave_requests</code>, <code>holidays</code></td><td>Leave (dates, half day, type, status) and studio holidays</td><td>Anyone requests their own; only the admin decides. Staff see all leave; freelancers their own.</td></tr>
     <tr><td><code>leads</code></td><td>Name, company, contact, source, service, budget, value, stage, furthest stage, lost reason, owner, follow-up, message, linked client/project, hashed IP (form rate limit), won/lost dates</td><td>Staff read; editors write; never readable by freelancers or anon. Public submissions go through validated server code with the service key.</td></tr>
@@ -330,6 +330,14 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-02</td><td><b>No hourly pay anywhere</b> (from the full-site audit).
+      <ul>
+        <li>Projects bill by fixed fee or monthly retainer only. Hourly billing, ₹/hour rates, cost/bill rates, "Draft invoice from approved time", realisation and ₹/hour columns are gone.</li>
+        <li>Migration 0014: hourly projects → fixed; dropped <code>project_finance.hourly_rate</code>, <code>members.cost_rate/bill_rate</code> and the rate RPCs (all were 0; no time had been invoiced). Added <code>admin_set_capacity()</code>, <code>settings.time_approval</code> + <code>time_approval_on()</code>, and a "Salaries &amp; retainers" overhead category so people costs come in through Expenses.</li>
+        <li>Reports: P&amp;L is revenue − project costs − overheads. Projects show revenue, expenses, profit and hours vs budget. "Team hours used" = hours logged ÷ hours available.</li>
+        <li>Timesheet approval is optional (Settings → Timesheets, off by default). Off: no Submit/Approve; hours count straight away.</li>
+        <li>Team → "Weekly hours" replaces the rates table. The project Time tab is hours only.</li>
+      </ul></td></tr>
     <tr><td>2026-11-02</td><td>Invoice template: long client names were cut off with "…".
       <ul>
         <li>The name now shrinks to fit the 280px column (37px down to 20px). Very long names wrap onto two 22px lines in the same height, so the layout below never moves.</li>
@@ -477,10 +485,9 @@ vercel deploy --prod
     "Time to invoice": [
       "Start a timer from a task (▶ Start timer) or the Time page. It runs in the header bar; Stop saves the minutes as draft time for today.",
       "Or type hours straight into the weekly timesheet: 1:30, 1.5, 90m or 2h.",
-      "At the end of the week: <b>Submit week for approval</b>. The admin is notified.",
-      "Admin: <b>Time → Approve</b>. Tick entries and approve, or send them back with a reason (they turn amber in the person's timesheet).",
-      "The project's <b>Time</b> tab shows hours against budget and retainer use. Only the admin sees cost and margin.",
-      "Hourly project: <b>Draft invoice from approved time</b> makes one GST line per task at the project's hourly rate. The time is linked to that invoice and can't be billed twice.",
+      "If timesheet approval is on (Settings): at the end of the week, <b>Submit week for approval</b>. The admin is notified.",
+      "Admin (approval on): <b>Time → Approve</b>. Tick entries and approve, or send them back with a reason (they turn amber in the person's timesheet).",
+      "The project's <b>Time</b> tab shows hours against budget, retainer use and hours by person.",
     ],
     "Plan a shoot": [
       "<b>Calendar → New event</b>: Shoot, title, project, dates/times (or all day), call time, location and map link.",
@@ -583,7 +590,7 @@ vercel deploy --prod
     ["supabase/migrations/0009_expenses.sql · 0010 · 0011_analytics.sql", "Vendors, categories (seeded), expenses, payments, TDS challans, balances view, guard trigger, receipt storage rules, cash accounts; monthly time-cost RPC for analytics"],
     ["src/lib/expenses.ts", "Purchase GST split, TDS natures + suggestion with limits, GSTR-3B Table 4 input-credit buckets, re-bill lines with markup, recurring dates, GSTR-2B CSV reader + matcher"],
     ["src/lib/compliance.ts", "GST/TDS/income-tax due dates (monthly or QRMP, state-wise 22nd/24th, March TDS on 30 April)"],
-    ["src/lib/analytics.ts · analytics-data.ts", "Periods and comparisons, accrual/cash revenue, P&L + waterfall, categories, concentration, new vs returning, cohorts, DSO, collection effectiveness, cash + 13-week forecast, project profit, utilisation, realisation, on-time, quote funnel; one batched loader"],
+    ["src/lib/analytics.ts · analytics-data.ts", "Periods and comparisons, accrual/cash revenue, P&L + waterfall, categories, concentration, new vs returning, cohorts, DSO, collection effectiveness, cash + 13-week forecast, project profit, team hours, on-time, quote funnel; one batched loader"],
     ["src/lib/expense-data.ts · src/app/actions/expenses.ts", "Expense reads; vendor/category/expense/claim/payment/receipt/re-bill/2B/challan actions"],
     ["src/app/(app)/expenses/* · vendors/*", "Expenses list, form, detail, claims, GST &amp; TDS, categories; vendors and vendor ledger"],
     ["src/components/charts/Charts.tsx · src/lib/format.ts", "SVG chart kit (columns, lines, waterfall, ranked bars, heatmap, funnel, bullet, KPI + sparkline), validated palette, shared number formats"],
@@ -596,7 +603,7 @@ vercel deploy --prod
     ["src/app/actions/time.ts · calendar.ts", "Timer, timesheet cells, submit/approve, rates, invoice from time, leave/holidays; events with crew/kit + conflicts, kit, feed token"],
     ["src/app/(app)/time/*", "Weekly timesheet, team week, admin approvals"],
     ["src/app/(app)/calendar/*", "Month/week/crew views, event form, call sheet, kit list, feed link"],
-    ["src/app/(app)/team/workload · team/leave · team/RatesEditor.tsx", "Capacity vs booked hours; leave + holidays; admin rates"],
+    ["src/app/(app)/team/workload · team/leave · team/CapacityEditor.tsx", "Capacity vs booked hours; leave + holidays; weekly hours per person"],
     ["src/app/(app)/TimerBar.tsx · projects/[id]/ProjectTime.tsx", "Running timer in the header; project time, retainer burn, margin, invoice from time"],
     ["src/app/api/ics/[token]", "Private calendar feed (bookings, task due dates, leave, holidays)"],
     ["scripts/e2e-projects.mjs", "44 end-to-end checks of projects, board drag, task panel, timer, timesheet, approvals, invoice from time, calendar, conflicts, feed, leave, files and freelancer access; safe on real data (cleans up only its own rows)"],

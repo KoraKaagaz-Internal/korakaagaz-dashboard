@@ -26,7 +26,6 @@ import {
   pnl,
   projectTable,
   quoteFunnel,
-  realisation,
   receivablesAt,
   trailingMonths,
   utilisation,
@@ -54,7 +53,7 @@ const PRESETS: { key: Preset; label: string }[] = [
 const pct = (n: number | null) => (n === null ? "—" : `${Math.round(n)}%`);
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  const { isAdmin } = await requireMember();
+  await requireMember();
   const sp = await searchParams;
   const today = todayIso();
   const preset = (PRESETS.some((p) => p.key === sp.p) ? sp.p : "fy") as Preset;
@@ -86,14 +85,13 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const pays = data.pays.filter((p) => docIds.has(p.document_id));
   const clientProjects = new Set(docs.map((d) => d.project_id).filter(Boolean));
   const exps = client ? data.exps.filter((e) => e.project_id && clientProjects.has(e.project_id)) : data.exps;
-  const costs = client ? data.costs.filter((c) => clientProjects.has(c.project_id)) : data.costs;
 
   const rev = basis === "cash" ? cashRevenue(docs, pays) : accrualRevenue(docs);
   const accrual = accrualRevenue(docs);
   const costEvents = expenseCosts(exps);
-  const p = pnl(rev, costEvents, costs, cur.from, cur.to);
-  const pp = pnl(rev, costEvents, costs, prev.from, prev.to);
-  const monthly = monthlyPnl(rev, costEvents, costs, trail);
+  const p = pnl(rev, costEvents, cur.from, cur.to);
+  const pp = pnl(rev, costEvents, prev.from, prev.to);
+  const monthly = monthlyPnl(rev, costEvents, trail);
   const cat = categoryMonths(costEvents, months(cur.from, cur.to).length > 1 ? months(cur.from, cur.to) : trail);
   const conc = concentration(rev, cur.from, cur.to);
   const concPrev = concentration(rev, prev.from, prev.to);
@@ -118,7 +116,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     docs: data.docs,
     exps: data.exps,
   });
-  const projects = projectTable(data.projects, accrual, costEvents, costs).slice(0, 12);
+  const projects = projectTable(client ? data.projects.filter((x) => clientProjects.has(x.id)) : data.projects, accrual, costEvents, data.projectMinutes).slice(0, 12);
   const team = people.filter((x) => x.role !== "viewer");
   const util = utilisation(
     data.time,
@@ -133,9 +131,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const utilAll = (() => {
     const w = util.flatMap((u) => u.weeks);
     const cap = w.reduce((s, x) => s + x.capacity, 0);
-    return cap ? Math.round((w.reduce((s, x) => s + x.billable, 0) / cap) * 100) : null;
+    return cap ? Math.round((w.reduce((s, x) => s + x.logged, 0) / cap) * 100) : null;
   })();
-  const real = isAdmin ? realisation(costs, accrual, cur.from, cur.to) : null;
+  const hoursLogged = Math.round(util.reduce((s, u) => s + u.weeks.reduce((t, w) => t + w.logged, 0), 0));
   const ot = onTime(data.tasks, cur.from, cur.to);
   const funnel = quoteFunnel(docs, cur.from, cur.to);
   const leadsF = leadFunnel(data.leads, cur.from, cur.to);
@@ -242,7 +240,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           sub={p.revenue ? `${pct((p.agi / p.revenue) * 100)} of revenue` : undefined}
         />
         <Kpi
-          label={isAdmin ? "Net profit" : "Profit before team cost"}
+          label="Net profit"
           value={compactInr(p.net)}
           delta={delta(p.net, pp.net)}
           spark={spark("profit")}
@@ -260,7 +258,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           }
         />
         <Kpi label="Owed by clients" value={compactInr(ar)} sub={`DSO ${dso[dso.length - 1]?.dso ?? "—"} days · aim ≤ 45`} />
-        <Kpi label="Billable utilisation (8 weeks)" value={pct(utilAll)} sub="aim 65–75%" />
+        <Kpi label="Team hours used (8 weeks)" value={pct(utilAll)} sub="hours logged ÷ hours available" />
         <Kpi
           label="Biggest client share"
           value={conc[0] ? pct(conc[0].share) : "—"}
@@ -285,7 +283,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           legend={[
             { label: "Revenue", color: SERIES[0] },
             {
-              label: isAdmin ? "Costs" : "Costs (excl. team time)",
+              label: "Costs",
               color: SERIES[1],
             },
             { label: "Profit", color: SERIES[2] },
@@ -307,13 +305,13 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </Frame>
         <Frame
           title={`Where the money went · ${cur.label}`}
-          subtitle={isAdmin ? "Revenue → project costs → gross income → team time → overheads → profit" : "Team time is visible to the admin only"}
+          subtitle="Revenue → project costs → gross income → overheads (incl. salaries) → profit"
           table={{
             columns: ["Step", "Amount"],
             rows: waterfall(p).map((s) => [s.label, inrFull(s.value)]),
           }}
         >
-          <Waterfall steps={waterfall(p).filter((s) => isAdmin || s.label !== "Team time")} />
+          <Waterfall steps={waterfall(p)} />
         </Frame>
         <Frame
           title="Margin by month"
@@ -585,7 +583,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       <h2 className="pt-2 text-lg font-semibold">Projects &amp; team</h2>
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Tasks done on time" value={pct(ot.pct)} sub={`${ot.done} finished · ${ot.late} late`} />
-        <Kpi label="Realisation" value={isAdmin ? pct(real) : "Admin only"} sub="billed ÷ time at bill rates · aim 90%+" />
+        <Kpi label="Hours logged (8 weeks)" value={String(hoursLogged)} sub="across the team" />
         <Kpi label="Over-budget projects" value={String(projects.filter((x) => x.overBudget).length)} sub="hours past the estimate" upIsGood={false} />
         <Kpi label="Quotes accepted" value={`${funnel.stages[1].count} of ${funnel.stages[0].count}`} sub={compactInr(funnel.stages[1].value)} />
       </section>
@@ -593,12 +591,17 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         <div className="lg:col-span-2">
           <Frame
             title="Project profitability"
-            subtitle={
-              isAdmin ? "All time: revenue − expenses − team time at cost rates. Effective rate = (revenue − expenses) ÷ hours." : "Team time costs are visible to the admin only"
-            }
+            subtitle="All time: revenue − project expenses. Hours are compared with each project's budget hours."
             table={{
-              columns: ["Project", "Revenue", "Expenses", "Hours", "Time cost", "Profit", "Margin"],
-              rows: projects.map((x) => [`${x.code} ${x.name}`, inrFull(x.revenue), inrFull(x.expenses), x.hours, inrFull(x.timeCost), inrFull(x.profit), pct(x.margin)]),
+              columns: ["Project", "Revenue", "Expenses", "Profit", "Margin", "Hours"],
+              rows: projects.map((x) => [
+                `${x.code} ${x.name}`,
+                inrFull(x.revenue),
+                inrFull(x.expenses),
+                inrFull(x.profit),
+                pct(x.margin),
+                x.budget_hours ? `${x.hours} of ${x.budget_hours}` : x.hours,
+              ]),
             }}
           >
             {projects.length ? (
@@ -609,10 +612,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                       <th className="py-1 font-medium">Project</th>
                       <th className="text-right font-medium">Revenue</th>
                       <th className="text-right font-medium">Expenses</th>
+                      <th className="text-right font-medium">Profit</th>
+                      <th className="w-40 pl-3 font-medium">Margin</th>
                       <th className="text-right font-medium">Hours</th>
-                      {isAdmin && <th className="text-right font-medium">Profit</th>}
-                      {isAdmin && <th className="w-40 pl-3 font-medium">Margin</th>}
-                      <th className="text-right font-medium">₹/hour</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-100">
@@ -626,27 +628,27 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                         </td>
                         <td className="text-right tabular-nums">{compactInr(x.revenue)}</td>
                         <td className="text-right tabular-nums">{compactInr(x.expenses)}</td>
-                        <td className="text-right tabular-nums">{x.hours}</td>
-                        {isAdmin && <td className={`text-right tabular-nums ${x.profit < 0 ? "text-red-700" : ""}`}>{compactInr(x.profit)}</td>}
-                        {isAdmin && (
-                          <td className="pl-3">
-                            {x.margin !== null && (
-                              <span className="flex items-center gap-2">
-                                <span className="h-2 flex-1 rounded-full bg-neutral-100">
-                                  <span
-                                    className="block h-2 rounded-full"
-                                    style={{
-                                      width: `${Math.max(0, Math.min(100, x.margin))}%`,
-                                      background: x.margin < 20 ? "#d03b3b" : SERIES[2],
-                                    }}
-                                  />
-                                </span>
-                                <span className="w-10 text-right text-xs tabular-nums">{pct(x.margin)}</span>
+                        <td className={`text-right tabular-nums ${x.profit < 0 ? "text-red-700" : ""}`}>{compactInr(x.profit)}</td>
+                        <td className="pl-3">
+                          {x.margin !== null && (
+                            <span className="flex items-center gap-2">
+                              <span className="h-2 flex-1 rounded-full bg-neutral-100">
+                                <span
+                                  className="block h-2 rounded-full"
+                                  style={{
+                                    width: `${Math.max(0, Math.min(100, x.margin))}%`,
+                                    background: x.margin < 20 ? "#d03b3b" : SERIES[2],
+                                  }}
+                                />
                               </span>
-                            )}
-                          </td>
-                        )}
-                        <td className="text-right tabular-nums">{x.ehr === null ? "—" : compactInr(x.ehr)}</td>
+                              <span className="w-10 text-right text-xs tabular-nums">{pct(x.margin)}</span>
+                            </span>
+                          )}
+                        </td>
+                        <td className="text-right tabular-nums">
+                          {x.hours}
+                          {x.budget_hours ? <span className="text-neutral-400"> / {x.budget_hours}</span> : null}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -658,8 +660,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           </Frame>
         </div>
         <Frame
-          title="Billable utilisation by week"
-          subtitle="Billable hours ÷ available hours (after leave and holidays). ▲ = over capacity."
+          title="Team hours by week"
+          subtitle="Hours logged ÷ hours available (after leave and holidays). ▲ = over capacity."
           table={{
             columns: ["Person", ...weeks.map((w) => formatInvoiceDate(w).replace(/, \d{4}$/, ""))],
             rows: util.map((u) => [names(u.email), ...u.weeks.map((w) => (w.pct === null ? "—" : `${w.pct}%`))]),
@@ -677,7 +679,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
               label: names(u.email),
               cells: u.weeks.map((w) => ({
                 value: w.pct,
-                title: `${w.billable} billable of ${w.capacity} h available (${w.logged} h logged)`,
+                title: `${w.logged} h logged of ${w.capacity} h available`,
               })),
             }))}
           />
@@ -713,21 +715,36 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         <Kpi label="Days to win" value={leadsF.avgDaysToWin === null ? "—" : `${leadsF.avgDaysToWin}`} sub="enquiry to won, average" upIsGood={false} />
       </section>
       <div className="grid gap-5 lg:grid-cols-2">
-        <Frame title="Lead funnel" subtitle={`Leads that came in during ${cur.label}, by how far they got`} table={{ columns: ["Stage", "Leads"], rows: leadsF.stages.map((s) => [s.stage, s.count]) }}>
+        <Frame
+          title="Lead funnel"
+          subtitle={`Leads that came in during ${cur.label}, by how far they got`}
+          table={{ columns: ["Stage", "Leads"], rows: leadsF.stages.map((s) => [s.stage, s.count]) }}
+        >
           <Funnel stages={leadsF.stages} />
         </Frame>
         <Frame
           title="Where leads come from"
           subtitle="Leads and wins by source"
-          table={{ columns: ["Source", "Leads", "Won", "Win rate", "Won value"], rows: leadsF.sources.map((s) => [s.source, s.leads, s.won, s.winRate === null ? "—" : `${s.winRate}%`, inrFull(s.value)]) }}
+          table={{
+            columns: ["Source", "Leads", "Won", "Win rate", "Won value"],
+            rows: leadsF.sources.map((s) => [s.source, s.leads, s.won, s.winRate === null ? "—" : `${s.winRate}%`, inrFull(s.value)]),
+          }}
         >
           {leadsF.sources.length ? (
-            <HBars rows={leadsF.sources.map((s) => ({ label: s.source, value: s.leads, extra: `${s.won} won${s.winRate !== null ? ` · ${s.winRate}%` : ""}` }))} format="num" color={SERIES[2]} />
+            <HBars
+              rows={leadsF.sources.map((s) => ({ label: s.source, value: s.leads, extra: `${s.won} won${s.winRate !== null ? ` · ${s.winRate}%` : ""}` }))}
+              format="num"
+              color={SERIES[2]}
+            />
           ) : (
             <p className="text-sm text-neutral-500">No leads in this period.</p>
           )}
         </Frame>
-        <Frame title="Open pipeline by stage" subtitle="Today, at full value" table={{ columns: ["Stage", "Leads", "Value"], rows: pipe.by.filter((b) => b.stage !== "won" && b.stage !== "lost").map((b) => [b.label, b.count, inrFull(b.value)]) }}>
+        <Frame
+          title="Open pipeline by stage"
+          subtitle="Today, at full value"
+          table={{ columns: ["Stage", "Leads", "Value"], rows: pipe.by.filter((b) => b.stage !== "won" && b.stage !== "lost").map((b) => [b.label, b.count, inrFull(b.value)]) }}
+        >
           <HBars rows={pipe.by.filter((b) => b.stage !== "won" && b.stage !== "lost").map((b) => ({ label: b.label, value: b.value, extra: `${b.count}` }))} />
         </Frame>
       </div>

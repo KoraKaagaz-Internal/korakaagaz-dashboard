@@ -10,7 +10,6 @@ export interface TimeEntry {
   task_id: string | null;
   work_date: string;
   minutes: number;
-  billable: boolean;
   note: string;
   status: TimeStatus;
   timer_started_at: string | null;
@@ -154,30 +153,6 @@ export function monthRange(iso: string): { from: string; to: string } {
 
 export function sumMinutes(entries: Pick<TimeEntry, "minutes">[]): number {
   return entries.reduce((s, e) => s + e.minutes, 0);
-}
-
-/** Groups approved, billable, not-yet-invoiced time into invoice lines (one per task, else per project). */
-export function invoiceLinesFromTime(
-  entries: (Pick<TimeEntry, "minutes" | "billable" | "status" | "invoiced_document_id" | "task_id" | "timer_started_at"> & { task_title?: string })[],
-  rate: number,
-  projectName: string,
-  sac: string,
-) {
-  const groups = new Map<string, { title: string; minutes: number }>();
-  for (const e of entries) {
-    if (!e.billable || e.status !== "approved" || e.invoiced_document_id || e.timer_started_at) continue;
-    const key = e.task_id ?? "_";
-    const g = groups.get(key) ?? { title: e.task_title || projectName, minutes: 0 };
-    g.minutes += e.minutes;
-    groups.set(key, g);
-  }
-  return [...groups.values()].map((g) => ({
-    title: g.title,
-    description: `${hhmm(g.minutes)} h`,
-    sac,
-    qty: Math.round((g.minutes / 60) * 100) / 100,
-    unit_price: rate,
-  }));
 }
 
 export function daysInclusive(from: string, to: string) {

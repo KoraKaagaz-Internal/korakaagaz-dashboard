@@ -46,16 +46,6 @@ export interface AExp {
   tds_amount: number;
   tds_challan_id: string | null;
 }
-export interface ACost {
-  month: string;
-  project_id: string;
-  member_email: string;
-  minutes: number;
-  billable_minutes: number;
-  cost: number;
-  bill_value: number;
-}
-
 const inr = (d: Pick<ADoc, "currency" | "fx_rate">, n: number) => (d.currency === "INR" ? n : n * (d.fx_rate || 1));
 const within = (date: string, from: string, to: string) => date >= from && date <= to;
 
@@ -168,7 +158,12 @@ const live = (d: ADoc) => d.status === "issued" || d.status === "accepted";
 export function accrualRevenue(docs: ADoc[]): RevEvent[] {
   return docs
     .filter((d) => live(d) && (d.doc_type === "invoice" || d.doc_type === "credit_note"))
-    .map((d) => ({ date: d.issue_date, client: d.client_name || "Unknown", project_id: d.project_id, amount: round2((d.doc_type === "credit_note" ? -1 : 1) * inr(d, d.taxable)) }));
+    .map((d) => ({
+      date: d.issue_date,
+      client: d.client_name || "Unknown",
+      project_id: d.project_id,
+      amount: round2((d.doc_type === "credit_note" ? -1 : 1) * inr(d, d.taxable)),
+    }));
 }
 
 /** Cash: money received (incl. TDS the client kept), without its GST share. */
@@ -204,9 +199,8 @@ export function expenseCosts(exps: AExp[]): CostEvent[] {
     }));
 }
 
-export const sumIn = (events: { date: string; amount: number }[], from: string, to: string) => round2(events.filter((e) => within(e.date, from, to)).reduce((s, e) => s + e.amount, 0));
-
-const costsIn = (costs: ACost[], from: string, to: string) => costs.filter((c) => c.month >= from.slice(0, 7) + "-01" && c.month <= to);
+export const sumIn = (events: { date: string; amount: number }[], from: string, to: string) =>
+  round2(events.filter((e) => within(e.date, from, to)).reduce((s, e) => s + e.amount, 0));
 
 // ---------------------------------------------------------------------------
 // Profit & loss
@@ -215,7 +209,6 @@ export interface Pnl {
   revenue: number;
   passThrough: number;
   agi: number;
-  teamCost: number;
   overhead: number;
   net: number;
   grossMargin: number | null;
@@ -223,16 +216,16 @@ export interface Pnl {
   overheadRatio: number | null;
 }
 
-export function pnl(rev: RevEvent[], costs: CostEvent[], team: ACost[], from: string, to: string): Pnl {
+/** Revenue − project costs = gross income; − overheads (rent, software, salaries & retainers…) = net profit. */
+export function pnl(rev: RevEvent[], costs: CostEvent[], from: string, to: string): Pnl {
   const revenue = sumIn(rev, from, to);
   const inRange = costs.filter((c) => within(c.date, from, to));
   const passThrough = round2(inRange.filter((c) => c.kind === "pass_through").reduce((s, c) => s + c.amount, 0));
   const overhead = round2(inRange.filter((c) => c.kind === "overhead").reduce((s, c) => s + c.amount, 0));
-  const teamCost = round2(costsIn(team, from, to).reduce((s, c) => s + c.cost, 0));
   const agi = round2(revenue - passThrough);
-  const net = round2(agi - teamCost - overhead);
+  const net = round2(agi - overhead);
   const pct = (n: number) => (agi > 0 ? round2((n / agi) * 100) : null);
-  return { revenue, passThrough, agi, teamCost, overhead, net, grossMargin: pct(agi - teamCost), netMargin: pct(net), overheadRatio: pct(overhead) };
+  return { revenue, passThrough, agi, overhead, net, grossMargin: revenue > 0 ? round2((agi / revenue) * 100) : null, netMargin: pct(net), overheadRatio: pct(overhead) };
 }
 
 export function waterfall(p: Pnl): { label: string; value: number; kind: "total" | "down" | "up" }[] {
@@ -240,16 +233,15 @@ export function waterfall(p: Pnl): { label: string; value: number; kind: "total"
     { label: "Revenue", value: p.revenue, kind: "total" },
     { label: "Project costs", value: -p.passThrough, kind: "down" },
     { label: "Gross income", value: p.agi, kind: "total" },
-    { label: "Team time", value: -p.teamCost, kind: "down" },
     { label: "Overheads", value: -p.overhead, kind: "down" },
     { label: "Net profit", value: p.net, kind: "total" },
   ];
 }
 
-export function monthlyPnl(rev: RevEvent[], costs: CostEvent[], team: ACost[], ms: ReturnType<typeof months>) {
+export function monthlyPnl(rev: RevEvent[], costs: CostEvent[], ms: ReturnType<typeof months>) {
   return ms.map((m) => {
-    const p = pnl(rev, costs, team, m.from, m.to);
-    return { key: m.key, label: m.label, revenue: p.revenue, costs: round2(p.passThrough + p.overhead + p.teamCost), profit: p.net, agi: p.agi, margin: p.netMargin };
+    const p = pnl(rev, costs, m.from, m.to);
+    return { key: m.key, label: m.label, revenue: p.revenue, costs: round2(p.passThrough + p.overhead), profit: p.net, agi: p.agi, margin: p.netMargin };
   });
 }
 
@@ -259,7 +251,10 @@ export function categoryMonths(costs: CostEvent[], ms: ReturnType<typeof months>
   const to = ms[ms.length - 1]?.to ?? "";
   const totals = new Map<string, number>();
   for (const c of costs) if (within(c.date, from, to)) totals.set(c.category, (totals.get(c.category) ?? 0) + c.amount);
-  const keep = [...totals.entries()].sort((a, b) => b[1] - a[1]).slice(0, top).map(([k]) => k);
+  const keep = [...totals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, top)
+    .map(([k]) => k);
   const series = [...keep, ...(totals.size > keep.length ? ["Other"] : [])];
   return {
     series,
@@ -395,7 +390,11 @@ export function receivablesAt(docs: ADoc[], pays: APay[], date: string) {
 }
 
 const billedIn = (docs: ADoc[], from: string, to: string) =>
-  round2(docs.filter((d) => live(d) && within(d.issue_date, from, to) && (d.doc_type === "invoice" || d.doc_type === "credit_note")).reduce((s, d) => s + (d.doc_type === "credit_note" ? -1 : 1) * inr(d, d.total), 0));
+  round2(
+    docs
+      .filter((d) => live(d) && within(d.issue_date, from, to) && (d.doc_type === "invoice" || d.doc_type === "credit_note"))
+      .reduce((s, d) => s + (d.doc_type === "credit_note" ? -1 : 1) * inr(d, d.total), 0),
+  );
 
 const collectedIn = (docs: ADoc[], pays: APay[], from: string, to: string) => {
   const byId = new Map(docs.map((d) => [d.id, d]));
@@ -431,7 +430,13 @@ export function cei(docs: ADoc[], pays: APay[], from: string, to: string, today:
 }
 
 /** Cash in hand: opening balances plus everything received, minus everything paid out since. */
-export function cashPosition(opening: number, openingDate: string | null, receipts: { date: string; amount: number }[], payouts: { date: string; amount: number }[], today: string) {
+export function cashPosition(
+  opening: number,
+  openingDate: string | null,
+  receipts: { date: string; amount: number }[],
+  payouts: { date: string; amount: number }[],
+  today: string,
+) {
   const since = openingDate ?? "0000-01-01";
   const inflow = receipts.filter((r) => r.date >= since && r.date <= today).reduce((s, r) => s + r.amount, 0);
   const outflow = payouts.filter((r) => r.date >= since && r.date <= today).reduce((s, r) => s + r.amount, 0);
@@ -446,12 +451,7 @@ export function cashPosition(opening: number, openingDate: string | null, receip
  * recurring retainers on their next date) and out (bill balances by due date, approved claims,
  * recurring expenses, TDS on the 7th).
  */
-export function forecast13w(input: {
-  today: string;
-  cash: number;
-  docs: ADoc[];
-  exps: AExp[];
-}) {
+export function forecast13w(input: { today: string; cash: number; docs: ADoc[]; exps: AExp[] }) {
   const start = weekStart(input.today);
   const weeks = Array.from({ length: 13 }, (_, i) => ({ from: addDays(start, i * 7), to: addDays(start, i * 7 + 6), in: 0, out: 0 }));
   const slot = (date: string) => {
@@ -501,41 +501,41 @@ export function forecast13w(input: {
   let bal = input.cash;
   return weeks.map((w) => {
     bal += w.in - w.out;
-    return { week: w.from, label: new Date(`${w.from}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }), in: round2(w.in), out: round2(w.out), balance: round2(bal) };
+    return {
+      week: w.from,
+      label: new Date(`${w.from}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }),
+      in: round2(w.in),
+      out: round2(w.out),
+      balance: round2(bal),
+    };
   });
 }
 
 // ---------------------------------------------------------------------------
 // Projects and team
 // ---------------------------------------------------------------------------
-export function projectTable(projects: { id: string; code: string; name: string; status: string; budget_hours: number }[], rev: RevEvent[], costs: CostEvent[], team: ACost[]) {
+/** Per project, all time: revenue, expenses, profit, and hours logged against the budget. */
+export function projectTable(
+  projects: { id: string; code: string; name: string; status: string; budget_hours: number }[],
+  rev: RevEvent[],
+  costs: CostEvent[],
+  minutes: Map<string, number>,
+) {
   return projects
     .map((p) => {
       const revenue = round2(rev.filter((e) => e.project_id === p.id).reduce((s, e) => s + e.amount, 0));
       const expenses = round2(costs.filter((c) => c.project_id === p.id).reduce((s, c) => s + c.amount, 0));
-      const t = team.filter((c) => c.project_id === p.id);
-      const hours = round2(t.reduce((s, c) => s + c.minutes, 0) / 60);
-      const timeCost = round2(t.reduce((s, c) => s + c.cost, 0));
-      const profit = round2(revenue - expenses - timeCost);
-      return {
-        ...p,
-        revenue,
-        expenses,
-        hours,
-        timeCost,
-        profit,
-        margin: revenue > 0 ? round2((profit / revenue) * 100) : null,
-        ehr: hours > 0 ? round2((revenue - expenses) / hours) : null,
-        overBudget: p.budget_hours > 0 && hours > p.budget_hours,
-      };
+      const hours = round2((minutes.get(p.id) ?? 0) / 60);
+      const profit = round2(revenue - expenses);
+      return { ...p, revenue, expenses, hours, profit, margin: revenue > 0 ? round2((profit / revenue) * 100) : null, overBudget: p.budget_hours > 0 && hours > p.budget_hours };
     })
     .filter((p) => p.revenue || p.expenses || p.hours)
     .sort((a, b) => b.revenue - a.revenue);
 }
 
-/** Billable hours ÷ available hours per person per week (available = capacity minus leave and holidays). */
+/** Hours logged ÷ available hours per person per week (available = capacity minus leave and holidays). */
 export function utilisation(
-  entries: { member_email: string; work_date: string; minutes: number; billable: boolean }[],
+  entries: { member_email: string; work_date: string; minutes: number }[],
   people: { email: string; capacity: number }[],
   weeks: string[],
   leave: Parameters<typeof availableDays>[2],
@@ -545,22 +545,11 @@ export function utilisation(
     email: p.email,
     weeks: weeks.map((w) => {
       const end = addDays(w, 6);
-      const mine = entries.filter((e) => e.member_email === p.email && e.work_date >= w && e.work_date <= end);
-      const billable = mine.filter((e) => e.billable).reduce((s, e) => s + e.minutes, 0) / 60;
-      const logged = mine.reduce((s, e) => s + e.minutes, 0) / 60;
+      const logged = entries.filter((e) => e.member_email === p.email && e.work_date >= w && e.work_date <= end).reduce((s, e) => s + e.minutes, 0) / 60;
       const cap = weekCapacity(p.capacity, availableDays(w, p.email, leave, holidays));
-      return { week: w, billable: round2(billable), logged: round2(logged), capacity: cap, pct: cap > 0 ? Math.round((billable / cap) * 100) : null };
+      return { week: w, logged: round2(logged), capacity: cap, pct: cap > 0 ? Math.round((logged / cap) * 100) : null };
     }),
   }));
-}
-
-/** Invoiced revenue on projects with tracked time ÷ the value of that time at standard bill rates. */
-export function realisation(team: ACost[], rev: RevEvent[], from: string, to: string) {
-  const t = costsIn(team, from, to);
-  const value = t.reduce((s, c) => s + c.bill_value, 0);
-  const projects = new Set(t.filter((c) => c.bill_value > 0).map((c) => c.project_id));
-  const billed = rev.filter((e) => e.project_id && projects.has(e.project_id) && within(e.date, from, to)).reduce((s, e) => s + e.amount, 0);
-  return value > 0 ? Math.round((billed / value) * 100) : null;
 }
 
 export function onTime(tasks: { due_date: string | null; completed_at: string | null }[], from: string, to: string) {

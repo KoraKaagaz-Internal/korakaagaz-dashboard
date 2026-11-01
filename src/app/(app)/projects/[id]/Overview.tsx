@@ -39,7 +39,7 @@ export function Overview({
     budget_hours: p.budget_hours,
     retainer_hours_month: p.retainer_hours_month,
   });
-  const [fin, setFin] = useState<ProjectFinance>(finance ?? { budget: 0, billing: "fixed", hourly_rate: 0, retainer_amount_month: 0 });
+  const [fin, setFin] = useState<ProjectFinance>(finance ?? { budget: 0, billing: "fixed", retainer_amount_month: 0 });
   const [msg, setMsg] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, start] = useTransition();
@@ -59,7 +59,16 @@ export function Overview({
   return (
     <div className="grid gap-5 lg:grid-cols-[2fr_1fr]">
       <div className="space-y-5">
-        <Card title="About" actions={canEdit && !editing ? <button className={btn.ghost} onClick={() => setEditing(true)}>Edit</button> : undefined}>
+        <Card
+          title="About"
+          actions={
+            canEdit && !editing ? (
+              <button className={btn.ghost} onClick={() => setEditing(true)}>
+                Edit
+              </button>
+            ) : undefined
+          }
+        >
           {!editing ? (
             <div className="space-y-3 text-sm">
               <p className="whitespace-pre-wrap text-neutral-700">{p.description || <span className="text-neutral-400">No brief yet.</span>}</p>
@@ -127,7 +136,16 @@ export function Overview({
                 <Textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </Field>
               <div className="flex gap-2 sm:col-span-2">
-                <button className={btn.primary} disabled={pending} onClick={() => run(() => updateProject(p.id, form), () => setEditing(false))}>
+                <button
+                  className={btn.primary}
+                  disabled={pending}
+                  onClick={() =>
+                    run(
+                      () => updateProject(p.id, form),
+                      () => setEditing(false),
+                    )
+                  }
+                >
                   Save
                 </button>
                 <button className={btn.secondary} onClick={() => setEditing(false)}>
@@ -168,7 +186,6 @@ export function Overview({
                 <Field label="Billing">
                   <Select value={fin.billing} onChange={(e) => setFin({ ...fin, billing: e.target.value as Billing })}>
                     <option value="fixed">Fixed fee</option>
-                    <option value="hourly">Hourly</option>
                     <option value="retainer">Monthly retainer</option>
                   </Select>
                 </Field>
@@ -177,13 +194,8 @@ export function Overview({
                     <NumberInput value={fin.retainer_amount_month} onValue={(v) => setFin({ ...fin, retainer_amount_month: v })} min={0} />
                   </Field>
                 ) : (
-                  <Field label={fin.billing === "hourly" ? "Cap (₹)" : "Fee (₹)"}>
+                  <Field label="Fee (₹)">
                     <NumberInput value={fin.budget} onValue={(v) => setFin({ ...fin, budget: v })} min={0} />
-                  </Field>
-                )}
-                {fin.billing === "hourly" && (
-                  <Field label="Rate ₹ / hour">
-                    <NumberInput value={fin.hourly_rate} onValue={(v) => setFin({ ...fin, hourly_rate: v })} min={0} />
                   </Field>
                 )}
                 <button className={btn.secondary} disabled={pending} onClick={() => run(() => updateProject(p.id, {}, fin))}>
@@ -192,14 +204,19 @@ export function Overview({
               </div>
             ) : (
               <p className="text-sm">
-                {finance.billing === "retainer" ? `${formatMoney(finance.retainer_amount_month)} / month` : formatMoney(finance.budget)} · <span className="capitalize">{finance.billing}</span>
+                {finance.billing === "retainer" ? `${formatMoney(finance.retainer_amount_month)} / month` : formatMoney(finance.budget)} ·{" "}
+                {finance.billing === "retainer" ? "Monthly retainer" : "Fixed fee"}
               </p>
             )}
             <p className="mt-2 text-xs text-neutral-500">Only staff see money. Freelancers on the project don&apos;t.</p>
           </Card>
         )}
 
-        {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+        {msg && (
+          <p className="text-sm text-red-700" role="alert">
+            {msg}
+          </p>
+        )}
 
         {isAdmin && (
           <div>
@@ -251,7 +268,12 @@ function Phases({ bundle, canEdit, run, pending }: { bundle: ProjectBundle; canE
                 {ph.due_date ? ` · ${formatInvoiceDate(ph.due_date).replace(/, \d{4}$/, "")}` : ""}
               </span>
               {canEdit && (
-                <button className="text-xs text-neutral-400 hover:text-red-600" disabled={pending} onClick={() => run(() => deletePhase(ph.id, ph.project_id))} aria-label={`Remove phase ${ph.name}`}>
+                <button
+                  className="text-xs text-neutral-400 hover:text-red-600"
+                  disabled={pending}
+                  onClick={() => run(() => deletePhase(ph.id, ph.project_id))}
+                  aria-label={`Remove phase ${ph.name}`}
+                >
                   Remove
                 </button>
               )}
@@ -263,7 +285,16 @@ function Phases({ bundle, canEdit, run, pending }: { bundle: ProjectBundle; canE
       {canEdit && (
         <div className="mt-3 flex gap-2">
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="New phase" aria-label="New phase name" />
-          <button className={btn.secondary} disabled={!name.trim() || pending} onClick={() => run(() => savePhase({ project_id: bundle.project.id, name, sort: bundle.phases.length }), () => setName(""))}>
+          <button
+            className={btn.secondary}
+            disabled={!name.trim() || pending}
+            onClick={() =>
+              run(
+                () => savePhase({ project_id: bundle.project.id, name, sort: bundle.phases.length }),
+                () => setName(""),
+              )
+            }
+          >
             Add
           </button>
         </div>
@@ -311,7 +342,12 @@ function Deliverables({ bundle, canEdit, run, pending }: { bundle: ProjectBundle
                 </td>
                 <td className="text-right">
                   {canEdit && (
-                    <button className="text-xs text-neutral-400 hover:text-red-600" disabled={pending} onClick={() => run(() => deleteDeliverable(x.id, x.project_id))} aria-label={`Remove ${x.name}`}>
+                    <button
+                      className="text-xs text-neutral-400 hover:text-red-600"
+                      disabled={pending}
+                      onClick={() => run(() => deleteDeliverable(x.id, x.project_id))}
+                      aria-label={`Remove ${x.name}`}
+                    >
                       Remove
                     </button>
                   )}
@@ -331,7 +367,12 @@ function Deliverables({ bundle, canEdit, run, pending }: { bundle: ProjectBundle
           <button
             className={btn.secondary}
             disabled={!d.name.trim() || pending}
-            onClick={() => run(() => saveDeliverable({ project_id: bundle.project.id, ...d }), () => setD({ name: "", qty: 1, revision_limit: 2 }))}
+            onClick={() =>
+              run(
+                () => saveDeliverable({ project_id: bundle.project.id, ...d }),
+                () => setD({ name: "", qty: 1, revision_limit: 2 }),
+              )
+            }
           >
             Add
           </button>

@@ -93,6 +93,7 @@ const admin = await browser.newPage();
 await admin.setViewport({ width: 1400, height: 1000 });
 const A = helpers(admin);
 let projectId, clientId;
+let restoreApproval = null;
 const createdDocs = [];
 const createdKit = [];
 
@@ -227,6 +228,14 @@ try {
     return r.length === 1 && r[0].minutes === 90 ? r[0] : null;
   });
   check("typing 1:30 in the timesheet saves 90 minutes", !!ninety, JSON.stringify(await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&select=minutes,status`)));
+  const tsBody = await A.body();
+  check("approval off: no submit button, no approve tab", !tsBody.includes("Submit week") && !(await admin.$("a[href*='tab=approve']")));
+
+  // approval on (restored in finally)
+  const [{ time_approval: approvalBefore }] = await api("/rest/v1/settings?id=eq.1&select=time_approval");
+  restoreApproval = approvalBefore;
+  await api("/rest/v1/settings?id=eq.1", { method: "PATCH", body: JSON.stringify({ time_approval: true }) });
+  await A.go("/time");
   await tap(admin, "::-p-xpath(//button[starts-with(normalize-space(), 'Submit week') and not(@disabled)])");
   const submitted = await until(async () => (await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&status=eq.submitted`)).length);
   check("submit the week for approval", submitted === 1);
@@ -235,19 +244,12 @@ try {
   const approved = await until(async () => (await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&status=eq.approved`)).length);
   check("admin approves submitted time", approved === 1);
 
-  // ------------------------------------------------------------ invoice from time
-  await api(`/rest/v1/project_finance?project_id=eq.${projectId}`, { method: "PATCH", body: JSON.stringify({ billing: "hourly", hourly_rate: 2000 }) });
+  // ------------------------------------------------------------ project hours (no money)
   await A.go(`/projects/${projectId}?tab=time`);
-  await A.waitText("1.5 h ready to bill");
+  await A.waitText("1:30 h");
+  const hoursBody = await A.body();
+  check("project hours panel shows logged hours and no ₹/hour", !/₹\s*\/\s*h|per hour|ready to bill|Bill this time/i.test(hoursBody));
   await admin.screenshot({ path: ".visual/e2e-project-time.png" });
-  await tap(admin, "::-p-xpath(//button[normalize-space()='Draft invoice from approved time' and not(@disabled)])");
-  await admin.waitForFunction(() => /\/documents\/[0-9a-f-]{36}\/edit/.test(location.pathname), { timeout: 60000 });
-  const docId = admin.url().match(/documents\/([0-9a-f-]{36})/)[1];
-  const [doc] = await api(`/rest/v1/documents?id=eq.${docId}&select=status,project_id,taxable,document_items(title,qty,unit_price)`);
-  check("draft invoice from time: 1.5 h × ₹2,000 for the task", doc.status === "draft" && doc.project_id === projectId && Number(doc.taxable) === 3000 && doc.document_items[0]?.title === callSheet.title, JSON.stringify(doc));
-  const linked = await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&select=invoiced_document_id`);
-  check("billed time is linked to the invoice", linked[0]?.invoiced_document_id === docId);
-  createdDocs.push(docId);
 
   // ------------------------------------------------------------ calendar
   const [kitItem] = await api("/rest/v1/kit", { method: "POST", body: JSON.stringify({ name: `E2E camera ${stamp}`, category: "Camera" }) });
@@ -365,6 +367,7 @@ try {
   check("unexpected error", false, e.message.split("\n")[0]);
   await admin.screenshot({ path: ".visual/e2e-projects-error.png" }).catch(() => {});
 } finally {
+  if (restoreApproval !== null) await api("/rest/v1/settings?id=eq.1", { method: "PATCH", body: JSON.stringify({ time_approval: restoreApproval }) });
   for (const d of createdDocs) {
     await api(`/rest/v1/time_entries?invoiced_document_id=eq.${d}`, { method: "PATCH", body: JSON.stringify({ invoiced_document_id: null }) });
     await api(`/rest/v1/document_items?document_id=eq.${d}`, { method: "DELETE" });
