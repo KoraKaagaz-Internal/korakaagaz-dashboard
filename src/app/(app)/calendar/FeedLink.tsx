@@ -29,7 +29,7 @@ export function FeedLink({ site }: { site: string }) {
             value={url}
             onFocus={(e) => e.target.select()}
             aria-label="Calendar link"
-            className="w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-1.5 font-mono text-xs"
+            className="w-full rounded-lg border border-line bg-neutral-50 px-3 py-1.5 font-mono text-xs"
           />
           <div className="flex flex-wrap gap-2">
             <button className={btn.secondary} onClick={() => navigator.clipboard.writeText(url).then(() => setMsg("Copied."))}>

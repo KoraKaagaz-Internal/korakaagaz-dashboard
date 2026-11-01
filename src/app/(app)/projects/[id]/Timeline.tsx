@@ -28,11 +28,11 @@ export function Timeline({ tasks, phases, today, projectId }: { tasks: Task[]; p
     <div className="rounded-xl bg-white border border-line">
       <div className="overflow-x-auto">
         <div className="relative" style={{ width: width + 220 }}>
-          <div className="sticky top-0 flex h-8 border-b border-neutral-100 text-xs text-neutral-500">
+          <div className="sticky top-0 flex h-8 border-b border-line text-xs text-neutral-500">
             <div className="sticky left-0 z-10 w-[220px] shrink-0 bg-white" />
             <div className="relative" style={{ width }}>
               {weeks.map((w) => (
-                <span key={w} className="absolute top-2 border-l border-neutral-200 pl-1" style={{ left: x(w) }}>
+                <span key={w} className="absolute top-2 border-l border-line pl-1" style={{ left: x(w) }}>
                   {formatInvoiceDate(w).replace(/, \d{4}$/, "")}
                 </span>
               ))}
@@ -59,7 +59,7 @@ export function Timeline({ tasks, phases, today, projectId }: { tasks: Task[]; p
                     <div className="relative h-full" style={{ width }}>
                       <div
                         title={`${t.title}: ${formatInvoiceDate(s)} → ${formatInvoiceDate(e)} · ${TASK_STATUS_LABEL[t.status]}`}
-                        className={`absolute top-2 h-4 rounded ${t.status === "done" ? "bg-neutral-300" : late ? "bg-red-600" : "bg-accent"}`}
+                        className={`absolute top-2 h-4 rounded ${t.status === "done" ? "bg-neutral-300" : late ? "bg-danger" : "bg-accent"}`}
                         style={{ left: x(s) + 1, width: Math.max(DAY - 2, (daysBetween(s, e) + 1) * DAY - 2) }}
                       />
                     </div>
@@ -71,7 +71,7 @@ export function Timeline({ tasks, phases, today, projectId }: { tasks: Task[]; p
           <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-red-500" style={{ left: 220 + x(today) + DAY / 2 }} aria-hidden="true" />
         </div>
       </div>
-      <p className="border-t border-neutral-100 px-4 py-2 text-xs text-neutral-500">
+      <p className="border-t border-line px-4 py-2 text-xs text-neutral-500">
         Red line = today. Bars: blue planned, red late, grey done.{undated ? ` ${undated} task${undated === 1 ? " has" : "s have"} no dates.` : ""}
       </p>
     </div>

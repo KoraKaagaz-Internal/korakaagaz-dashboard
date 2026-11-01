@@ -53,7 +53,7 @@ export function PeoplePicker({
         type="button"
         disabled={disabled}
         onClick={() => (open ? finish() : setOpen(true))}
-        className="flex min-h-8 items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm disabled:bg-neutral-50"
+        className="flex min-h-8 items-center gap-1.5 rounded-lg border border-line bg-white px-2 py-1 text-sm disabled:bg-neutral-50"
         aria-expanded={open}
       >
         {sel.length ? (
@@ -73,7 +73,7 @@ export function PeoplePicker({
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search people"
-            className="mb-1 w-full rounded-md border border-neutral-200 px-2 py-1 text-sm outline-none focus:border-navy"
+            className="mb-1 w-full rounded-md border border-line px-2 py-1 text-sm outline-none focus:border-navy"
           />
           <ul className="max-h-60 overflow-y-auto">
             {shown.map((p) => (

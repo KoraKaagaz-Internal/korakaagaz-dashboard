@@ -212,7 +212,7 @@ export function Overview({
         )}
 
         {msg && (
-          <p className="text-sm text-red-700" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {msg}
           </p>
         )}
@@ -269,7 +269,7 @@ function Phases({ bundle, canEdit, run, pending }: { bundle: ProjectBundle; canE
               </span>
               {canEdit && (
                 <button
-                  className="text-xs text-neutral-400 hover:text-red-600"
+                  className="text-xs text-neutral-400 hover:text-danger"
                   disabled={pending}
                   onClick={() => run(() => deletePhase(ph.id, ph.project_id))}
                   aria-label={`Remove phase ${ph.name}`}
@@ -318,7 +318,7 @@ function Deliverables({ bundle, canEdit, run, pending }: { bundle: ProjectBundle
               <th />
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
+          <tbody className="divide-y divide-line">
             {bundle.deliverables.map((x) => (
               <tr key={x.id}>
                 <td className="py-1.5">{x.name}</td>
@@ -327,7 +327,7 @@ function Deliverables({ bundle, canEdit, run, pending }: { bundle: ProjectBundle
                 <td>
                   {canEdit ? (
                     <select
-                      className="rounded border border-neutral-200 bg-white px-1 py-0.5 text-xs"
+                      className="rounded border border-line bg-white px-1 py-0.5 text-xs"
                       value={x.status}
                       onChange={(e) => run(() => saveDeliverable({ ...x, status: e.target.value as typeof x.status }))}
                       aria-label={`Status of ${x.name}`}
@@ -343,7 +343,7 @@ function Deliverables({ bundle, canEdit, run, pending }: { bundle: ProjectBundle
                 <td className="text-right">
                   {canEdit && (
                     <button
-                      className="text-xs text-neutral-400 hover:text-red-600"
+                      className="text-xs text-neutral-400 hover:text-danger"
                       disabled={pending}
                       onClick={() => run(() => deleteDeliverable(x.id, x.project_id))}
                       aria-label={`Remove ${x.name}`}

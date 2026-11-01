@@ -105,12 +105,12 @@ export function LeadBoard({ leads, today, canEdit }: { leads: Lead[]; today: str
   return (
     <div>
       {msg && (
-        <p className="mb-2 text-sm text-red-700" role="alert">
+        <p className="mb-2 text-sm text-danger" role="alert">
           {msg}
         </p>
       )}
       {lost && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-amber-50 p-3 text-sm ring-1 ring-amber-200" role="dialog" aria-label="Why was it lost?">
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-warn/10 p-3 text-sm ring-1 ring-warn/20" role="dialog" aria-label="Why was it lost?">
           <span>Why was it lost?</span>
           <Select className="!w-56" value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason">
             {LOST_REASONS.map((r) => (
@@ -194,7 +194,7 @@ function Card({ lead: l, today, lifted }: { lead: Lead; today: string; lifted?: 
       <div className="mt-2 flex items-center justify-between text-xs">
         <span className="font-medium tabular-nums">{l.value ? compactInr(l.value) : l.budget || ""}</span>
         {l.follow_up_on && l.stage !== "won" && l.stage !== "lost" && (
-          <span className={due ? "font-semibold text-red-700" : "text-neutral-500"}>
+          <span className={due ? "font-semibold text-danger" : "text-neutral-500"}>
             {due ? "Follow up " : ""}
             {formatInvoiceDate(l.follow_up_on).replace(/, \d{4}$/, "")}
           </span>

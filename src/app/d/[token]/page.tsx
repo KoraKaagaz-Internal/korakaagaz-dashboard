@@ -21,9 +21,8 @@ export default async function SharedDocumentPage({ params }: { params: Promise<{
   const balance = doc.balance;
   const payable = ["invoice", "proforma"].includes(doc.doc_type) && doc.status === "issued" && (balance?.balance ?? doc.total) > 0.005;
   const due = balance?.balance ?? doc.total;
-  const upi = doc.supplier.bank?.upi_id && doc.currency === "INR" && payable
-    ? upiUri({ vpa: doc.supplier.bank.upi_id, name: business, amount: due, note: doc.number ?? undefined })
-    : null;
+  const upi =
+    doc.supplier.bank?.upi_id && doc.currency === "INR" && payable ? upiUri({ vpa: doc.supplier.bank.upi_id, name: business, amount: due, note: doc.number ?? undefined }) : null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-6 sm:py-10">
@@ -40,7 +39,7 @@ export default async function SharedDocumentPage({ params }: { params: Promise<{
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <a href={`/api/share/${token}/pdf`} className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-medium">
+          <a href={`/api/share/${token}/pdf`} className="rounded-lg border border-line bg-white px-4 py-2 text-sm font-medium">
             Download PDF
           </a>
           {upi && (
@@ -56,7 +55,17 @@ export default async function SharedDocumentPage({ params }: { params: Promise<{
         {balance?.payment_status && (
           <Info
             label="Status"
-            value={doc.status === "cancelled" ? "Cancelled" : balance.payment_status === "paid" ? "Paid, thank you" : balance.payment_status === "partial" ? "Partly paid" : balance.overdue ? "Overdue" : "Awaiting payment"}
+            value={
+              doc.status === "cancelled"
+                ? "Cancelled"
+                : balance.payment_status === "paid"
+                  ? "Paid, thank you"
+                  : balance.payment_status === "partial"
+                    ? "Partly paid"
+                    : balance.overdue
+                      ? "Overdue"
+                      : "Awaiting payment"
+            }
           />
         )}
         {payable && <Info label="Balance due" value={formatMoney(due, doc.currency)} strong />}

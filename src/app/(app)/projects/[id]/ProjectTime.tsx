@@ -30,7 +30,7 @@ export async function ProjectTime({ project, people }: { project: Project; peopl
           {project.budget_hours > 0 && (
             <div className="mt-1">
               <ProgressBar pct={hoursPct} label={`${hoursPct}% of ${project.budget_hours} budgeted hours`} />
-              <div className={`text-xs ${hoursPct > 100 ? "font-medium text-red-700" : "text-neutral-500"}`}>of {project.budget_hours} h budget</div>
+              <div className={`text-xs ${hoursPct > 100 ? "font-medium text-danger" : "text-neutral-500"}`}>of {project.budget_hours} h budget</div>
             </div>
           )}
         </div>
@@ -43,7 +43,7 @@ export async function ProjectTime({ project, people }: { project: Project; peopl
             <div className="mt-1">
               <ProgressBar pct={burn.pct} label={`${burn.pct}% of the monthly hours used`} />
             </div>
-            <div className={`text-xs ${burn.overHours ? "font-medium text-red-700" : "text-neutral-500"}`}>
+            <div className={`text-xs ${burn.overHours ? "font-medium text-danger" : "text-neutral-500"}`}>
               {burn.overHours ? `${burn.overHours} h over: bill extra or roll back` : `${burn.leftHours} h left`}
             </div>
           </div>
@@ -76,7 +76,7 @@ export async function ProjectTime({ project, people }: { project: Project; peopl
         </Card>
         <Card title="Entries">
           {entries.length ? (
-            <ul className="divide-y divide-neutral-100 text-sm">
+            <ul className="divide-y divide-line text-sm">
               {entries.slice(0, 100).map((e) => (
                 <li key={e.id} className="flex items-center gap-3 py-1.5">
                   <span className="w-20 text-xs text-neutral-500">{formatInvoiceDate(e.work_date).replace(/, \d{4}$/, "")}</span>

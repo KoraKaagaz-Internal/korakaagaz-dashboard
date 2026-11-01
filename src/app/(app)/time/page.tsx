@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Card } from "@/components/ui";
+import { Card, PageHeader, Tabs } from "@/components/ui";
 import { requireTeam } from "@/lib/data";
-import { addDays, formatInvoiceDate, todayIso } from "@/lib/money";
+import { addDays, formatShortDate, todayIso } from "@/lib/money";
 import { displayName } from "@/lib/pm";
 import { teamDirectory } from "@/lib/pm-data";
 import { hhmm, weekStart } from "@/lib/time";
@@ -26,39 +26,29 @@ export default async function TimePage({ searchParams }: { searchParams: Promise
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Time</h1>
-          <p className="text-sm text-neutral-500">Log hours against projects and tasks.{approval ? " Submit each week for approval." : ""}</p>
-        </div>
-        <div className="flex items-center gap-1 text-sm">
-          <Link href={`/time?tab=${tab}&week=${addDays(monday, -7)}`} className="rounded-md px-2 py-1 hover:bg-neutral-100" aria-label="Previous week">
-            ←
-          </Link>
-          <span className="px-2 font-medium">Week of {formatInvoiceDate(monday)}</span>
-          <Link href={`/time?tab=${tab}&week=${addDays(monday, 7)}`} className="rounded-md px-2 py-1 hover:bg-neutral-100" aria-label="Next week">
-            →
-          </Link>
-          {monday !== weekStart(today) && (
-            <Link href={`/time?tab=${tab}`} className="rounded-md px-2 py-1 text-navy hover:bg-neutral-100">
-              This week
-            </Link>
-          )}
-        </div>
-      </div>
-
-      <nav className="flex gap-1 border-b border-neutral-200" aria-label="Time sections">
-        {tabs.map((t) => (
-          <Link
-            key={t.key}
-            href={`/time?tab=${t.key}&week=${monday}`}
-            aria-current={tab === t.key ? "page" : undefined}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm ${tab === t.key ? "border-navy font-medium text-navy" : "border-transparent text-neutral-600"}`}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </nav>
+      <PageHeader
+        title="Time"
+        subtitle={<>Log hours against projects and tasks.{approval ? " Submit each week for approval." : ""}</>}
+        actions={
+          <>
+            <div className="flex items-center gap-1 text-sm">
+              <Link href={`/time?tab=${tab}&week=${addDays(monday, -7)}`} className="rounded-md px-2 py-1 hover:bg-subtle" aria-label="Previous week">
+                ←
+              </Link>
+              <span className="px-2 font-medium">Week of {formatShortDate(monday)}</span>
+              <Link href={`/time?tab=${tab}&week=${addDays(monday, 7)}`} className="rounded-md px-2 py-1 hover:bg-subtle" aria-label="Next week">
+                →
+              </Link>
+              {monday !== weekStart(today) && (
+                <Link href={`/time?tab=${tab}`} className="rounded-md px-2 py-1 text-navy hover:bg-subtle">
+                  This week
+                </Link>
+              )}
+            </div>
+          </>
+        }
+        tabs={<Tabs label="Time sections" items={tabs.map((t) => ({ href: `/time?tab=${t.key}&week=${monday}`, label: t.label, active: tab === t.key }))} />}
+      />
 
       {tab === "week" && (
         <Timesheet monday={monday} entries={await myEntries(monday, addDays(monday, 6))} projects={await loggableProjects()} today={today} canWork={canWork} approval={approval} />

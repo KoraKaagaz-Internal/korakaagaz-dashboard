@@ -2,10 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getUser } from "@/lib/supabase/server";
 
 // Free, keyless ECB reference rates (Frankfurter). Falls back to manual entry if unavailable.
-const SOURCES = [
-  (c: string) => `https://api.frankfurter.dev/v1/latest?base=${c}&symbols=INR`,
-  (c: string) => `https://api.frankfurter.app/latest?from=${c}&to=INR`,
-];
+const SOURCES = [(c: string) => `https://api.frankfurter.dev/v1/latest?base=${c}&symbols=INR`, (c: string) => `https://api.frankfurter.app/latest?from=${c}&to=INR`];
 
 export async function GET(request: NextRequest) {
   const { user } = await getUser();

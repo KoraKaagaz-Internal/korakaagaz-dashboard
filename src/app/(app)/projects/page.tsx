@@ -5,6 +5,7 @@ import { requireTeam } from "@/lib/data";
 import { formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
 import { PROJECT_STATUS_LABEL, progress, projectHealth } from "@/lib/pm";
 import { listProjectCards, teamDirectory } from "@/lib/pm-data";
+import { ButtonLink, EmptyState, Input, PageHeader, Segmented, button } from "@/components/ui";
 
 const FILTERS = [
   { key: "open", label: "Open" },
@@ -29,49 +30,42 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Projects</h1>
-          <p className="text-sm text-neutral-500">{isStaff ? "Every job the studio is running." : "Projects you've been added to."}</p>
-        </div>
-        {canEdit && (
-          <Link href="/projects/new" className="rounded-lg bg-navy px-3 py-1.5 text-sm font-medium text-white">
-            New project
-          </Link>
-        )}
-      </div>
+      <PageHeader
+        title="Projects"
+        subtitle={isStaff ? "Every job the studio is running." : "Projects you've been added to."}
+        actions={
+          <>
+            {canEdit && (
+              <Link href="/projects/new" className={button("primary", "sm")}>
+                New project
+              </Link>
+            )}
+          </>
+        }
+      />
 
       <form className="flex flex-wrap items-center gap-2">
-        <div className="flex rounded-lg bg-white p-0.5 ring-1 ring-black/10" role="group" aria-label="Filter">
-          {FILTERS.map((f) => (
-            <Link
-              key={f.key}
-              href={`/projects?show=${f.key}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-              aria-current={show === f.key ? "true" : undefined}
-              className={`rounded-md px-3 py-1 text-sm ${show === f.key ? "bg-navy text-white" : "text-neutral-700 hover:bg-neutral-100"}`}
-            >
-              {f.label}
-            </Link>
-          ))}
-        </div>
-        <input type="hidden" name="show" value={show} />
-        <input
-          name="q"
-          defaultValue={q}
-          placeholder="Search projects  /"
-          className="w-56 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-navy"
+        <Segmented
+          label="Show"
+          items={FILTERS.map((f) => ({ href: `/projects?show=${f.key}${q ? `&q=${encodeURIComponent(q)}` : ""}`, label: f.label, active: show === f.key }))}
         />
+        <input type="hidden" name="show" value={show} />
+        <Input name="q" type="search" defaultValue={q} aria-label="Search projects" placeholder="Search projects" className="!h-8 !w-56 !py-1" />
       </form>
 
       {shown.length === 0 ? (
-        <div className="rounded-xl bg-white p-10 text-center border border-line">
-          <p className="text-neutral-600">{cards.length ? "No projects match." : "No projects yet."}</p>
-          {canEdit && !cards.length && (
-            <Link href="/projects/new" className="mt-3 inline-block rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white">
-              Start one from a template
-            </Link>
-          )}
-        </div>
+        <EmptyState
+          title={cards.length ? "No projects match" : "No projects yet"}
+          filtered={!!cards.length}
+          hint={cards.length ? undefined : "Start one from a template: phases, tasks and deliverables are set up for you."}
+          action={
+            canEdit && !cards.length ? (
+              <ButtonLink href="/projects/new" variant="primary" size="sm">
+                New project
+              </ButtonLink>
+            ) : undefined
+          }
+        />
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {shown.map((p) => {

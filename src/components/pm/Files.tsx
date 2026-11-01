@@ -106,7 +106,7 @@ export function Files({ projectId, taskId = null, files, canWork, compact }: { p
             e.preventDefault();
             upload(e.dataTransfer.files);
           }}
-          className={`rounded-xl border border-dashed border-neutral-300 text-center text-sm text-neutral-500 ${compact ? "p-3" : "p-6"}`}
+          className={`rounded-xl border border-dashed border-line text-center text-sm text-neutral-500 ${compact ? "p-3" : "p-6"}`}
         >
           <input ref={input} type="file" multiple className="hidden" onChange={(e) => upload(e.target.files)} />
           {busy || (
@@ -131,14 +131,14 @@ export function Files({ projectId, taskId = null, files, canWork, compact }: { p
             onChange={(e) => setLink({ ...link, url: e.target.value })}
             placeholder="https://drive.google.com/…"
             aria-label="Link"
-            className="min-w-56 flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm"
+            className="min-w-56 flex-1 rounded-lg border border-line px-3 py-1.5 text-sm"
           />
           <input
             value={link.name}
             onChange={(e) => setLink({ ...link, name: e.target.value })}
             placeholder="Name (optional)"
             aria-label="Link name"
-            className="w-48 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm"
+            className="w-48 rounded-lg border border-line px-3 py-1.5 text-sm"
           />
           <button className={btn.primary} onClick={saveLink} disabled={!link.url}>
             Add link
@@ -146,12 +146,12 @@ export function Files({ projectId, taskId = null, files, canWork, compact }: { p
         </div>
       )}
       {msg && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {msg}
         </p>
       )}
       {files.length > 0 ? (
-        <ul className="divide-y divide-neutral-100 rounded-xl ring-1 ring-black/5">
+        <ul className="divide-y divide-line rounded-xl ring-1 ring-black/5">
           {files.map((f) => (
             <li key={f.id} className="flex items-center gap-3 px-3 py-2 text-sm">
               <span className="w-12 shrink-0 rounded bg-neutral-100 py-0.5 text-center text-[10px] font-semibold text-neutral-600 uppercase">

@@ -117,7 +117,7 @@ export function LeadForm({ lead, people, services, me, onDone }: { lead?: Lead; 
           </button>
         )}
         {msg && (
-          <p className="text-sm text-red-700" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {msg}
           </p>
         )}

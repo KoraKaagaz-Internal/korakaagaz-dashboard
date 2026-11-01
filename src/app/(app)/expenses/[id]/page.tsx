@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Card } from "@/components/ui";
+import { Card, PageHeader, button } from "@/components/ui";
 import { getSettings, requireTeam } from "@/lib/data";
 import { cashAccounts, getExpense, listCategories, listVendors } from "@/lib/expense-data";
 import { tdsNature } from "@/lib/expenses";
@@ -30,11 +30,8 @@ export default async function ExpensePage({ params, searchParams }: { params: Pr
       isStaff ? getSettings() : Promise.resolve(null),
     ]);
     return (
-      <div className="mx-auto max-w-3xl space-y-5">
-        <Link href={`/expenses/${id}`} className="text-sm text-neutral-500 hover:text-navy">
-          ← Back
-        </Link>
-        <h1 className="text-2xl font-semibold">Edit expense</h1>
+      <div className="mx-auto max-w-3xl">
+        <PageHeader back={{ href: `/expenses/${id}`, label: "Back" }} title="Edit expense" />
         <ExpenseForm
           expense={e}
           categories={categories}
@@ -131,7 +128,7 @@ export default async function ExpensePage({ params, searchParams }: { params: Pr
         <div className="flex gap-2">
           {e.receipt_path && <ReceiptButton id={e.id} name={e.receipt_name} />}
           {editable && (
-            <Link href={`/expenses/${id}?edit=1`} className="rounded-lg bg-navy px-3 py-1.5 text-sm font-medium text-white">
+            <Link href={`/expenses/${id}?edit=1`} className={button("primary", "sm")}>
               Edit
             </Link>
           )}

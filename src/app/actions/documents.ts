@@ -12,7 +12,10 @@ import type { DocType } from "@/lib/types";
 const itemSchema = z.object({
   title: z.string().trim(),
   description: z.string().trim(),
-  sac: z.string().trim().regex(/^(\d{4,8})?$/, "SAC must be 4–8 digits"),
+  sac: z
+    .string()
+    .trim()
+    .regex(/^(\d{4,8})?$/, "SAC must be 4–8 digits"),
   qty: z.coerce.number().min(0),
   unit_price: z.coerce.number().min(0),
 });
@@ -109,14 +112,16 @@ export async function saveDocument(input: DocumentInput): Promise<Result> {
     const { error: delErr } = await supabase.from("document_items").delete().eq("document_id", docId);
     if (delErr) return { ok: false, message: friendly(delErr) };
   } else {
-    const { data, error } = await supabase.from("documents").insert({ ...row, status: "draft" }).select("id").single();
+    const { data, error } = await supabase
+      .from("documents")
+      .insert({ ...row, status: "draft" })
+      .select("id")
+      .single();
     if (error) return { ok: false, message: friendly(error) };
     docId = data.id as string;
   }
 
-  const { error: itemsErr } = await supabase
-    .from("document_items")
-    .insert(items.map((item, position) => ({ ...item, document_id: docId, position, amount: lineAmount(item) })));
+  const { error: itemsErr } = await supabase.from("document_items").insert(items.map((item, position) => ({ ...item, document_id: docId, position, amount: lineAmount(item) })));
   if (itemsErr) return { ok: false, message: friendly(itemsErr) };
 
   revalidatePath("/documents");

@@ -25,7 +25,7 @@ export function InvoiceFromExpenses({ projectId, count }: { projectId: string; c
         {pending ? "Drafting…" : `Draft invoice from ${count} billable expense${count === 1 ? "" : "s"}`}
       </button>
       {msg && (
-        <span className="text-sm text-red-700" role="alert">
+        <span className="text-sm text-danger" role="alert">
           {msg}
         </span>
       )}

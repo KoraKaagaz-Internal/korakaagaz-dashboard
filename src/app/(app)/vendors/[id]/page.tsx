@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Card } from "@/components/ui";
+import { Card, PageHeader, button } from "@/components/ui";
 import { requireMember } from "@/lib/data";
 import { getVendor, listCategories, listExpenses } from "@/lib/expense-data";
 import { financialYear, formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
@@ -16,23 +16,25 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
   const sum = (k: "taxable" | "tds_amount" | "balance") => thisFy.reduce((s, e) => s + e[k], 0);
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <Link href="/vendors" className="text-sm text-neutral-500 hover:text-navy">
-            ← Vendors
-          </Link>
-          <h1 className="text-2xl font-semibold">{vendor.name}</h1>
-          <p className="text-sm text-neutral-500">
+      <PageHeader
+        back={{ href: "/vendors", label: "Vendors" }}
+        title={vendor.name}
+        subtitle={
+          <>
             {vendor.gstin || "No GSTIN"}
             {vendor.pan ? ` · PAN ${vendor.pan}` : " · no PAN (TDS at 20%)"}
-          </p>
-        </div>
-        {canEdit && (
-          <Link href={`/expenses/new?kind=bill&vendor=${vendor.id}`} className="rounded-lg bg-navy px-3 py-1.5 text-sm font-medium text-white">
-            Add bill
-          </Link>
-        )}
-      </div>
+          </>
+        }
+        actions={
+          <>
+            {canEdit && (
+              <Link href={`/expenses/new?kind=bill&vendor=${vendor.id}`} className={button("primary", "sm")}>
+                Add bill
+              </Link>
+            )}
+          </>
+        }
+      />
       <div className="grid gap-3 sm:grid-cols-3">
         {(
           [
@@ -49,7 +51,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
       </div>
       <Card title="Bills and payments">
         {expenses.length ? (
-          <ul className="divide-y divide-neutral-100 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {expenses.map((e) => (
               <li key={e.id}>
                 <Link href={`/expenses/${e.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
@@ -60,7 +62,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
                   </span>
                   {e.tds_amount > 0 && <span className="text-xs text-neutral-500">TDS {formatMoney(e.tds_amount)}</span>}
                   <span className="w-24 text-right tabular-nums">{formatMoney(e.total)}</span>
-                  <span className={`w-24 text-right text-xs ${e.balance > 0.005 ? "font-medium text-amber-800" : "text-neutral-400"}`}>
+                  <span className={`w-24 text-right text-xs ${e.balance > 0.005 ? "font-medium text-warn" : "text-neutral-400"}`}>
                     {e.balance > 0.005 ? `owe ${formatMoney(e.balance)}` : "paid"}
                   </span>
                 </Link>

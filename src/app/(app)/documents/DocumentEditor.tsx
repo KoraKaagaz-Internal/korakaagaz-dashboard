@@ -364,7 +364,7 @@ export function DocumentEditor({
         >
           <div className="space-y-3">
             {doc.items.map((item, i) => (
-              <div key={i} className="rounded-xl border border-neutral-200 p-3">
+              <div key={i} className="rounded-xl border border-line p-3">
                 <div className="mb-2 flex items-center gap-1 text-xs text-neutral-500">
                   <span className="font-mono">{String(i + 1).padStart(2, "0")}</span>
                   <span className="ml-auto" />
@@ -465,7 +465,7 @@ export function DocumentEditor({
             </label>
           </div>
           {isExport && doc.export_type === "lut" && !supplier.lut_number && (
-            <p className="mt-2 text-xs text-amber-700">Add this year&apos;s LUT number in Settings so it prints on export invoices.</p>
+            <p className="mt-2 text-xs text-warn">Add this year&apos;s LUT number in Settings so it prints on export invoices.</p>
           )}
           <dl className="mt-4 grid grid-cols-2 gap-y-1 text-sm">
             <dt className="text-neutral-500">Taxable value</dt>
@@ -581,7 +581,7 @@ export function DocumentEditor({
             Save and issue
           </ConfirmButton>
           {dirty && <span className="text-xs text-neutral-500">Unsaved changes</span>}
-          {message && <span className={`text-sm ${message.ok ? "text-green-700" : "text-red-600"}`}>{message.text}</span>}
+          {message && <span className={`text-sm ${message.ok ? "text-ok" : "text-danger"}`}>{message.text}</span>}
         </div>
       </div>
 

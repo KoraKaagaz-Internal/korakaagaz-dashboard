@@ -55,17 +55,17 @@ export const btn = {
 };
 
 export const STATUS_STYLES: Record<string, string> = {
-  draft: "bg-neutral-100 text-neutral-700",
-  awaiting_approval: "bg-violet-100 text-violet-800",
-  issued: "bg-blue-100 text-blue-800",
-  accepted: "bg-green-100 text-green-800",
-  declined: "bg-neutral-200 text-neutral-700",
-  expired: "bg-neutral-200 text-neutral-700",
-  cancelled: "bg-neutral-200 text-neutral-500 line-through",
-  unpaid: "bg-amber-100 text-amber-800",
-  partial: "bg-sky-100 text-sky-800",
-  paid: "bg-green-100 text-green-800",
-  overdue: "bg-red-100 text-red-800",
+  draft: "bg-subtle text-neutral-600",
+  awaiting_approval: "bg-warn/10 text-warn",
+  issued: "bg-navy/8 text-navy",
+  accepted: "bg-ok/10 text-ok",
+  declined: "bg-subtle text-neutral-500",
+  expired: "bg-subtle text-neutral-500",
+  cancelled: "bg-subtle text-neutral-400 line-through",
+  unpaid: "bg-warn/10 text-warn",
+  partial: "bg-accent/10 text-accent",
+  paid: "bg-ok/10 text-ok",
+  overdue: "bg-danger/10 text-danger",
 };
 
 const STATUS_TEXT: Record<string, string> = {

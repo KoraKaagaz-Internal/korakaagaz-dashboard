@@ -57,7 +57,7 @@ export function QuickAdd({
         aria-label={placeholder}
         className="w-full rounded-lg border border-navy/40 bg-white px-2.5 py-1.5 text-sm outline-none"
       />
-      {msg && <p className="mt-1 text-xs text-red-700">{msg}</p>}
+      {msg && <p className="mt-1 text-xs text-danger">{msg}</p>}
     </div>
   );
 }

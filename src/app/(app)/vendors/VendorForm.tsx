@@ -84,7 +84,7 @@ export function VendorForm({ vendor, categories, onDone }: { vendor?: Vendor; ca
             onChange={(e) => setV({ ...v, gstin: e.target.value.toUpperCase(), state_code: e.target.value.length >= 2 ? e.target.value.slice(0, 2) : v.state_code })}
             placeholder="21ABCDE1234F1Z5"
           />
-          {g && !g.ok && <span className="mt-1 block text-xs text-red-700">{g.reason}</span>}
+          {g && !g.ok && <span className="mt-1 block text-xs text-danger">{g.reason}</span>}
           {g?.ok && (
             <a className="mt-1 block text-xs text-navy underline" href={GST_PORTAL_SEARCH} target="_blank" rel="noopener noreferrer">
               Check it on the GST portal
@@ -159,7 +159,7 @@ export function VendorForm({ vendor, categories, onDone }: { vendor?: Vendor; ca
           </ConfirmButton>
         )}
         {msg && (
-          <p className="text-sm text-red-700" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {msg}
           </p>
         )}

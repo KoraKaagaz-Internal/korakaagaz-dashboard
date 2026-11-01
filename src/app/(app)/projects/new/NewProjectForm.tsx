@@ -202,7 +202,7 @@ export function NewProjectForm({
           {pending ? "Creating…" : "Create project"}
         </button>
         {msg && (
-          <p className="text-sm text-red-700" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {msg}
           </p>
         )}

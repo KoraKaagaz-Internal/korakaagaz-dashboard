@@ -74,7 +74,7 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label={t?.title ?? "Task"}>
       <button className="absolute inset-0 bg-black/20" onClick={close} aria-label="Close task" />
       <div className="relative flex h-full w-full max-w-xl flex-col overflow-y-auto bg-white shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-100 bg-white px-5 py-3">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-white px-5 py-3">
           {detail ? (
             <Link href={`/projects/${detail.project.id}`} className="text-sm text-neutral-500 hover:text-navy">
               {detail.project.code} · {detail.project.name}
@@ -98,7 +98,7 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
               disabled={!canWork}
               onBlur={(e) => e.target.value.trim() && e.target.value !== t.title && save({ title: e.target.value })}
               aria-label="Task title"
-              className="w-full rounded-md border border-transparent px-1 text-xl font-semibold outline-none hover:border-neutral-200 focus:border-navy disabled:bg-white"
+              className="w-full rounded-md border border-transparent px-1 text-xl font-semibold outline-none hover:border-line focus:border-navy disabled:bg-white"
             />
 
             {canWork && (
@@ -195,7 +195,7 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
                     />
                     <span className={`flex-1 ${s.status === "done" ? "text-neutral-400 line-through" : ""}`}>{s.title}</span>
                     {canWork && (
-                      <button className="text-xs text-neutral-400 hover:text-red-600" onClick={() => run(() => deleteTask(s.id))} aria-label={`Remove ${s.title}`}>
+                      <button className="text-xs text-neutral-400 hover:text-danger" onClick={() => run(() => deleteTask(s.id))} aria-label={`Remove ${s.title}`}>
                         Remove
                       </button>
                     )}
@@ -215,7 +215,7 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
                   }}
                   placeholder="+ Add a checklist item, then Enter"
                   aria-label="Add checklist item"
-                  className="mt-2 w-full rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm outline-none focus:border-navy"
+                  className="mt-2 w-full rounded-lg border border-line px-2.5 py-1.5 text-sm outline-none focus:border-navy"
                 />
               )}
             </section>
@@ -283,13 +283,13 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
             </section>
 
             {msg && (
-              <p className="text-sm text-red-700" role="alert">
+              <p className="text-sm text-danger" role="alert">
                 {msg}
               </p>
             )}
 
             {canWork && (
-              <div className="border-t border-neutral-100 pt-4">
+              <div className="border-t border-line pt-4">
                 <ConfirmButton
                   align="left"
                   confirm="Delete this task with its checklist, files and comments? This can't be undone."

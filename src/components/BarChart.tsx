@@ -33,7 +33,7 @@ export function BarChart({ bars, title, height = 180 }: { bars: Bar[]; title: st
     <figure className="m-0">
       <div className="relative" style={{ height }} onMouseLeave={() => setHover(null)}>
         {ticks.map((t) => (
-          <div key={t} className="absolute inset-x-0 border-t border-neutral-200/70" style={{ bottom: `${(t / max) * 100}%` }}>
+          <div key={t} className="absolute inset-x-0 border-t border-line/70" style={{ bottom: `${(t / max) * 100}%` }}>
             <span className="absolute -top-2 right-full mr-1 text-[10px] text-neutral-400 tabular-nums">{t ? format(t) : ""}</span>
           </div>
         ))}

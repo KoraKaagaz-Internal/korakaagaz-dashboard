@@ -4,6 +4,7 @@
 // (≤24px columns, 2px lines), 4px rounded data ends on a single baseline, hairline solid grid,
 // 2px surface gaps between touching fills, text in ink colours (never the series colour), a legend
 // for 2+ series, a tooltip on hover/focus, and a "View as table" fallback on every chart.
+import { InfoTip } from "@/components/ui/Feedback";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { SERIES, compactInr, fmt, inrFull, type Fmt } from "@/lib/format";
 
@@ -108,7 +109,7 @@ export function Frame({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-line">
               {table.rows.map((r, i) => (
                 <tr key={i}>
                   {r.map((c, j) => (
@@ -632,7 +633,7 @@ export function Bullet({ rows }: { rows: { label: string; actual: number; target
               />
               {r.target > 0 && <span className="absolute -inset-y-0.5 w-0.5 bg-neutral-900" style={{ left: `${(r.target / max) * 100}%` }} aria-hidden="true" />}
             </span>
-            <span className={`text-right tabular-nums ${over ? "font-medium text-red-700" : ""}`}>
+            <span className={`text-right tabular-nums ${over ? "font-medium text-danger" : ""}`}>
               {compactInr(r.actual)} / {compactInr(r.target)}
               {over && <span className="ml-1 text-xs">▲ over</span>}
             </span>
@@ -670,6 +671,7 @@ export function Kpi({
   upIsGood = true,
   spark,
   compareLabel,
+  info,
 }: {
   label: string;
   value: string;
@@ -678,18 +680,22 @@ export function Kpi({
   upIsGood?: boolean;
   spark?: (number | null)[];
   compareLabel?: string;
+  info?: string;
 }) {
   const good = delta === null || delta === undefined || delta === 0 ? null : delta > 0 === upIsGood;
   return (
     <div className="rounded-xl bg-white px-4 py-3 border border-line">
-      <div className="text-xs text-neutral-500">{label}</div>
+      <div className="flex items-center gap-1 text-xs text-neutral-500">
+        {label}
+        {info && <InfoTip>{info}</InfoTip>}
+      </div>
       <div className="mt-0.5 flex items-end justify-between gap-2">
         <span className="text-xl font-semibold text-neutral-900">{value}</span>
         {spark && <Sparkline values={spark} />}
       </div>
       <div className="mt-0.5 flex flex-wrap gap-x-2 text-xs">
         {delta !== undefined && delta !== null && (
-          <span className={good === null ? "text-neutral-500" : good ? "text-[#006300]" : "text-red-700"}>
+          <span className={good === null ? "text-neutral-500" : good ? "text-ok" : "text-danger"}>
             {delta > 0 ? "▲" : delta < 0 ? "▼" : "•"} {Math.abs(delta).toFixed(Math.abs(delta) < 10 ? 1 : 0)}%{compareLabel ? ` vs ${compareLabel}` : ""}
           </span>
         )}

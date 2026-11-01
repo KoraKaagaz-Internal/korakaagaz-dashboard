@@ -27,7 +27,12 @@ function refresh(projectId?: string | null) {
 // Timer
 // ---------------------------------------------------------------------------
 async function stopRunning(supabase: Awaited<ReturnType<typeof requireTeam>>["supabase"], email: string) {
-  const { data: running } = await supabase.from("time_entries").select("id, timer_started_at, project_id").eq("member_email", email).not("timer_started_at", "is", null).maybeSingle();
+  const { data: running } = await supabase
+    .from("time_entries")
+    .select("id, timer_started_at, project_id")
+    .eq("member_email", email)
+    .not("timer_started_at", "is", null)
+    .maybeSingle();
   if (!running) return null;
   const minutes = timerMinutes(running.timer_started_at as string);
   const { error } = await supabase.from("time_entries").update({ minutes, timer_started_at: null }).eq("id", running.id);
@@ -86,7 +91,14 @@ export async function setCell(input: { project_id: string; task_id: string | nul
   q = input.task_id ? q.eq("task_id", input.task_id) : q.is("task_id", null);
   const { data: rows } = await q.order("created_at");
   const [first, ...extra] = rows ?? [];
-  if (extra.length) await supabase.from("time_entries").delete().in("id", extra.map((r) => r.id));
+  if (extra.length)
+    await supabase
+      .from("time_entries")
+      .delete()
+      .in(
+        "id",
+        extra.map((r) => r.id),
+      );
   let error;
   if (input.minutes === 0) {
     if (first) ({ error } = await supabase.from("time_entries").delete().eq("id", first.id));
@@ -103,7 +115,10 @@ export async function setCell(input: { project_id: string; task_id: string | nul
 const entrySchema = z.object({
   id: uuid.optional(),
   project_id: uuid,
-  task_id: uuid.nullable().or(z.literal("").transform(() => null)).default(null),
+  task_id: uuid
+    .nullable()
+    .or(z.literal("").transform(() => null))
+    .default(null),
   work_date: isoDate,
   minutes: z.number().int().min(1, "Enter some time").max(1440),
   note: z.string().trim().max(500).default(""),
@@ -115,7 +130,10 @@ export async function saveEntry(input: z.input<typeof entrySchema>): Promise<Res
   if (!parsed.success) return fail(parsed.error.issues.map((i) => i.message).join(", "));
   const { id, ...row } = parsed.data;
   const { error } = id
-    ? await supabase.from("time_entries").update({ ...row, status: "draft" }).eq("id", id)
+    ? await supabase
+        .from("time_entries")
+        .update({ ...row, status: "draft" })
+        .eq("id", id)
     : await supabase.from("time_entries").insert(row);
   if (error) return fail(error.message);
   refresh(row.project_id);
@@ -151,7 +169,9 @@ export async function submitWeek(monday: string): Promise<Result<{ count: number
     const { data: admins } = await supabase.rpc("team_directory");
     const admin = ((admins ?? []) as { email: string; role: string }[]).find((p) => p.role === "admin");
     if (admin && admin.email !== email) {
-      await supabase.from("notifications").insert({ recipient_email: admin.email, kind: "time_submitted", title: `${email.split("@")[0]} submitted time for the week of ${monday}`, link: "/time?tab=approve" });
+      await supabase
+        .from("notifications")
+        .insert({ recipient_email: admin.email, kind: "time_submitted", title: `${email.split("@")[0]} submitted time for the week of ${monday}`, link: "/time?tab=approve" });
     }
   }
   revalidatePath("/time");
@@ -171,9 +191,9 @@ export async function decideTime(ids: string[], approve: boolean, reason = ""): 
   if (error) return fail(error.message);
   const people = [...new Set((data ?? []).map((r) => r.member_email as string))];
   if (!approve && people.length) {
-    await supabase.from("notifications").insert(
-      people.map((p) => ({ recipient_email: p, kind: "time_rejected", title: "Some of your time was sent back", body: reason, link: "/time" })),
-    );
+    await supabase
+      .from("notifications")
+      .insert(people.map((p) => ({ recipient_email: p, kind: "time_rejected", title: "Some of your time was sent back", body: reason, link: "/time" })));
   }
   revalidatePath("/time");
   return { ok: true, count: data?.length ?? 0 };
@@ -213,7 +233,15 @@ export async function requestLeave(input: z.input<typeof leaveSchema>): Promise<
   const { data: people } = await supabase.rpc("team_directory");
   const admin = ((people ?? []) as { email: string; role: string }[]).find((p) => p.role === "admin");
   if (admin && admin.email !== email) {
-    await supabase.from("notifications").insert({ recipient_email: admin.email, kind: "leave_requested", title: `${email.split("@")[0]} asked for leave`, body: `${l.from_date} → ${l.to_date}${l.note ? ` · ${l.note}` : ""}`, link: "/team/leave" });
+    await supabase
+      .from("notifications")
+      .insert({
+        recipient_email: admin.email,
+        kind: "leave_requested",
+        title: `${email.split("@")[0]} asked for leave`,
+        body: `${l.from_date} → ${l.to_date}${l.note ? ` · ${l.note}` : ""}`,
+        link: "/team/leave",
+      });
   }
   revalidatePath("/team/leave");
   return { ok: true };
@@ -221,9 +249,21 @@ export async function requestLeave(input: z.input<typeof leaveSchema>): Promise<
 
 export async function decideLeave(id: string, approve: boolean): Promise<Result> {
   const { supabase } = await requireMember("admin");
-  const { data, error } = await supabase.from("leave_requests").update({ status: approve ? "approved" : "declined" }).eq("id", id).select("member_email, from_date, to_date").single();
+  const { data, error } = await supabase
+    .from("leave_requests")
+    .update({ status: approve ? "approved" : "declined" })
+    .eq("id", id)
+    .select("member_email, from_date, to_date")
+    .single();
   if (error) return fail(error.message);
-  await supabase.from("notifications").insert({ recipient_email: data.member_email, kind: "leave_decided", title: `Leave ${approve ? "approved" : "declined"}: ${data.from_date} → ${data.to_date}`, link: "/team/leave" });
+  await supabase
+    .from("notifications")
+    .insert({
+      recipient_email: data.member_email,
+      kind: "leave_decided",
+      title: `Leave ${approve ? "approved" : "declined"}: ${data.from_date} → ${data.to_date}`,
+      link: "/team/leave",
+    });
   revalidatePath("/team/leave");
   revalidatePath("/team/workload");
   return { ok: true };

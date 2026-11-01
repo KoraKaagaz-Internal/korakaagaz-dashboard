@@ -74,7 +74,7 @@ export function SettingsForm({ settings, mailReady }: { settings: Settings; mail
           </Field>
           <Field label="GSTIN (leave empty if not registered)">
             <Input value={s.gstin} onChange={(e) => set("gstin", e.target.value.toUpperCase())} />
-            {gst && <span className={`mt-1 block text-xs ${gst.ok ? "text-green-700" : "text-red-600"}`}>{gst.ok ? `Valid · ${STATES[gst.state]}` : gst.reason}</span>}
+            {gst && <span className={`mt-1 block text-xs ${gst.ok ? "text-ok" : "text-danger"}`}>{gst.ok ? `Valid · ${STATES[gst.state]}` : gst.reason}</span>}
           </Field>
           <Field label="PAN">
             <Input value={s.pan} onChange={(e) => set("pan", e.target.value.toUpperCase())} />
@@ -82,7 +82,7 @@ export function SettingsForm({ settings, mailReady }: { settings: Settings; mail
           <Field label={`LUT number (for export invoices, FY ${fy})`}>
             <Input value={s.lut_number} onChange={(e) => setS({ ...s, lut_number: e.target.value, lut_fy: fy })} />
             {s.lut_number && s.lut_fy && s.lut_fy !== fy && (
-              <span className="mt-1 block text-xs text-amber-700">
+              <span className="mt-1 block text-xs text-warn">
                 This LUT is for FY {s.lut_fy}. File a new one for {fy}.
               </span>
             )}
@@ -107,7 +107,7 @@ export function SettingsForm({ settings, mailReady }: { settings: Settings; mail
           {s.signature_path && (
             <div className="flex items-center gap-3 sm:col-span-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={s.signature_path} alt="Signature" className="h-10 rounded border border-neutral-200 bg-white p-1" />
+              <img src={s.signature_path} alt="Signature" className="h-10 rounded border border-line bg-white p-1" />
               <button
                 className={btn.danger}
                 onClick={() =>
@@ -224,7 +224,7 @@ export function SettingsForm({ settings, mailReady }: { settings: Settings; mail
         <button className={btn.primary} disabled={pending} onClick={save}>
           {pending ? "Saving…" : "Save settings"}
         </button>
-        {msg && <span className={`text-sm ${msg.ok ? "text-green-700" : "text-red-600"}`}>{msg.text}</span>}
+        {msg && <span className={`text-sm ${msg.ok ? "text-ok" : "text-danger"}`}>{msg.text}</span>}
       </div>
     </div>
   );

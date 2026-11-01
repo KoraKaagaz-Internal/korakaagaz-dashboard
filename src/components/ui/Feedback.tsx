@@ -58,7 +58,7 @@ export function InfoTip({ children, label = "What does this mean?" }: { children
       </button>
       <span
         role="tooltip"
-        className="invisible absolute bottom-full left-1/2 z-50 mb-1.5 w-60 -translate-x-1/2 rounded-lg bg-ink px-3 py-2 text-xs font-normal leading-snug text-white opacity-0 shadow-lg transition-opacity group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100"
+        className="absolute bottom-full left-1/2 z-50 mb-1.5 hidden w-60 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-lg bg-ink px-3 py-2 text-xs leading-snug font-normal text-white shadow-lg group-focus-within:block group-hover:block"
       >
         {children}
       </span>

@@ -25,7 +25,7 @@ export function ReceiptButton({ id, name }: { id: string; name: string }) {
       >
         Open receipt{name ? ` (${name.length > 24 ? `${name.slice(0, 22)}…` : name})` : ""}
       </button>
-      {msg && <span className="ml-2 text-sm text-red-700">{msg}</span>}
+      {msg && <span className="ml-2 text-sm text-danger">{msg}</span>}
     </span>
   );
 }
@@ -52,7 +52,7 @@ export function Payments({
   return (
     <div className="space-y-3">
       {payments.length > 0 ? (
-        <ul className="divide-y divide-neutral-100 text-sm">
+        <ul className="divide-y divide-line text-sm">
           {payments.map((x) => (
             <li key={x.id} className="flex items-center gap-3 py-1.5">
               <span className="w-28 text-neutral-600">{formatInvoiceDate(x.paid_on)}</span>
@@ -64,7 +64,7 @@ export function Payments({
               <span className="tabular-nums">{formatMoney(x.amount)}</span>
               {canPay && (
                 <button
-                  className="text-xs text-neutral-400 hover:text-red-600"
+                  className="text-xs text-neutral-400 hover:text-danger"
                   onClick={() =>
                     start(async () => {
                       const r = await deleteExpensePayment(x.id, expenseId);
@@ -129,7 +129,7 @@ export function Payments({
         </div>
       )}
       {msg && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {msg}
         </p>
       )}
@@ -177,7 +177,7 @@ export function Danger({ id, isDraft, canDelete, back }: { id: string; isDraft: 
         </ConfirmButton>
       )}
       {msg && (
-        <span className="text-sm text-red-700" role="alert">
+        <span className="text-sm text-danger" role="alert">
           {msg}
         </span>
       )}

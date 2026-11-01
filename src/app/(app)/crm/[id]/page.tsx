@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Card } from "@/components/ui";
+import { Card, PageHeader, button } from "@/components/ui";
 import { SOURCE_LABEL, STAGE_LABEL } from "@/lib/crm";
 import { getLead } from "@/lib/crm-data";
 import { getSettings, listDocuments, requireMember } from "@/lib/data";
@@ -35,34 +35,34 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <Link href="/crm" className="text-sm text-neutral-500 hover:text-navy">
-            ← Leads
-          </Link>
-          <h1 className="text-2xl font-semibold">{l.company || l.name}</h1>
-          <p className="text-sm text-neutral-500">
-            {[l.company ? l.name : "", l.service, `from ${SOURCE_LABEL[l.source]}`, `added ${formatInvoiceDate(l.created_at.slice(0, 10))}`].filter(Boolean).join(" · ")}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {l.email && (
-            <a href={`mailto:${l.email}`} className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm">
-              Email
-            </a>
-          )}
-          {wa && (
-            <a href={wa} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm">
-              WhatsApp
-            </a>
-          )}
-          {digits && (
-            <a href={`tel:${l.phone}`} className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm">
-              Call
-            </a>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        back={{ href: "/crm", label: "Leads" }}
+        title={l.company || l.name}
+        subtitle={
+          <>{[l.company ? l.name : "", l.service, `from ${SOURCE_LABEL[l.source]}`, `added ${formatInvoiceDate(l.created_at.slice(0, 10))}`].filter(Boolean).join(" · ")}</>
+        }
+        actions={
+          <>
+            <div className="flex flex-wrap gap-2">
+              {l.email && (
+                <a href={`mailto:${l.email}`} className={button("secondary", "sm")}>
+                  Email
+                </a>
+              )}
+              {wa && (
+                <a href={wa} target="_blank" rel="noopener noreferrer" className={button("secondary", "sm")}>
+                  WhatsApp
+                </a>
+              )}
+              {digits && (
+                <a href={`tel:${l.phone}`} className={button("secondary", "sm")}>
+                  Call
+                </a>
+              )}
+            </div>
+          </>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-3">
         {canEdit ? <StagePicker key={l.stage} lead={l} /> : <span className="rounded-full bg-neutral-100 px-3 py-1 text-sm">{STAGE_LABEL[l.stage]}</span>}
@@ -147,7 +147,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
               <dt className="text-neutral-500">Owner</dt>
               <dd>{l.owner_email ? displayName(l.owner_email, people) : "—"}</dd>
               <dt className="text-neutral-500">Follow up</dt>
-              <dd className={l.follow_up_on && l.follow_up_on <= today ? "font-medium text-red-700" : ""}>{l.follow_up_on ? formatInvoiceDate(l.follow_up_on) : "—"}</dd>
+              <dd className={l.follow_up_on && l.follow_up_on <= today ? "font-medium text-danger" : ""}>{l.follow_up_on ? formatInvoiceDate(l.follow_up_on) : "—"}</dd>
             </dl>
             {l.message && <p className="mt-3 rounded-lg bg-neutral-50 p-3 text-sm whitespace-pre-wrap text-neutral-700">{l.message}</p>}
             {l.notes && <p className="mt-2 text-sm whitespace-pre-wrap text-neutral-600">{l.notes}</p>}

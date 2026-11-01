@@ -21,7 +21,7 @@ interface Claim {
 
 function Selectable({ list, sel, setSel, names }: { list: Claim[]; sel: Set<string>; setSel: (s: Set<string>) => void; names: Record<string, string> }) {
   return (
-    <ul className="divide-y divide-neutral-100 text-sm">
+    <ul className="divide-y divide-line text-sm">
       {list.map((c) => (
         <li key={c.id} className="flex items-center gap-3 py-2">
           <input

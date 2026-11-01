@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card } from "@/components/ui";
+import { Card, PageHeader, button } from "@/components/ui";
 import { requireTeam } from "@/lib/data";
 import { cashAccounts, listExpenses } from "@/lib/expense-data";
 import { formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
@@ -34,18 +34,20 @@ export default async function ClaimsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">{isStaff ? "Expenses" : "My claims"}</h1>
-          <p className="text-sm text-neutral-500">Spent your own money on studio work? File a claim with the receipt and get reimbursed.</p>
-        </div>
-        {role !== "viewer" && (
-          <Link href="/expenses/new?kind=claim" className="rounded-lg bg-navy px-3 py-1.5 text-sm font-medium text-white">
-            New claim
-          </Link>
-        )}
-      </div>
-      {isStaff && <ExpenseTabs current="/expenses/claims" isAdmin={isAdmin} />}
+      <PageHeader
+        title={isStaff ? "Expenses" : "My claims"}
+        subtitle="Spent your own money on studio work? File a claim with the receipt and get reimbursed."
+        actions={
+          <>
+            {role !== "viewer" && (
+              <Link href="/expenses/new?kind=claim" className={button("primary", "sm")}>
+                New claim
+              </Link>
+            )}
+          </>
+        }
+        tabs={isStaff ? <ExpenseTabs current="/expenses/claims" /> : undefined}
+      />
 
       {isAdmin && (
         <ClaimsAdmin
@@ -59,7 +61,7 @@ export default async function ClaimsPage() {
 
       <Card title={isAdmin ? "All claims" : "My claims"}>
         {(isAdmin ? claims : mine).length ? (
-          <ul className="divide-y divide-neutral-100 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {(isAdmin ? claims : mine).map((c) => (
               <li key={c.id} className="flex flex-wrap items-center gap-3 py-2">
                 <span className="w-24 text-neutral-500">{formatInvoiceDate(c.expense_date).replace(/, \d{4}$/, "")}</span>
@@ -67,7 +69,7 @@ export default async function ClaimsPage() {
                 <Link href={`/expenses/${c.id}`} className="min-w-0 flex-1 truncate hover:text-navy">
                   {c.description || c.vendor || c.category}
                 </Link>
-                <span className={`text-xs ${c.approval === "rejected" ? "text-amber-800" : "text-neutral-500"}`}>{status(c)}</span>
+                <span className={`text-xs ${c.approval === "rejected" ? "text-warn" : "text-neutral-500"}`}>{status(c)}</span>
                 <span className="w-24 text-right tabular-nums">{formatMoney(c.total)}</span>
               </li>
             ))}

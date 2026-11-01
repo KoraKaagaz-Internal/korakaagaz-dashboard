@@ -61,13 +61,13 @@ export function Bell() {
           <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-4 rounded-full bg-red-600 px-1 text-[10px] leading-4 font-semibold text-white">{unread > 9 ? "9+" : unread}</span>
+          <span className="absolute -top-0.5 -right-0.5 min-w-4 rounded-full bg-danger px-1 text-[10px] leading-4 font-semibold text-white">{unread > 9 ? "9+" : unread}</span>
         )}
       </button>
       {open && (
         <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl bg-white shadow-lg ring-1 ring-black/10">
-          <div className="border-b border-neutral-100 px-4 py-2.5 text-sm font-semibold">Notifications</div>
-          <ul className="max-h-96 divide-y divide-neutral-100 overflow-y-auto">
+          <div className="border-b border-line px-4 py-2.5 text-sm font-semibold">Notifications</div>
+          <ul className="max-h-96 divide-y divide-line overflow-y-auto">
             {items.length === 0 && <li className="px-4 py-6 text-center text-sm text-neutral-500">Nothing yet.</li>}
             {items.map((n) => (
               <li key={n.id}>

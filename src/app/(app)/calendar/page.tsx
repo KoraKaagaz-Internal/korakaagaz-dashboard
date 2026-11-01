@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avatar } from "@/components/pm/Avatar";
-import { Card } from "@/components/ui";
+import { Card, PageHeader, Segmented, button } from "@/components/ui";
 import { eventDays, monthGrid, overlaps } from "@/lib/calendar";
 import { requireTeam } from "@/lib/data";
 import { addDays, formatInvoiceDate, todayIso } from "@/lib/money";
@@ -36,55 +36,49 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Calendar</h1>
-          <p className="text-sm text-neutral-500">Shoots, meetings and deadlines, with crew and kit.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {canEdit && (
-            <>
-              <Link href="/calendar/kit" className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm">
-                Kit
-              </Link>
-              <Link href={`/calendar/new?date=${date}`} className="rounded-lg bg-navy px-3 py-1.5 text-sm font-medium text-white">
-                New event
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        title="Calendar"
+        subtitle="Shoots, meetings and deadlines, with crew and kit."
+        actions={
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              {canEdit && (
+                <>
+                  <Link href="/calendar/kit" className={button("secondary", "sm")}>
+                    Kit
+                  </Link>
+                  <Link href={`/calendar/new?date=${date}`} className={button("primary", "sm")}>
+                    New event
+                  </Link>
+                </>
+              )}
+            </div>
+          </>
+        }
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1 text-sm">
-          <Link href={href(view, prev)} className="rounded-md px-2 py-1 hover:bg-neutral-100" aria-label="Previous">
+          <Link href={href(view, prev)} className="rounded-md px-2 py-1 hover:bg-subtle" aria-label="Previous">
             ←
           </Link>
           <span className="min-w-40 px-2 text-center font-medium">{view === "month" ? monthLabel(date) : `${short(week[0])} – ${short(week[6])}`}</span>
-          <Link href={href(view, next)} className="rounded-md px-2 py-1 hover:bg-neutral-100" aria-label="Next">
+          <Link href={href(view, next)} className="rounded-md px-2 py-1 hover:bg-subtle" aria-label="Next">
             →
           </Link>
-          <Link href={href(view, today)} className="rounded-md px-2 py-1 text-navy hover:bg-neutral-100">
+          <Link href={href(view, today)} className="rounded-md px-2 py-1 text-navy hover:bg-subtle">
             Today
           </Link>
         </div>
-        <div className="flex rounded-lg bg-white p-0.5 ring-1 ring-black/10" role="group" aria-label="View">
-          {[["month", "Month"], ["week", "Week"], ...(isStaff ? [["crew", "Crew & kit"]] : [])].map(([v, l]) => (
-            <Link
-              key={v}
-              href={href(v, date)}
-              aria-current={view === v ? "true" : undefined}
-              className={`rounded-md px-3 py-1 text-sm ${view === v ? "bg-navy text-white" : "text-neutral-700 hover:bg-neutral-100"}`}
-            >
-              {l}
-            </Link>
-          ))}
-        </div>
+        <Segmented
+          label="View"
+          items={[["month", "Month"], ["week", "Week"], ...(isStaff ? [["crew", "Crew & kit"]] : [])].map(([v, l]) => ({ href: href(v, date), label: l, active: view === v }))}
+        />
       </div>
 
       {view === "month" && (
         <div className="overflow-x-auto rounded-xl bg-white border border-line">
-          <div className="grid min-w-[720px] grid-cols-7 border-b border-neutral-100 text-xs font-medium text-neutral-500">
+          <div className="grid min-w-[720px] grid-cols-7 border-b border-line text-xs font-medium text-neutral-500">
             {DAY.map((d) => (
               <div key={d} className="px-2 py-2">
                 {d}
@@ -98,7 +92,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               const off = away(d);
               const list = onDay(d);
               return (
-                <div key={d} className={`min-h-28 border-r border-b border-neutral-100 p-1.5 ${inMonth ? "" : "bg-neutral-50/70"} ${h ? "bg-amber-50/60" : ""}`}>
+                <div key={d} className={`min-h-28 border-r border-b border-line p-1.5 ${inMonth ? "" : "bg-neutral-50/70"} ${h ? "bg-warn/10/60" : ""}`}>
                   <div className="mb-1 flex items-center justify-between text-xs">
                     <span className={`${d === today ? "rounded-full bg-navy px-1.5 font-semibold text-white" : inMonth ? "text-neutral-700" : "text-neutral-400"}`}>
                       {Number(d.slice(8))}
@@ -109,7 +103,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                       </Link>
                     )}
                   </div>
-                  {h && <div className="mb-1 truncate text-[11px] text-amber-800">{h.name}</div>}
+                  {h && <div className="mb-1 truncate text-[11px] text-warn">{h.name}</div>}
                   <div className="space-y-1">
                     {list.slice(0, 4).map((e) => (
                       <EventChip key={e.id} e={e} compact />
@@ -142,7 +136,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               <section key={d} className="rounded-xl bg-white p-4 border border-line">
                 <h2 className={`mb-2 text-sm font-semibold ${d === today ? "text-navy" : ""}`}>
                   {formatInvoiceDate(d)} · {DAY[week.indexOf(d)]}
-                  {h && <span className="ml-2 font-normal text-amber-800">{h.name}</span>}
+                  {h && <span className="ml-2 font-normal text-warn">{h.name}</span>}
                 </h2>
                 {list.length ? (
                   <ul className="space-y-2">
@@ -210,7 +204,7 @@ async function CrewView({
       {list.map((e) => (
         <EventChip key={e.id} e={e} compact />
       ))}
-      {list.some((a, i) => list.some((b, j) => j > i && overlaps(a, b))) && <div className="text-[11px] font-semibold text-red-700">Double-booked</div>}
+      {list.some((a, i) => list.some((b, j) => j > i && overlaps(a, b))) && <div className="text-[11px] font-semibold text-danger">Double-booked</div>}
     </div>
   );
   const head = (
@@ -229,7 +223,7 @@ async function CrewView({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[760px] table-fixed text-sm">
             <thead>{head}</thead>
-            <tbody className="divide-y divide-neutral-100 align-top">
+            <tbody className="divide-y divide-line align-top">
               {people
                 .filter((p) => p.role !== "viewer")
                 .map((p) => (
@@ -254,7 +248,7 @@ async function CrewView({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] table-fixed text-sm">
               <thead>{head}</thead>
-              <tbody className="divide-y divide-neutral-100 align-top">
+              <tbody className="divide-y divide-line align-top">
                 {kit.map((k) => (
                   <tr key={k.id}>
                     <td className="truncate py-1.5 pr-2" title={k.serial}>

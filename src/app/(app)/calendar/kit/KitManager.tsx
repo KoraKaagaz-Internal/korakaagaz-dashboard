@@ -48,14 +48,14 @@ export function KitManager({ kit }: { kit: KitItem[] }) {
           </datalist>
         </div>
         {msg && (
-          <p className="mt-2 text-sm text-red-700" role="alert">
+          <p className="mt-2 text-sm text-danger" role="alert">
             {msg}
           </p>
         )}
       </Card>
       {categories.map((c) => (
         <Card key={c} title={c}>
-          <ul className="divide-y divide-neutral-100 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {kit
               .filter((x) => (x.category || "Other") === c)
               .map((x) => (

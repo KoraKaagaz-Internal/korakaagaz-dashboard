@@ -54,7 +54,7 @@ export function StagePicker({ lead }: { lead: Lead }) {
       )}
       {stage === "won" && lead.stage !== "won" && <span className="text-sm text-neutral-600">Use “Won: set up the client” below.</span>}
       {msg && (
-        <span className="text-sm text-red-700" role="alert">
+        <span className="text-sm text-danger" role="alert">
           {msg}
         </span>
       )}
@@ -119,7 +119,7 @@ export function LogActivity({ leadId, followUp, today }: { leadId: string; follo
         </button>
       </div>
       {msg && (
-        <p className="text-sm text-red-700" role="alert">
+        <p className="text-sm text-danger" role="alert">
           {msg}
         </p>
       )}
@@ -184,7 +184,7 @@ export function Convert({ lead, templates, open }: { lead: Lead; templates: { id
           Not yet
         </button>
         {msg && (
-          <p className="text-sm text-red-700" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {msg}
           </p>
         )}

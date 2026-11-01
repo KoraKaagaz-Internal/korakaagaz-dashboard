@@ -40,8 +40,18 @@ const leadSchema = z.object({
   budget: z.string().trim().max(80).default(""),
   value: z.coerce.number().min(0).default(0),
   stage: stageEnum.default("enquiry"),
-  owner_email: z.string().email().nullable().or(z.literal("").transform(() => null)).default(null),
-  follow_up_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().or(z.literal("").transform(() => null)).default(null),
+  owner_email: z
+    .string()
+    .email()
+    .nullable()
+    .or(z.literal("").transform(() => null))
+    .default(null),
+  follow_up_on: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .or(z.literal("").transform(() => null))
+    .default(null),
   message: z.string().trim().max(5000).default(""),
   notes: z.string().trim().max(5000).default(""),
 });
@@ -54,7 +64,11 @@ export async function saveLead(input: z.input<typeof leadSchema>): Promise<Resul
   if (l.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(l.email)) return fail("That email doesn't look right");
   const { data, error } = id
     ? await supabase.from("leads").update(l).eq("id", id).select("id").single()
-    : await supabase.from("leads").insert({ ...l, owner_email: l.owner_email ?? email, created_by: email }).select("id").single();
+    : await supabase
+        .from("leads")
+        .insert({ ...l, owner_email: l.owner_email ?? email, created_by: email })
+        .select("id")
+        .single();
   if (error) return fail(error.message);
   if (!id) await supabase.from("lead_activities").insert({ lead_id: data.id, kind: "system", body: "Lead added" });
   refresh(data.id as string);
@@ -73,7 +87,9 @@ export async function moveLead(id: string, stage: Stage, sort?: number, lostReas
   const { error } = await supabase.from("leads").update(patch).eq("id", id);
   if (error) return fail(error.message);
   if (before && before.stage !== stage) {
-    await supabase.from("lead_activities").insert({ lead_id: id, kind: "stage", body: `${STAGE_LABEL[before.stage as Stage]} → ${STAGE_LABEL[stage]}${stage === "lost" && lostReason ? ` (${lostReason})` : ""}` });
+    await supabase
+      .from("lead_activities")
+      .insert({ lead_id: id, kind: "stage", body: `${STAGE_LABEL[before.stage as Stage]} → ${STAGE_LABEL[stage]}${stage === "lost" && lostReason ? ` (${lostReason})` : ""}` });
   }
   refresh(id);
   return { ok: true };
@@ -87,7 +103,11 @@ export async function addActivity(leadId: string, kind: string, body: string, fo
     const { error } = await supabase.from("lead_activities").insert({ lead_id: leadId, kind, body: body.trim().slice(0, 5000) });
     if (error) return fail(error.message);
   }
-  if (followUp !== undefined) await supabase.from("leads").update({ follow_up_on: followUp || null }).eq("id", leadId);
+  if (followUp !== undefined)
+    await supabase
+      .from("leads")
+      .update({ follow_up_on: followUp || null })
+      .eq("id", leadId);
   refresh(leadId);
   return { ok: true };
 }
@@ -104,7 +124,10 @@ export async function deleteLead(id: string): Promise<Result> {
  * Won: makes (or finds, by email) the client, optionally a project from a template, and marks
  * the lead won. The quote is then one click away with the client filled in.
  */
-export async function convertLead(id: string, opts: { template_id?: string | null; project_name?: string; create_project: boolean }): Promise<Result<{ client_id: string; project_id: string | null }>> {
+export async function convertLead(
+  id: string,
+  opts: { template_id?: string | null; project_name?: string; create_project: boolean },
+): Promise<Result<{ client_id: string; project_id: string | null }>> {
   const { supabase, email } = await requireMember("member");
   const { data: lead } = await supabase.from("leads").select("*").eq("id", id).single();
   if (!lead) return fail("Lead not found");
@@ -116,7 +139,13 @@ export async function convertLead(id: string, opts: { template_id?: string | nul
   if (!clientId) {
     const { data: c, error } = await supabase
       .from("clients")
-      .insert({ name: (lead.company as string) || (lead.name as string), email: lead.email, phone: lead.phone, city: lead.city, notes: `From lead: ${lead.name}${lead.message ? `\n\n${lead.message}` : ""}` })
+      .insert({
+        name: (lead.company as string) || (lead.name as string),
+        email: lead.email,
+        phone: lead.phone,
+        city: lead.city,
+        notes: `From lead: ${lead.name}${lead.message ? `\n\n${lead.message}` : ""}`,
+      })
       .select("id")
       .single();
     if (error) return fail(error.message);
@@ -124,7 +153,16 @@ export async function convertLead(id: string, opts: { template_id?: string | nul
   }
   let projectId = lead.project_id as string | null;
   if (opts.create_project && !projectId) {
-    const r = await createProject({ project: { name: opts.project_name?.trim() || `${(lead.company as string) || (lead.name as string)} · ${(lead.service as string) || "project"}`, client_id: clientId, status: "active" }, finance: { budget: Number(lead.value) || 0 }, template_id: opts.template_id || null, members: [email] });
+    const r = await createProject({
+      project: {
+        name: opts.project_name?.trim() || `${(lead.company as string) || (lead.name as string)} · ${(lead.service as string) || "project"}`,
+        client_id: clientId,
+        status: "active",
+      },
+      finance: { budget: Number(lead.value) || 0 },
+      template_id: opts.template_id || null,
+      members: [email],
+    });
     if (!r.ok) return fail(`Client created, but the project failed: ${r.message}`);
     projectId = r.id;
   }
@@ -152,7 +190,16 @@ export async function saveBooking(b: BookingSettings, services: string[]): Promi
     days: [...new Set(b.days.filter((d) => d >= 0 && d <= 6))].sort(),
   };
   if (!/^\d{2}:\d{2}$/.test(clean.start) || !/^\d{2}:\d{2}$/.test(clean.end) || clean.start >= clean.end) return fail("Working hours: start must be before end");
-  const { error } = await supabase.from("settings").update({ booking: clean, enquiry_services: services.map((s) => s.trim()).filter(Boolean).slice(0, 20) }).eq("id", 1);
+  const { error } = await supabase
+    .from("settings")
+    .update({
+      booking: clean,
+      enquiry_services: services
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 20),
+    })
+    .eq("id", 1);
   if (error) return fail(error.message);
   revalidatePath("/crm/settings");
   return { ok: true };
@@ -164,13 +211,17 @@ export async function saveBooking(b: BookingSettings, services: string[]): Promi
 async function ipHash() {
   const h = await headers();
   const ip = (h.get("x-forwarded-for") ?? "").split(",")[0].trim() || h.get("x-real-ip") || "unknown";
-  return createHash("sha256").update(`${ip}|${process.env.CRON_SECRET ?? "kk"}`).digest("hex").slice(0, 32);
+  return createHash("sha256")
+    .update(`${ip}|${process.env.CRON_SECRET ?? "kk"}`)
+    .digest("hex")
+    .slice(0, 32);
 }
 
 async function tellTheStudio(db: ReturnType<typeof createAdminClient>, title: string, body: string, link: string) {
   const { data: staff } = await db.from("members").select("email").in("role", ["admin", "member"]);
   const admin = (staff ?? [])[0]?.email as string | undefined;
-  if (staff?.length) await db.from("notifications").insert(staff.map((s) => ({ recipient_email: s.email, actor_email: admin ?? s.email, kind: "lead", title, body: body.slice(0, 300), link })));
+  if (staff?.length)
+    await db.from("notifications").insert(staff.map((s) => ({ recipient_email: s.email, actor_email: admin ?? s.email, kind: "lead", title, body: body.slice(0, 300), link })));
   await sendMail({ to: [process.env.SMTP_USER || "team@korakaagaz.co"], subject: title, text: `${body}\n\n${await siteUrl()}${link}` });
 }
 
@@ -196,18 +247,40 @@ export async function submitEnquiry(input: z.input<typeof enquirySchema>): Promi
   if (e.website || (e.opened_at && Date.now() - e.opened_at < 3000)) return { ok: true };
   const db = createAdminClient();
   const hash = await ipHash();
-  const { count } = await db.from("leads").select("id", { count: "exact", head: true }).eq("ip_hash", hash).gte("created_at", new Date(Date.now() - 3600000).toISOString());
+  const { count } = await db
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .eq("ip_hash", hash)
+    .gte("created_at", new Date(Date.now() - 3600000).toISOString());
   if ((count ?? 0) >= 5) return fail("Thanks! We've already got a few messages from you. We'll be in touch soon.");
   const source = sourceEnum.safeParse(e.source).success ? e.source : "website";
   const { data: admin } = await db.from("members").select("email").eq("role", "admin").maybeSingle();
   const { data, error } = await db
     .from("leads")
-    .insert({ name: e.name, email: e.email, phone: e.phone, company: e.company, service: e.service, budget: e.budget, message: e.message, source, ip_hash: hash, owner_email: admin?.email ?? null, follow_up_on: addDays(todayIso(), 1), created_by: "enquiry form" })
+    .insert({
+      name: e.name,
+      email: e.email,
+      phone: e.phone,
+      company: e.company,
+      service: e.service,
+      budget: e.budget,
+      message: e.message,
+      source,
+      ip_hash: hash,
+      owner_email: admin?.email ?? null,
+      follow_up_on: addDays(todayIso(), 1),
+      created_by: "enquiry form",
+    })
     .select("id")
     .single();
   if (error) return fail("Something went wrong. Please email team@korakaagaz.co instead.");
   await db.from("lead_activities").insert({ lead_id: data.id, kind: "system", body: "Came in through the enquiry form", author_email: "enquiry form" });
-  await tellTheStudio(db, `New enquiry: ${e.name}${e.company ? ` (${e.company})` : ""}`, `${e.service ? `${e.service} · ` : ""}${e.budget ? `${e.budget} · ` : ""}${e.email}${e.phone ? ` · ${e.phone}` : ""}\n\n${e.message}`, `/crm/${data.id}`);
+  await tellTheStudio(
+    db,
+    `New enquiry: ${e.name}${e.company ? ` (${e.company})` : ""}`,
+    `${e.service ? `${e.service} · ` : ""}${e.budget ? `${e.budget} · ` : ""}${e.email}${e.phone ? ` · ${e.phone}` : ""}\n\n${e.message}`,
+    `/crm/${data.id}`,
+  );
   return { ok: true };
 }
 
@@ -225,7 +298,16 @@ export async function bookingSlots(slug: string) {
   const now = new Date();
   const until = new Date(now.getTime() + (b.horizon_days + 1) * 86400000).toISOString();
   const [busy, { data: hol }] = await Promise.all([busyTimes(db, now.toISOString(), until), db.from("holidays").select("day")]);
-  return { booking: b, business: (s?.business_name as string) || "Kora Kaagaz", days: freeSlots(b, busy, now, (hol ?? []).map((h) => h.day as string)) };
+  return {
+    booking: b,
+    business: (s?.business_name as string) || "Kora Kaagaz",
+    days: freeSlots(
+      b,
+      busy,
+      now,
+      (hol ?? []).map((h) => h.day as string),
+    ),
+  };
 }
 
 const bookSchema = z.object({
@@ -250,7 +332,11 @@ export async function bookCall(input: z.input<typeof bookSchema>): Promise<Resul
   if (!available.days.some((d) => d.slots.includes(slotIso))) return fail("That time was just taken. Please pick another.");
   const db = createAdminClient();
   const hash = await ipHash();
-  const { count } = await db.from("leads").select("id", { count: "exact", head: true }).eq("ip_hash", hash).gte("created_at", new Date(Date.now() - 3600000).toISOString());
+  const { count } = await db
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .eq("ip_hash", hash)
+    .gte("created_at", new Date(Date.now() - 3600000).toISOString());
   if ((count ?? 0) >= 5) return fail("Too many requests from here. Please email team@korakaagaz.co.");
 
   const minutes = available.booking.minutes;
@@ -264,7 +350,18 @@ export async function bookCall(input: z.input<typeof bookSchema>): Promise<Resul
   } else {
     const { data: l, error } = await db
       .from("leads")
-      .insert({ name: b.name, email: b.email, phone: b.phone, company: b.company, message: b.note, stage: "discovery", source: "website", ip_hash: hash, owner_email: admin?.email ?? null, created_by: "booking page" })
+      .insert({
+        name: b.name,
+        email: b.email,
+        phone: b.phone,
+        company: b.company,
+        message: b.note,
+        stage: "discovery",
+        source: "website",
+        ip_hash: hash,
+        owner_email: admin?.email ?? null,
+        created_by: "booking page",
+      })
       .select("id")
       .single();
     if (error) return fail("Something went wrong. Please email team@korakaagaz.co instead.");
@@ -273,15 +370,36 @@ export async function bookCall(input: z.input<typeof bookSchema>): Promise<Resul
   const title = `${available.booking.title}: ${b.name}${b.company ? ` (${b.company})` : ""}`;
   const { data: ev, error: evErr } = await db
     .from("events")
-    .insert({ type: "meeting", title, starts_at: slotIso, ends_at: end, location: available.booking.location, status: "confirmed", notes: `${b.email}${b.phone ? ` · ${b.phone}` : ""}\n${b.note}`, contacts: `${b.name} · ${b.email}${b.phone ? ` · ${b.phone}` : ""}` })
+    .insert({
+      type: "meeting",
+      title,
+      starts_at: slotIso,
+      ends_at: end,
+      location: available.booking.location,
+      status: "confirmed",
+      notes: `${b.email}${b.phone ? ` · ${b.phone}` : ""}\n${b.note}`,
+      contacts: `${b.name} · ${b.email}${b.phone ? ` · ${b.phone}` : ""}`,
+    })
     .select("id")
     .single();
   if (evErr) return fail("Something went wrong. Please email team@korakaagaz.co instead.");
   const people = [{ event_id: ev.id, external_name: b.name, role: "Client", phone: b.phone }, ...(admin ? [{ event_id: ev.id, member_email: admin.email, role: "Host" }] : [])];
   await db.from("event_people").insert(people);
   const when = new Date(slotIso).toLocaleString("en-IN", { dateStyle: "full", timeStyle: "short", timeZone: "Asia/Kolkata" });
-  await db.from("lead_activities").insert({ lead_id: leadId, kind: "meeting", body: `Booked a ${available.booking.title.toLowerCase()} for ${when}`, author_email: "booking page" });
-  const ics = toIcs(available.booking.title, [{ uid: `event-${ev.id}`, title: `${available.booking.title} with ${available.business}`, start: slotIso, end, allDay: false, location: available.booking.location, description: b.note }]);
+  await db
+    .from("lead_activities")
+    .insert({ lead_id: leadId, kind: "meeting", body: `Booked a ${available.booking.title.toLowerCase()} for ${when}`, author_email: "booking page" });
+  const ics = toIcs(available.booking.title, [
+    {
+      uid: `event-${ev.id}`,
+      title: `${available.booking.title} with ${available.business}`,
+      start: slotIso,
+      end,
+      allDay: false,
+      location: available.booking.location,
+      description: b.note,
+    },
+  ]);
   await sendMail({
     to: [b.email],
     subject: `Booked: ${available.booking.title} with ${available.business}, ${when}`,

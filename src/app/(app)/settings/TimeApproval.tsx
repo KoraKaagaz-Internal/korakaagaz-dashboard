@@ -38,7 +38,7 @@ export function TimeApproval({ on }: { on: boolean }) {
         </span>
       </label>
       {msg && (
-        <p className="mt-2 text-sm text-red-700" role="alert">
+        <p className="mt-2 text-sm text-danger" role="alert">
           {msg}
         </p>
       )}

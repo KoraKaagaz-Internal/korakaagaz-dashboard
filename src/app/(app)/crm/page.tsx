@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { Kpi } from "@/components/charts/Charts";
-import { Card } from "@/components/ui";
+import { DataList, EmptyState, FilterBar, Input, PageHeader, Segmented, Select, Stat, button } from "@/components/ui";
 import { OPEN_STAGES, SOURCE_LABEL, SOURCES, STAGE_LABEL, pipeline } from "@/lib/crm";
 import { listLeads } from "@/lib/crm-data";
 import { requireMember } from "@/lib/data";
 import { compactInr } from "@/lib/format";
-import { formatInvoiceDate, todayIso } from "@/lib/money";
+import { formatShortDate, todayIso } from "@/lib/money";
 import { displayName } from "@/lib/pm";
 import { teamDirectory } from "@/lib/pm-data";
 import { LeadBoard } from "./LeadBoard";
@@ -27,110 +26,112 @@ export default async function CrmPage({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Leads</h1>
-          <p className="text-sm text-neutral-500">Enquiries to won work. Drag a card to move it; drop on Won to make the client and project.</p>
-        </div>
-        <div className="flex gap-2">
-          {isAdmin && (
-            <Link href="/crm/settings" className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-sm">
-              Enquiry form &amp; booking
-            </Link>
-          )}
-          {canEdit && (
-            <Link href="/crm/new" className="rounded-lg bg-navy px-3 py-1.5 text-sm font-medium text-white">
-              Add lead
-            </Link>
-          )}
-        </div>
+      <PageHeader
+        title="Leads"
+        subtitle="Enquiries to won work. Drag a card to move it; drop on Won to make the client and project."
+        actions={
+          <>
+            <div className="flex gap-2">
+              {isAdmin && (
+                <Link href="/crm/settings" className={button("secondary", "sm")}>
+                  Enquiry form &amp; booking
+                </Link>
+              )}
+              {canEdit && (
+                <Link href="/crm/new" className={button("primary", "sm")}>
+                  Add lead
+                </Link>
+              )}
+            </div>
+          </>
+        }
+      />
+
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-line py-4 lg:grid-cols-4">
+        <Stat label="Open leads" value={String(p.open)} />
+        <Stat label="Pipeline value" value={compactInr(p.openValue)} sub="open deals at full value" />
+        <Stat
+          label="Likely value"
+          value={compactInr(p.weighted)}
+          info="Each open deal's value × the chance of winning at its stage: Enquiry 10%, Discovery 25%, Proposal 50%, Negotiation 75%."
+        />
+        <Stat label="Follow-ups due" value={String(due.length)} sub={due.length ? "today or overdue" : "all caught up"} tone={due.length ? "warn" : undefined} />
       </div>
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Open leads" value={String(p.open)} />
-        <Kpi label="Pipeline value" value={compactInr(p.openValue)} sub="open deals at full value" />
-        <Kpi label="Likely value" value={compactInr(p.weighted)} sub="weighted by stage (10–75%)" />
-        <Kpi label="Follow-ups due" value={String(due.length)} sub={due.length ? "today or overdue" : "all caught up"} />
-      </section>
-
-      <form className="flex flex-wrap items-center gap-2 text-sm">
-        <input type="hidden" name="view" value={view} />
-        <select name="source" defaultValue={sp.source ?? ""} aria-label="Source" className="rounded-lg border border-neutral-300 bg-white px-2 py-1.5">
-          <option value="">All sources</option>
-          {SOURCES.map((s) => (
-            <option key={s.key} value={s.key}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-        <select name="owner" defaultValue={sp.owner ?? ""} aria-label="Owner" className="rounded-lg border border-neutral-300 bg-white px-2 py-1.5">
-          <option value="">Everyone</option>
-          {people
-            .filter((x) => x.role === "admin" || x.role === "member")
-            .map((x) => (
-              <option key={x.email} value={x.email}>
-                {x.name || x.email}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <FilterBar
+          action="/crm"
+          active={(sp.source ? 1 : 0) + (sp.owner ? 1 : 0)}
+          clearHref={`/crm?view=${view}`}
+          search={
+            <>
+              <input type="hidden" name="view" value={view} />
+              <Input name="q" type="search" defaultValue={sp.q} aria-label="Search leads" placeholder="Search leads" className="!h-8 !py-1" />
+            </>
+          }
+        >
+          <Select name="source" defaultValue={sp.source ?? ""} aria-label="Source" className="!h-8 !w-auto !py-1">
+            <option value="">All sources</option>
+            {SOURCES.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
               </option>
             ))}
-        </select>
-        <input name="q" defaultValue={sp.q} placeholder="Search leads  /" className="w-48 rounded-lg border border-neutral-300 px-2 py-1.5" />
-        <button className="rounded-lg bg-neutral-900 px-3 py-1.5 text-white">Filter</button>
-        <div className="ml-auto flex rounded-lg bg-white p-0.5 ring-1 ring-black/10" role="group" aria-label="View">
-          {(["board", "list"] as const).map((v) => (
-            <Link
-              key={v}
-              href={`/crm?view=${v}${keep ? `&${keep}` : ""}`}
-              aria-current={view === v ? "true" : undefined}
-              className={`rounded-md px-3 py-1 capitalize ${view === v ? "bg-navy text-white" : "text-neutral-700"}`}
-            >
-              {v}
-            </Link>
-          ))}
-        </div>
-      </form>
+          </Select>
+          <Select name="owner" defaultValue={sp.owner ?? ""} aria-label="Owner" className="!h-8 !w-auto !py-1">
+            <option value="">Everyone</option>
+            {people
+              .filter((x) => x.role === "admin" || x.role === "member")
+              .map((x) => (
+                <option key={x.email} value={x.email}>
+                  {x.name || x.email}
+                </option>
+              ))}
+          </Select>
+        </FilterBar>
+        <Segmented
+          label="View"
+          items={(["board", "list"] as const).map((v) => ({ href: `/crm?view=${v}${keep ? `&${keep}` : ""}`, label: v === "board" ? "Board" : "List", active: view === v }))}
+        />
+      </div>
 
       {view === "board" ? (
         <LeadBoard leads={leads} today={today} canEdit={canEdit} />
+      ) : leads.length ? (
+        <DataList
+          label="Leads"
+          columns={[
+            { key: "lead", label: "Lead", primary: true },
+            { key: "stage", label: "Stage" },
+            { key: "source", label: "Source", hideOnMobile: true },
+            { key: "owner", label: "Owner", hideOnMobile: true },
+            { key: "follow", label: "Follow up" },
+            { key: "value", label: "Value", align: "right" },
+          ]}
+          rows={leads.map((l) => ({
+            id: l.id,
+            href: `/crm/${l.id}`,
+            cells: {
+              lead: (
+                <span className="block">
+                  {l.company || l.name}
+                  <span className="block text-xs font-normal text-neutral-500">{[l.company ? l.name : "", l.service].filter(Boolean).join(" · ")}</span>
+                </span>
+              ),
+              stage: STAGE_LABEL[l.stage],
+              source: <span className="text-neutral-600">{SOURCE_LABEL[l.source]}</span>,
+              owner: <span className="text-neutral-600">{l.owner_email ? displayName(l.owner_email, people) : "—"}</span>,
+              follow: (
+                <span className={l.follow_up_on && l.follow_up_on <= today && OPEN_STAGES.includes(l.stage) ? "font-medium text-danger" : "text-neutral-600"}>
+                  {l.follow_up_on ? formatShortDate(l.follow_up_on) : ""}
+                </span>
+              ),
+              value: l.value ? compactInr(l.value) : "",
+            },
+          }))}
+        />
       ) : (
-        <Card>
-          {leads.length ? (
-            <div className="-mx-5 overflow-x-auto px-5">
-              <table className="w-full min-w-[720px] text-sm">
-                <thead className="text-left text-xs text-neutral-500">
-                  <tr>
-                    <th className="py-2 font-medium">Lead</th>
-                    <th className="font-medium">Stage</th>
-                    <th className="font-medium">Source</th>
-                    <th className="font-medium">Owner</th>
-                    <th className="font-medium">Follow up</th>
-                    <th className="text-right font-medium">Value</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100">
-                  {leads.map((l) => (
-                    <tr key={l.id}>
-                      <td className="py-2">
-                        <Link href={`/crm/${l.id}`} className="font-medium hover:text-navy">
-                          {l.company || l.name}
-                        </Link>
-                        <span className="block text-xs text-neutral-500">{[l.company ? l.name : "", l.service].filter(Boolean).join(" · ")}</span>
-                      </td>
-                      <td>{STAGE_LABEL[l.stage]}</td>
-                      <td className="text-neutral-600">{SOURCE_LABEL[l.source]}</td>
-                      <td className="text-neutral-600">{l.owner_email ? displayName(l.owner_email, people) : "—"}</td>
-                      <td className={l.follow_up_on && l.follow_up_on <= today && OPEN_STAGES.includes(l.stage) ? "font-medium text-red-700" : "text-neutral-600"}>
-                        {l.follow_up_on ? formatInvoiceDate(l.follow_up_on).replace(/, \d{4}$/, "") : ""}
-                      </td>
-                      <td className="text-right tabular-nums">{l.value ? compactInr(l.value) : ""}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="py-6 text-center text-sm text-neutral-500">No leads yet. Add one, or share your enquiry form.</p>
-          )}
-        </Card>
+        <EmptyState title="No leads yet" hint="Add one, or share your enquiry form so enquiries land here." />
       )}
     </div>
   );

@@ -6,13 +6,21 @@ import { requireMember } from "@/lib/data";
 import { checkGstin } from "@/lib/gst";
 import { isValidVpa } from "@/lib/upi";
 
-const prefix = z.string().trim().min(1).max(5).regex(/^[A-Za-z0-9]+$/, "Prefix: letters and digits only");
+const prefix = z
+  .string()
+  .trim()
+  .min(1)
+  .max(5)
+  .regex(/^[A-Za-z0-9]+$/, "Prefix: letters and digits only");
 
 const settingsSchema = z.object({
   business_name: z.string().trim().min(1),
   legal_name: z.string().trim(),
   address: z.string().trim(),
-  state_code: z.string().trim().regex(/^\d{2}$/, "Pick a state"),
+  state_code: z
+    .string()
+    .trim()
+    .regex(/^\d{2}$/, "Pick a state"),
   gstin: z.string().trim().toUpperCase(),
   pan: z.string().trim().toUpperCase(),
   lut_number: z.string().trim(),
@@ -22,7 +30,10 @@ const settingsSchema = z.object({
   query_phone: z.string().trim(),
   default_currency: z.string().trim().min(3).max(3).toUpperCase(),
   default_due_days: z.coerce.number().int().min(0).max(365),
-  default_sac: z.string().trim().regex(/^\d{4,8}$/, "SAC must be 4–8 digits"),
+  default_sac: z
+    .string()
+    .trim()
+    .regex(/^\d{4,8}$/, "SAC must be 4–8 digits"),
   default_gst_rate: z.coerce.number().min(0).max(28),
   require_approval: z.coerce.boolean(),
   gst_filing: z.enum(["monthly", "qrmp", "none"]).default("monthly"),
@@ -80,7 +91,12 @@ const bankSchema = z.object({
   upi_id: z.string().trim(),
   is_default: z.boolean(),
   opening_balance: z.coerce.number().default(0),
-  opening_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().or(z.literal("").transform(() => null)).default(null),
+  opening_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .nullable()
+    .or(z.literal("").transform(() => null))
+    .default(null),
 });
 
 export async function saveBankAccount(input: z.input<typeof bankSchema>) {

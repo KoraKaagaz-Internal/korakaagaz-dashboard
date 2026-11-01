@@ -4,7 +4,7 @@ import { istTime, type EventType, type EventStatus } from "@/lib/calendar";
 export const TYPE_STYLE: Record<EventType, string> = {
   shoot: "bg-accent/10 text-navy ring-accent/30",
   meeting: "bg-violet-50 text-violet-900 ring-violet-200",
-  deadline: "bg-red-50 text-red-800 ring-red-200",
+  deadline: "bg-danger/5 text-danger ring-danger/20",
   other: "bg-neutral-100 text-neutral-700 ring-neutral-200",
 };
 export const TYPE_LABEL: Record<EventType, string> = { shoot: "Shoot", meeting: "Meeting", deadline: "Deadline", other: "Other" };

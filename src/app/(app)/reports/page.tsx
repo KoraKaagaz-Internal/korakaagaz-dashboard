@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Bullet, Columns, Frame, Funnel, HBars, Heatmap, Kpi, Lines, Waterfall } from "@/components/charts/Charts";
 import { SERIES, compactInr, inrFull } from "@/lib/format";
-import { Card, btn } from "@/components/ui";
+import { Card, PageHeader, btn } from "@/components/ui";
 import {
   accrualRevenue,
   billedVsCollected,
@@ -173,19 +173,19 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Reports</h1>
-          <p className="text-sm text-neutral-500">
+      <PageHeader
+        title="Reports"
+        subtitle={
+          <>
             {cur.label} · compared with the {cmpLabel} · {basis === "cash" ? "cash basis (money received)" : "accrual basis (invoices issued)"} · amounts in ₹ before GST
-          </p>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <form className="flex flex-wrap items-end gap-2 rounded-xl bg-white p-3 text-sm border border-line">
         <label className="flex flex-col gap-1 text-xs text-neutral-500">
           Period
-          <select name="p" defaultValue={preset} className="rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
+          <select name="p" defaultValue={preset} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-neutral-900">
             {PRESETS.map((x) => (
               <option key={x.key} value={x.key}>
                 {x.label}
@@ -195,29 +195,29 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </label>
         <label className="flex flex-col gap-1 text-xs text-neutral-500">
           From (custom)
-          <input type="date" name="from" defaultValue={sp.from ?? cur.from} className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm text-neutral-900" />
+          <input type="date" name="from" defaultValue={sp.from ?? cur.from} className="rounded-lg border border-line px-2 py-1.5 text-sm text-neutral-900" />
         </label>
         <label className="flex flex-col gap-1 text-xs text-neutral-500">
           To (custom)
-          <input type="date" name="to" defaultValue={sp.to ?? cur.to} className="rounded-lg border border-neutral-300 px-2 py-1.5 text-sm text-neutral-900" />
+          <input type="date" name="to" defaultValue={sp.to ?? cur.to} className="rounded-lg border border-line px-2 py-1.5 text-sm text-neutral-900" />
         </label>
         <label className="flex flex-col gap-1 text-xs text-neutral-500">
           Compare with
-          <select name="cmp" defaultValue={cmpMode} className="rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
+          <select name="cmp" defaultValue={cmpMode} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-neutral-900">
             <option value="previous">Previous period</option>
             <option value="year">Same period last year</option>
           </select>
         </label>
         <label className="flex flex-col gap-1 text-xs text-neutral-500">
           Basis
-          <select name="basis" defaultValue={basis} className="rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
+          <select name="basis" defaultValue={basis} className="rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-neutral-900">
             <option value="accrual">Invoiced</option>
             <option value="cash">Received</option>
           </select>
         </label>
         <label className="flex flex-col gap-1 text-xs text-neutral-500">
           Client
-          <select name="client" defaultValue={client} className="max-w-48 rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
+          <select name="client" defaultValue={client} className="max-w-48 rounded-lg border border-line bg-white px-2 py-1.5 text-sm text-neutral-900">
             <option value="">All clients</option>
             {clientNames.map(([id, name]) => (
               <option key={id} value={id}>
@@ -233,7 +233,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       <section aria-label="Health" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="Revenue" value={compactInr(p.revenue)} delta={delta(p.revenue, pp.revenue)} spark={spark("revenue")} compareLabel={cmpLabel} />
         <Kpi
-          label="Gross income (revenue − project costs)"
+          label="Gross income"
+          info="Revenue minus project costs (freelancers, props, studio hire you pass on). This is what the studio actually earns."
           value={compactInr(p.agi)}
           delta={delta(p.agi, pp.agi)}
           spark={spark("agi")}
@@ -257,7 +258,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
               : "Settings → bank accounts → opening balance"
           }
         />
-        <Kpi label="Owed by clients" value={compactInr(ar)} sub={`DSO ${dso[dso.length - 1]?.dso ?? "—"} days · aim ≤ 45`} />
+        <Kpi
+          label="Owed by clients"
+          value={compactInr(ar)}
+          sub={`${dso[dso.length - 1]?.dso ?? "—"} days to get paid · aim ≤ 45`}
+          info="Days to get paid (DSO): how many days of billing are still unpaid. Under the MSME Act, business clients must pay within 45 days."
+        />
         <Kpi label="Team hours used (8 weeks)" value={pct(utilAll)} sub="hours logged ÷ hours available" />
         <Kpi
           label="Biggest client share"
@@ -464,8 +470,18 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       {/* ------------------------------------------------------------- cash */}
       <h2 className="pt-2 text-lg font-semibold">Cash &amp; collections</h2>
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Collection effectiveness" value={ceiNow === null ? "—" : `${ceiNow}`} sub="100 = everything due was collected" />
-        <Kpi label="TDS deducted by clients" value={compactInr(tdsReceived)} sub="match with Form 26AS" />
+        <Kpi
+          label="Collected on time"
+          value={ceiNow === null ? "—" : `${ceiNow}%`}
+          sub="of what was due in the period"
+          info="Collection effectiveness index (CEI): money collected ÷ money that was due in the period. 100% means everything due was collected."
+        />
+        <Kpi
+          label="TDS deducted by clients"
+          value={compactInr(tdsReceived)}
+          sub="match with Form 26AS"
+          info="Tax clients held back from your payments and paid to the government for you. It counts as tax you have already paid; check it against Form 26AS on the income-tax site."
+        />
         <Kpi label="TDS you deducted from vendors" value={compactInr(tdsDeducted)} sub="deposit by the 7th" />
         <Kpi label="Overdue" value={compactInr(aged.slice(1).reduce((s, a) => s + a.value, 0))} sub={`${aged.slice(1).reduce((s, a) => s + a.count, 0)} invoices`} />
       </section>
@@ -491,7 +507,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           />
         </Frame>
         <Frame
-          title="Days to get paid (DSO)"
+          title="Days to get paid"
           subtitle="Receivables ÷ last 90 days' billing × 90. MSMEs must be paid within 45 days."
           table={{
             columns: ["Month", "DSO", "Owed"],
@@ -520,7 +536,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           }}
           note={
             data.opening.set && forecast.some((w) => w.balance < 0) ? (
-              <span className="font-medium text-red-700">▼ The balance goes below zero in week of {forecast.find((w) => w.balance < 0)!.label}.</span>
+              <span className="font-medium text-danger">▼ The balance goes below zero in week of {forecast.find((w) => w.balance < 0)!.label}.</span>
             ) : undefined
           }
         >
@@ -565,13 +581,13 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
               color: i === 0 ? SERIES[0] : i < 3 ? SERIES[3] : SERIES[7],
             }))}
           />
-          <div className="mt-4 border-t border-neutral-100 pt-3">
+          <div className="mt-4 border-t border-line pt-3">
             <div className="mb-1 text-xs font-medium text-neutral-500">Filing due soon</div>
             <ul className="space-y-1 text-sm">
               {dues.slice(0, 5).map((d) => (
                 <li key={`${d.date}${d.title}`} className="flex justify-between gap-2">
                   <span>{d.title}</span>
-                  <span className={daysBetween(today, d.date) <= 7 ? "font-medium text-red-700" : "text-neutral-500"}>{formatInvoiceDate(d.date).replace(/, \d{4}$/, "")}</span>
+                  <span className={daysBetween(today, d.date) <= 7 ? "font-medium text-danger" : "text-neutral-500"}>{formatInvoiceDate(d.date).replace(/, \d{4}$/, "")}</span>
                 </li>
               ))}
             </ul>
@@ -617,18 +633,18 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                       <th className="text-right font-medium">Hours</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-neutral-100">
+                  <tbody className="divide-y divide-line">
                     {projects.map((x) => (
                       <tr key={x.id}>
                         <td className="py-1.5">
                           <Link href={`/projects/${x.id}?tab=money`} className="hover:text-navy">
                             <span className="font-mono text-xs text-neutral-400">{x.code}</span> {x.name}
                           </Link>
-                          {x.overBudget && <span className="ml-1.5 text-xs text-red-700">▲ over hours</span>}
+                          {x.overBudget && <span className="ml-1.5 text-xs text-danger">▲ over hours</span>}
                         </td>
                         <td className="text-right tabular-nums">{compactInr(x.revenue)}</td>
                         <td className="text-right tabular-nums">{compactInr(x.expenses)}</td>
-                        <td className={`text-right tabular-nums ${x.profit < 0 ? "text-red-700" : ""}`}>{compactInr(x.profit)}</td>
+                        <td className={`text-right tabular-nums ${x.profit < 0 ? "text-danger" : ""}`}>{compactInr(x.profit)}</td>
                         <td className="pl-3">
                           {x.margin !== null && (
                             <span className="flex items-center gap-2">
@@ -755,7 +771,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         <p className="mb-3 text-sm text-neutral-500">CSV in the GST offline tool&apos;s columns, for your CA. Check before filing.</p>
         <ul className="grid gap-2 sm:grid-cols-2">
           {Object.entries(GSTR1_SECTIONS).map(([key, label]) => (
-            <li key={key} className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 px-3 py-2 text-sm">
+            <li key={key} className="flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2 text-sm">
               <span>{label}</span>
               <a className={btn.ghost} href={`/api/export/gstr1?section=${key}&${exportQs}`}>
                 CSV
@@ -776,7 +792,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             TDS deducted by clients
           </a>
           <a className={btn.secondary} href={`/api/export/purchases?${exportQs}`}>
-            Purchase register (ITC)
+            Purchase register (GST credit)
           </a>
           <a className={btn.secondary} href={`/api/export/tds-payable?${exportQs}`}>
             TDS you deducted

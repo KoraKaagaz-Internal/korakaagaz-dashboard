@@ -6,6 +6,7 @@ import { formatInvoiceDate, todayIso } from "@/lib/money";
 import { BUCKET_LABEL, dueBucket, displayName, type Bucket } from "@/lib/pm";
 import { listMyTasks, teamDirectory } from "@/lib/pm-data";
 import { DoneBox } from "./DoneBox";
+import { PageHeader } from "@/components/ui";
 
 const ORDER: Bucket[] = ["overdue", "today", "week", "later", "no_date"];
 
@@ -20,13 +21,15 @@ export default async function MyWorkPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">My work</h1>
-        <p className="text-sm text-neutral-500">
-          {displayName(email, people)} · {open.length} open task{open.length === 1 ? "" : "s"}
-          {hoursThisWeek ? ` · about ${hoursThisWeek} h due in the next 7 days` : ""}
-        </p>
-      </div>
+      <PageHeader
+        title="My work"
+        subtitle={
+          <>
+            {displayName(email, people)} · {open.length} open task{open.length === 1 ? "" : "s"}
+            {hoursThisWeek ? ` · about ${hoursThisWeek} h due in the next 7 days` : ""}
+          </>
+        }
+      />
 
       {open.length === 0 && (
         <div className="rounded-xl bg-white p-10 text-center text-neutral-600 border border-line">
@@ -39,10 +42,10 @@ export default async function MyWorkPage() {
 
       {groups.map((g) => (
         <section key={g.bucket} className="rounded-xl bg-white border border-line">
-          <h2 className={`border-b border-neutral-100 px-4 py-2.5 text-sm font-semibold ${g.bucket === "overdue" ? "text-red-700" : ""}`}>
+          <h2 className={`border-b border-line px-4 py-2.5 text-sm font-semibold ${g.bucket === "overdue" ? "text-danger" : ""}`}>
             {BUCKET_LABEL[g.bucket]} <span className="font-normal text-neutral-500">· {g.tasks.length}</span>
           </h2>
-          <ul className="divide-y divide-neutral-100">
+          <ul className="divide-y divide-line">
             {g.tasks.map((t) => (
               <li key={t.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                 <DoneBox id={t.id} title={t.title} done={false} disabled={!canWork} />
@@ -56,7 +59,7 @@ export default async function MyWorkPage() {
                 <span className="hidden sm:inline">
                   <TaskStatusPill status={t.status} />
                 </span>
-                <span className={`w-16 text-right text-xs ${g.bucket === "overdue" ? "font-medium text-red-700" : "text-neutral-500"}`}>
+                <span className={`w-16 text-right text-xs ${g.bucket === "overdue" ? "font-medium text-danger" : "text-neutral-500"}`}>
                   {t.due_date ? formatInvoiceDate(t.due_date).replace(/, \d{4}$/, "") : ""}
                 </span>
               </li>
@@ -67,8 +70,8 @@ export default async function MyWorkPage() {
 
       {done.length > 0 && (
         <section className="rounded-xl bg-white border border-line">
-          <h2 className="border-b border-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-600">Done in the last 7 days · {done.length}</h2>
-          <ul className="divide-y divide-neutral-100">
+          <h2 className="border-b border-line px-4 py-2.5 text-sm font-semibold text-neutral-600">Done in the last 7 days · {done.length}</h2>
+          <ul className="divide-y divide-line">
             {done.map((t) => (
               <li key={t.id} className="flex items-center gap-3 px-4 py-2 text-sm text-neutral-500">
                 <DoneBox id={t.id} title={t.title} done disabled={!canWork} />

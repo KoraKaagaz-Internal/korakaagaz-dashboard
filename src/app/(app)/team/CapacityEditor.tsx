@@ -16,7 +16,7 @@ export function CapacityEditor({ people }: { people: Capacity[] }) {
   const [pending, start] = useTransition();
   return (
     <Card title="Weekly hours">
-      <ul className="divide-y divide-neutral-100 text-sm">
+      <ul className="divide-y divide-line text-sm">
         {rows.map((r) => (
           <li key={r.email} className="flex flex-wrap items-center gap-2 py-2">
             <span className="min-w-0 flex-1 truncate">
@@ -52,7 +52,7 @@ export function CapacityEditor({ people }: { people: Capacity[] }) {
       </ul>
       <p className="mt-2 text-xs text-neutral-500">Used by Workload and the team hours chart in Reports.</p>
       {msg && (
-        <p className="mt-1 text-sm text-red-700" role="alert">
+        <p className="mt-1 text-sm text-danger" role="alert">
           {msg}
         </p>
       )}

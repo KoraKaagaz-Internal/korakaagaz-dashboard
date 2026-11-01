@@ -80,10 +80,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const full = docs.filter((d) => d.status !== "draft");
     // Items are needed for the HSN summary.
     if (section.startsWith("hsn")) {
-      const { data: items } = await supabase.from("document_items").select("*").in("document_id", full.map((d) => d.id));
+      const { data: items } = await supabase
+        .from("document_items")
+        .select("*")
+        .in(
+          "document_id",
+          full.map((d) => d.id),
+        );
       const byDoc = new Map<string, Record<string, unknown>[]>();
       for (const i of items ?? []) byDoc.set(i.document_id, [...(byDoc.get(i.document_id) ?? []), i]);
-      for (const d of full) d.items = (byDoc.get(d.id) ?? []).map((i) => ({ title: String(i.title), description: String(i.description), sac: String(i.sac), qty: Number(i.qty), unit_price: Number(i.unit_price) }));
+      for (const d of full)
+        d.items = (byDoc.get(d.id) ?? []).map((i) => ({
+          title: String(i.title),
+          description: String(i.description),
+          sac: String(i.sac),
+          qty: Number(i.qty),
+          unit_price: Number(i.unit_price),
+        }));
     }
     rows = gstr1Section(section, full, settings.state_code);
     name = `gstr1-${section}`;

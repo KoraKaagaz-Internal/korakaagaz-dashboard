@@ -3,6 +3,7 @@ import { listClients, requireMember } from "@/lib/data";
 import { todayIso } from "@/lib/money";
 import { listTemplates, teamDirectory } from "@/lib/pm-data";
 import { NewProjectForm } from "./NewProjectForm";
+import { PageHeader } from "@/components/ui";
 
 export default async function NewProjectPage({ searchParams }: { searchParams: Promise<{ client?: string }> }) {
   const { email } = await requireMember("member");
@@ -10,12 +11,7 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
   const [templates, clients, people] = await Promise.all([listTemplates(), listClients(), teamDirectory()]);
   return (
     <div className="mx-auto max-w-4xl space-y-5">
-      <div>
-        <Link href="/projects" className="text-sm text-neutral-500 hover:text-navy">
-          ← Projects
-        </Link>
-        <h1 className="text-2xl font-semibold">New project</h1>
-      </div>
+      <PageHeader back={{ href: "/projects", label: "Projects" }} title="New project" />
       <NewProjectForm
         templates={templates.map((t) => ({
           id: t.id,

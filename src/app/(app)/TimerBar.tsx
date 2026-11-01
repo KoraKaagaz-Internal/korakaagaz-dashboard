@@ -19,8 +19,8 @@ export function TimerBar({ timer }: { timer: { started: string; project_id: stri
   if (!timer) return null;
   const mins = Math.max(0, Math.floor((now - Date.parse(timer.started)) / 60000));
   return (
-    <div className="flex items-center gap-2 rounded-full bg-red-50 py-1 pr-1 pl-3 text-sm ring-1 ring-red-200" role="status" aria-live="polite">
-      <span className="size-2 animate-pulse rounded-full bg-red-600" aria-hidden="true" />
+    <div className="flex items-center gap-2 rounded-full bg-danger/5 py-1 pr-1 pl-3 text-sm ring-1 ring-danger/20" role="status" aria-live="polite">
+      <span className="size-2 animate-pulse rounded-full bg-danger" aria-hidden="true" />
       <Link href={`/projects/${timer.project_id}`} className="hidden max-w-48 truncate text-red-900 hover:underline sm:inline" title={timer.task_title || timer.project_code}>
         {timer.project_code}
         {timer.task_title ? ` · ${timer.task_title}` : ""}
@@ -34,7 +34,7 @@ export function TimerBar({ timer }: { timer: { started: string; project_id: stri
             router.refresh();
           })
         }
-        className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-medium text-white hover:bg-red-700"
+        className="rounded-full bg-danger px-2.5 py-0.5 text-xs font-medium text-white hover:bg-red-700"
       >
         Stop
       </button>

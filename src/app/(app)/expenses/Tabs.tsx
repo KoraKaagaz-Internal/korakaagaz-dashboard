@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Tabs } from "@/components/ui";
 
 const TABS = [
   { href: "/expenses", label: "All expenses" },
@@ -9,19 +9,5 @@ const TABS = [
 ];
 
 export function ExpenseTabs({ current }: { current: string; isAdmin?: boolean }) {
-  const tabs = TABS;
-  return (
-    <nav className="-mx-4 flex gap-1 overflow-x-auto border-b border-neutral-200 px-4" aria-label="Expense sections">
-      {tabs.map((t) => (
-        <Link
-          key={t.href}
-          href={t.href}
-          aria-current={current === t.href ? "page" : undefined}
-          className={`-mb-px border-b-2 px-3 py-2 text-sm whitespace-nowrap ${current === t.href ? "border-navy font-medium text-navy" : "border-transparent text-neutral-600 hover:text-neutral-900"}`}
-        >
-          {t.label}
-        </Link>
-      ))}
-    </nav>
-  );
+  return <Tabs label="Expense sections" items={TABS.map((t) => ({ ...t, active: t.href === current }))} />;
 }

@@ -52,7 +52,11 @@ const itemSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1, "Name is required"),
   description: z.string().trim().default(""),
-  sac: z.string().trim().regex(/^(\d{4,8})?$/, "SAC must be 4–8 digits").default(""),
+  sac: z
+    .string()
+    .trim()
+    .regex(/^(\d{4,8})?$/, "SAC must be 4–8 digits")
+    .default(""),
   unit_price: z.coerce.number().min(0),
 });
 
@@ -75,4 +79,3 @@ export async function deleteItem(id: string) {
   revalidatePath("/items");
   return { ok: true as const };
 }
-

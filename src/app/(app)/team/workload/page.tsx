@@ -73,7 +73,7 @@ export default async function WorkloadPage({ searchParams }: { searchParams: Pro
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-line">
               {workers.map((p) => (
                 <tr key={p.email}>
                   <td className="py-2 pr-3">
@@ -87,7 +87,7 @@ export default async function WorkloadPage({ searchParams }: { searchParams: Pro
                     const cap = weekCapacity(capacity.get(p.email) ?? 40, days);
                     const load = weekLoad(w, p.email, loadTasks, loadEvents);
                     const pct = cap > 0 ? Math.round((load.total / cap) * 100) : load.total > 0 ? 999 : 0;
-                    const tone = pct > 100 ? "bg-red-100 text-red-900" : pct >= 80 ? "bg-amber-50 text-amber-900" : load.total ? "bg-green-50 text-green-900" : "text-neutral-400";
+                    const tone = pct > 100 ? "bg-danger/10 text-red-900" : pct >= 80 ? "bg-warn/10 text-warn" : load.total ? "bg-ok/10 text-green-900" : "text-neutral-400";
                     return (
                       <td key={w} className="px-1 py-1.5 text-center">
                         <div className={`rounded-lg px-2 py-1.5 ${tone}`} title={`Tasks ${load.tasks} h + events ${load.events} h, capacity ${cap} h (${days} working days)`}>

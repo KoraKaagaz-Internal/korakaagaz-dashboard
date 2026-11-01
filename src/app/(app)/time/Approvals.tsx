@@ -73,7 +73,7 @@ export function Approvals({ rows, names }: { rows: Row[]; names: Record<string, 
               </label>
             }
           >
-            <ul className="divide-y divide-neutral-100 text-sm">
+            <ul className="divide-y divide-line text-sm">
               {list.map((r) => (
                 <li key={r.id} className="flex items-center gap-3 py-1.5">
                   <input

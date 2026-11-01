@@ -27,7 +27,18 @@ export default async function SamplePage({ searchParams }: { searchParams: Promi
     };
   }
   // ?name=…&addr=… to try long client names and addresses
-  if (params.name || params.addr) doc = { ...doc, client: { ...doc.client, name: params.name ?? doc.client.name, address: params.addr ?? doc.client.address, city: params.city ?? doc.client.city, pin: params.pin ?? doc.client.pin, state_code: params.state ?? doc.client.state_code } };
+  if (params.name || params.addr)
+    doc = {
+      ...doc,
+      client: {
+        ...doc.client,
+        name: params.name ?? doc.client.name,
+        address: params.addr ?? doc.client.address,
+        city: params.city ?? doc.client.city,
+        pin: params.pin ?? doc.client.pin,
+        state_code: params.state ?? doc.client.state_code,
+      },
+    };
   const supplier = full ? { ...SAMPLE_GST_SUPPLIER, lut_number: params.export ? "AD2104260012345" : "" } : SAMPLE_SUPPLIER;
 
   return (
@@ -35,11 +46,7 @@ export default async function SamplePage({ searchParams }: { searchParams: Promi
       <DocumentTemplate doc={doc} supplier={supplier} status={params.draft ? "draft" : "issued"} />
       {params.overlay && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src="/dev-reference.png"
-          alt=""
-          style={{ position: "absolute", left: -1, top: -2, width: 854, opacity: 0.5, pointerEvents: "none" }}
-        />
+        <img src="/dev-reference.png" alt="" style={{ position: "absolute", left: -1, top: -2, width: 854, opacity: 0.5, pointerEvents: "none" }} />
       )}
     </div>
   );

@@ -13,7 +13,11 @@ type Supa = Awaited<ReturnType<typeof requireTeam>>["supabase"];
 const fail = (message: string) => ({ ok: false as const, message });
 const issues = (e: z.ZodError) => e.issues.map((i) => i.message).join(", ");
 const uuid = z.string().uuid();
-const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().or(z.literal("").transform(() => null));
+const date = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .nullable()
+  .or(z.literal("").transform(() => null));
 
 /** In-app notifications for everyone except the actor. */
 async function notify(supabase: Supa, me: string, to: string[], n: { kind: string; title: string; body?: string; link: string }) {
@@ -33,7 +37,12 @@ const projectSchema = z.object({
   status: z.enum(["planned", "active", "on_hold", "review", "done", "cancelled"]).default("active"),
   start_date: date.default(null),
   due_date: date.default(null),
-  owner_email: z.string().email().nullable().or(z.literal("").transform(() => null)).default(null),
+  owner_email: z
+    .string()
+    .email()
+    .nullable()
+    .or(z.literal("").transform(() => null))
+    .default(null),
   budget_hours: z.coerce.number().min(0).default(0),
   retainer_hours_month: z.coerce.number().min(0).default(0),
   colour: z.string().default(""),
@@ -198,7 +207,10 @@ const taskSchema = z.object({
   description: z.string().default(""),
   status: z.enum(["todo", "doing", "review", "client_review", "done"]).default("todo"),
   priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
-  phase_id: uuid.nullable().or(z.literal("").transform(() => null)).default(null),
+  phase_id: uuid
+    .nullable()
+    .or(z.literal("").transform(() => null))
+    .default(null),
   parent_id: uuid.nullable().default(null),
   start_date: date.default(null),
   due_date: date.default(null),
@@ -220,10 +232,21 @@ export async function createTask(projectId: string, input: z.input<typeof taskSc
   if (!parsed.success) return fail(issues(parsed.error));
   let sort = parsed.data.sort;
   if (sort === undefined) {
-    const { data: last } = await supabase.from("tasks").select("sort").eq("project_id", projectId).eq("status", parsed.data.status).order("sort", { ascending: false }).limit(1).maybeSingle();
+    const { data: last } = await supabase
+      .from("tasks")
+      .select("sort")
+      .eq("project_id", projectId)
+      .eq("status", parsed.data.status)
+      .order("sort", { ascending: false })
+      .limit(1)
+      .maybeSingle();
     sort = (last ? Number(last.sort) : 0) + 1;
   }
-  const { data, error } = await supabase.from("tasks").insert({ ...parsed.data, sort, project_id: projectId }).select("id").single();
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert({ ...parsed.data, sort, project_id: projectId })
+    .select("id")
+    .single();
   if (error) return fail(error.message);
   const assignees = input.assignees ?? [];
   if (assignees.length) {
@@ -283,7 +306,10 @@ export async function setAssignees(taskId: string, emails: string[]): Promise<Re
     if (error) return fail(error.message);
     // assignees must be on the project to see it
     if ((await requireTeam()).canEdit) {
-      await supabase.from("project_members").upsert(add.map((e) => ({ project_id: t.project_id, member_email: e })), { onConflict: "project_id,member_email", ignoreDuplicates: true });
+      await supabase.from("project_members").upsert(
+        add.map((e) => ({ project_id: t.project_id, member_email: e })),
+        { onConflict: "project_id,member_email", ignoreDuplicates: true },
+      );
     }
   }
   if (remove.length) await supabase.from("task_assignees").delete().eq("task_id", taskId).in("member_email", remove);
@@ -332,7 +358,11 @@ const linkSchema = z.object({
   project_id: uuid.nullable(),
   task_id: uuid.nullable().default(null),
   name: z.string().trim().min(1, "Name is required"),
-  url: z.string().trim().url("Paste a full link starting with https://").refine((u) => /^https?:\/\//.test(u), "Links must start with https://"),
+  url: z
+    .string()
+    .trim()
+    .url("Paste a full link starting with https://")
+    .refine((u) => /^https?:\/\//.test(u), "Links must start with https://"),
 });
 
 export async function addLink(input: z.input<typeof linkSchema>): Promise<Result> {

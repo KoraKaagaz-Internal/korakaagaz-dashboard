@@ -250,7 +250,7 @@ export function EventForm({
       </Card>
 
       {conflicts.length > 0 && (
-        <div className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200" role="alert">
+        <div className="rounded-xl bg-warn/10 px-4 py-3 text-sm text-warn ring-1 ring-warn/20" role="alert">
           <b>Double booking:</b>
           <ul className="mt-1 list-disc pl-5">
             {conflicts.map((c) => (
@@ -312,7 +312,7 @@ export function EventForm({
           </span>
         )}
         {msg && (
-          <p className="text-sm text-red-700" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {msg}
           </p>
         )}

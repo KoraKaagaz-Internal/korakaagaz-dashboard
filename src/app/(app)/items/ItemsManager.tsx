@@ -54,13 +54,13 @@ export function ItemsManager({ initial, canEdit }: { initial: CatalogItem[]; can
                 Cancel
               </button>
             )}
-            {msg && <span className="text-sm text-red-600">{msg}</span>}
+            {msg && <span className="text-sm text-danger">{msg}</span>}
           </div>
         </Card>
       )}
       <Card>
         {items.length === 0 && <p className="text-sm text-neutral-500">No items yet.</p>}
-        <ul className="divide-y divide-neutral-100">
+        <ul className="divide-y divide-line">
           {items.map((it) => (
             <li key={it.id} className="flex items-start gap-3 py-3 text-sm">
               <div className="min-w-0 flex-1">

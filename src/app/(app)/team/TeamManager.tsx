@@ -49,11 +49,11 @@ export function TeamManager({ members, me, mailReady }: { members: Member[]; me:
           They must sign in with a Google account for exactly this email.{!mailReady && " Invite emails start once Gmail sending is set up (Settings → Email)."}
         </p>
         {msg && (
-          <div className={`mt-3 text-sm ${msg.ok ? "text-green-700" : "text-red-600"}`}>
+          <div className={`mt-3 text-sm ${msg.ok ? "text-ok" : "text-danger"}`}>
             {msg.text}
             {msg.invite && (
               <div className="mt-2">
-                <textarea readOnly rows={7} className="w-full rounded-lg border border-neutral-300 p-2 text-xs text-neutral-800" value={msg.invite} />
+                <textarea readOnly rows={7} className="w-full rounded-lg border border-line p-2 text-xs text-neutral-800" value={msg.invite} />
                 <button className={btn.ghost} onClick={() => navigator.clipboard.writeText(msg.invite!)}>
                   Copy message
                 </button>
@@ -64,7 +64,7 @@ export function TeamManager({ members, me, mailReady }: { members: Member[]; me:
       </Card>
 
       <Card title={`People · ${members.length}`}>
-        <ul className="divide-y divide-neutral-100">
+        <ul className="divide-y divide-line">
           {members.map((m) => (
             <li key={m.email} className="flex flex-wrap items-center gap-3 py-3 text-sm">
               <div className="min-w-0 flex-1">

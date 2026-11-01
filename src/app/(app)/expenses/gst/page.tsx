@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, btn } from "@/components/ui";
+import { Card, InfoTip, PageHeader, btn } from "@/components/ui";
 import { upcoming } from "@/lib/compliance";
 import { getSettings, requireMember } from "@/lib/data";
 import { listChallans, listExpenses } from "@/lib/expense-data";
@@ -39,40 +39,56 @@ export default async function GstPage({ searchParams }: { searchParams: Promise<
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">GST &amp; TDS on purchases</h1>
-          <p className="text-sm text-neutral-500">
-            Input credit for GSTR-3B, matching with GSTR-2B, and TDS you deducted from vendors. Rules are FY 2025-26; check with your CA before filing.
-          </p>
-        </div>
-        <form className="flex items-center gap-2 text-sm">
-          <select name="month" defaultValue={month.slice(0, 7)} aria-label="Month" className="rounded-lg border border-neutral-300 bg-white px-2 py-1.5">
-            {months.map((m) => (
-              <option key={m} value={m}>
-                {monthLabel(m)}
-              </option>
-            ))}
-          </select>
-          <button className="rounded-lg bg-neutral-900 px-3 py-1.5 text-white">Show</button>
-        </form>
-      </div>
-      <ExpenseTabs current="/expenses/gst" isAdmin={isAdmin} />
+      <PageHeader
+        title="GST & TDS on purchases"
+        subtitle="Input credit for GSTR-3B, matching with GSTR-2B, and TDS you deducted from vendors. Rules are FY 2025-26; check with your CA before filing."
+        tabs={<ExpenseTabs current="/expenses/gst" />}
+        actions={
+          <>
+            <form className="flex items-center gap-2 text-sm">
+              <select name="month" defaultValue={month.slice(0, 7)} aria-label="Month" className="rounded-lg border border-line bg-white px-2 py-1.5">
+                {months.map((m) => (
+                  <option key={m} value={m}>
+                    {monthLabel(m)}
+                  </option>
+                ))}
+              </select>
+              <button className="inline-flex h-8 items-center rounded-lg border border-line bg-white px-3 text-sm font-medium hover:bg-subtle">Show</button>
+            </form>
+          </>
+        }
+      />
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title={`Input credit · ${monthLabel(month)} (GSTR-3B Table 4)`}>
+        <Card title={`GST you can claim back · ${monthLabel(month)}`}>
+          <p className="-mt-2 mb-3 flex items-center gap-1.5 text-xs text-neutral-500">
+            Goes in GSTR-3B, Table 4
+            <InfoTip>
+              Input tax credit (ITC): GST you paid on business purchases, set off against the GST you collect. The small codes (4A, 4B…) are the rows in the GSTR-3B return.
+            </InfoTip>
+          </p>
           <dl className="grid grid-cols-[1fr_auto] gap-y-1.5 text-sm">
-            <dt className="text-neutral-600">4A · All credit on bills ({itc.count})</dt>
+            <dt className="text-neutral-600">
+              All GST on your bills ({itc.count}) <Code>4A</Code>
+            </dt>
             <dd className="text-right tabular-nums">{formatMoney(itc.a)}</dd>
-            <dt className="text-neutral-600">4B(1) · Blocked under s.17(5)</dt>
+            <dt className="text-neutral-600">
+              Never claimable (food, cars, personal use) <Code>4B(1)</Code>
+            </dt>
             <dd className="text-right tabular-nums">− {formatMoney(itc.b1)}</dd>
-            <dt className="text-neutral-600">4B(2) · Held back (not in 2B / unpaid 180+ days)</dt>
+            <dt className="text-neutral-600">
+              Held back for now: supplier hasn&apos;t filed, or unpaid 180+ days <Code>4B(2)</Code>
+            </dt>
             <dd className="text-right tabular-nums">− {formatMoney(itc.b2)}</dd>
-            <dt className="font-medium">4C · Net credit to claim</dt>
+            <dt className="font-medium">
+              GST to claim this month <Code>4C</Code>
+            </dt>
             <dd className="text-right font-semibold tabular-nums">{formatMoney(itc.c)}</dd>
             {itc.rcmPayable > 0 && (
               <>
-                <dt className="pt-2 text-neutral-600">Reverse-charge GST to pay in cash (Table 3.1(d))</dt>
+                <dt className="pt-2 text-neutral-600">
+                  GST you pay yourself on reverse-charge bills <Code>3.1(d)</Code>
+                </dt>
                 <dd className="pt-2 text-right tabular-nums">{formatMoney(itc.rcmPayable)}</dd>
               </>
             )}
@@ -87,20 +103,20 @@ export default async function GstPage({ searchParams }: { searchParams: Promise<
           </div>
         </Card>
 
-        <Card title="Match with GSTR-2B">
+        <Card title="Check against your suppliers' filings (GSTR-2B)">
           <Reconcile from={from} to={to} />
           {(missing.length > 0 || over180.length > 0) && (
             <ul className="mt-4 space-y-1 text-sm">
               {missing.slice(0, 8).map((e) => (
                 <li key={e.id}>
-                  <Link href={`/expenses/${e.id}`} className="text-amber-800 hover:underline">
+                  <Link href={`/expenses/${e.id}`} className="text-warn hover:underline">
                     {e.vendor} · {e.bill_no || "no bill no."}: {e.gstr2b === "missing" ? "not in 2B yet; ask the supplier to file" : "tax differs from 2B"}
                   </Link>
                 </li>
               ))}
               {over180.slice(0, 8).map((e) => (
                 <li key={`o-${e.id}`}>
-                  <Link href={`/expenses/${e.id}`} className="text-red-700 hover:underline">
+                  <Link href={`/expenses/${e.id}`} className="text-danger hover:underline">
                     {e.vendor}: unpaid {e.unpaid_days} days; reverse the credit until you pay
                   </Link>
                 </li>
@@ -123,7 +139,7 @@ export default async function GstPage({ searchParams }: { searchParams: Promise<
                   <th className="text-right font-medium">Deposited</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-line">
                 {tdsLines.map((e) => (
                   <tr key={e.id}>
                     <td className="py-1.5">
@@ -170,10 +186,10 @@ export default async function GstPage({ searchParams }: { searchParams: Promise<
       </Card>
 
       <Card title="Coming up (next 60 days)">
-        <ul className="divide-y divide-neutral-100 text-sm">
+        <ul className="divide-y divide-line text-sm">
           {dues.map((d) => (
             <li key={`${d.date}-${d.title}`} className="flex items-center gap-3 py-1.5">
-              <span className={`w-28 ${daysBetween(today, d.date) <= 7 ? "font-semibold text-red-700" : "text-neutral-600"}`}>
+              <span className={`w-28 ${daysBetween(today, d.date) <= 7 ? "font-semibold text-danger" : "text-neutral-600"}`}>
                 {formatInvoiceDate(d.date).replace(/, \d{4}$/, "")}
               </span>
               <span className="flex-1">{d.title}</span>
@@ -188,4 +204,8 @@ export default async function GstPage({ searchParams }: { searchParams: Promise<
       </Card>
     </div>
   );
+}
+
+function Code({ children }: { children: React.ReactNode }) {
+  return <span className="ml-1 rounded bg-subtle px-1 font-mono text-[10px] text-neutral-500">{children}</span>;
 }

@@ -117,7 +117,7 @@ export function BookingSettingsForm({ booking, services, site }: { booking: Book
           Save
         </button>
         {msg && (
-          <span className={`text-sm ${msg.ok ? "text-green-700" : "text-red-700"}`} role="status">
+          <span className={`text-sm ${msg.ok ? "text-ok" : "text-danger"}`} role="status">
             {msg.text}
           </span>
         )}

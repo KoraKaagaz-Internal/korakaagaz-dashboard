@@ -14,7 +14,11 @@ const fail = (message: string) => ({ ok: false as const, message });
 const issues = (e: z.ZodError) => e.issues.map((i) => i.message).join(", ");
 const uuid = z.string().uuid();
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date");
-const opt = <T extends z.ZodTypeAny>(s: T) => s.nullable().or(z.literal("").transform(() => null)).default(null);
+const opt = <T extends z.ZodTypeAny>(s: T) =>
+  s
+    .nullable()
+    .or(z.literal("").transform(() => null))
+    .default(null);
 
 function refresh() {
   revalidatePath("/expenses");
@@ -74,7 +78,16 @@ export async function deleteVendor(id: string): Promise<Result> {
   return { ok: true };
 }
 
-export async function saveCategory(input: { id?: string; name: string; itc_rule: string; kind: string; tds_nature: string; rcm: boolean; budget_month: number; active: boolean }): Promise<Result> {
+export async function saveCategory(input: {
+  id?: string;
+  name: string;
+  itc_rule: string;
+  kind: string;
+  tds_nature: string;
+  rcm: boolean;
+  budget_month: number;
+  active: boolean;
+}): Promise<Result> {
   const { supabase } = await requireMember("admin");
   const row = {
     name: input.name.trim(),
@@ -119,10 +132,16 @@ const expenseSchema = z.object({
   due_date: opt(isoDate),
   billable: z.boolean().default(false),
   markup_pct: z.coerce.number().min(0).max(500).default(0),
-  recurring: z.object({ every: z.enum(["month", "quarter", "year"]), next: isoDate }).nullable().default(null),
+  recurring: z
+    .object({ every: z.enum(["month", "quarter", "year"]), next: isoDate })
+    .nullable()
+    .default(null),
   notes: z.string().trim().max(2000).default(""),
   /** Receipts: record the payment straight away from this account. */
-  pay_now: z.object({ account_id: opt(uuid), mode: z.enum(["upi", "bank", "cash", "card", "cheque"]), reference: z.string().default("") }).nullable().default(null),
+  pay_now: z
+    .object({ account_id: opt(uuid), mode: z.enum(["upi", "bank", "cash", "card", "cheque"]), reference: z.string().default("") })
+    .nullable()
+    .default(null),
 });
 export type ExpenseInput = z.input<typeof expenseSchema>;
 
@@ -187,7 +206,9 @@ export async function saveExpense(input: ExpenseInput): Promise<Result<{ id: str
   if (!id && e.kind === "receipt" && pay_now && canEdit) {
     const amount = round2(gst.total - tdsAmount);
     if (amount > 0) {
-      const { error } = await supabase.from("expense_payments").insert({ expense_id: expenseId, paid_on: e.expense_date, amount, mode: pay_now.mode, account_id: pay_now.account_id, reference: pay_now.reference });
+      const { error } = await supabase
+        .from("expense_payments")
+        .insert({ expense_id: expenseId, paid_on: e.expense_date, amount, mode: pay_now.mode, account_id: pay_now.account_id, reference: pay_now.reference });
       if (error) return fail(`Saved, but recording the payment failed: ${error.message}`);
     }
   }
@@ -195,7 +216,15 @@ export async function saveExpense(input: ExpenseInput): Promise<Result<{ id: str
     const { data: people } = await supabase.rpc("team_directory");
     const admin = ((people ?? []) as { email: string; role: string }[]).find((p) => p.role === "admin");
     if (admin && admin.email !== email) {
-      await supabase.from("notifications").insert({ recipient_email: admin.email, kind: "claim_submitted", title: `${email.split("@")[0]} filed a claim: ₹${gst.total.toLocaleString("en-IN")}`, body: e.description, link: "/expenses/claims" });
+      await supabase
+        .from("notifications")
+        .insert({
+          recipient_email: admin.email,
+          kind: "claim_submitted",
+          title: `${email.split("@")[0]} filed a claim: ₹${gst.total.toLocaleString("en-IN")}`,
+          body: e.description,
+          link: "/expenses/claims",
+        });
     }
   }
   refresh();
@@ -218,7 +247,10 @@ export async function attachReceipt(expenseId: string, path: string, name: strin
   const { supabase } = await requireTeam();
   if (!path.startsWith(`expenses/${expenseId}/`)) return fail("Bad upload path");
   const { data: old } = await supabase.from("expenses").select("receipt_path").eq("id", expenseId).single();
-  const { error } = await supabase.from("expenses").update({ receipt_path: path, receipt_name: name.slice(0, 200) }).eq("id", expenseId);
+  const { error } = await supabase
+    .from("expenses")
+    .update({ receipt_path: path, receipt_name: name.slice(0, 200) })
+    .eq("id", expenseId);
   if (error) {
     await supabase.storage.from("files").remove([path]);
     return fail(error.message);
@@ -260,9 +292,17 @@ export async function decideClaims(ids: string[], approve: boolean, note = ""): 
     .select("created_by, total, description");
   if (error) return fail(error.message.replace(/^.*?: /, ""));
   if (data?.length) {
-    await supabase.from("notifications").insert(
-      data.map((c) => ({ recipient_email: c.created_by, kind: "claim_decided", title: `Claim ${approve ? "approved" : "sent back"}: ₹${Number(c.total).toLocaleString("en-IN")}`, body: approve ? c.description : note || c.description, link: "/expenses/claims" })),
-    );
+    await supabase
+      .from("notifications")
+      .insert(
+        data.map((c) => ({
+          recipient_email: c.created_by,
+          kind: "claim_decided",
+          title: `Claim ${approve ? "approved" : "sent back"}: ₹${Number(c.total).toLocaleString("en-IN")}`,
+          body: approve ? c.description : note || c.description,
+          link: "/expenses/claims",
+        })),
+      );
   }
   refresh();
   return { ok: true, count: data?.length ?? 0 };
@@ -307,12 +347,23 @@ export async function payClaims(ids: string[], input: Omit<z.input<typeof paymen
   const { data: bals } = await supabase.from("expense_balances").select("expense_id, balance").in("expense_id", ids);
   const { data: claims } = await supabase.from("expenses").select("id, created_by").in("id", ids).eq("kind", "claim").eq("approval", "approved");
   const ok = new Set((claims ?? []).map((c) => c.id as string));
-  const rows = (bals ?? []).filter((b) => ok.has(b.expense_id as string) && Number(b.balance) > 0.005).map((b) => ({ expense_id: b.expense_id, amount: Number(b.balance), paid_on: input.paid_on, mode: input.mode, account_id: input.account_id || null, reference: input.reference ?? "" }));
+  const rows = (bals ?? [])
+    .filter((b) => ok.has(b.expense_id as string) && Number(b.balance) > 0.005)
+    .map((b) => ({
+      expense_id: b.expense_id,
+      amount: Number(b.balance),
+      paid_on: input.paid_on,
+      mode: input.mode,
+      account_id: input.account_id || null,
+      reference: input.reference ?? "",
+    }));
   if (!rows.length) return fail("Nothing approved and unpaid in the selection.");
   const { error } = await supabase.from("expense_payments").insert(rows);
   if (error) return fail(error.message);
   const people = [...new Set((claims ?? []).filter((c) => rows.some((r) => r.expense_id === c.id)).map((c) => c.created_by as string))];
-  await supabase.from("notifications").insert(people.map((p) => ({ recipient_email: p, kind: "claim_paid", title: "Your claim was reimbursed", body: input.reference ?? "", link: "/expenses/claims" })));
+  await supabase
+    .from("notifications")
+    .insert(people.map((p) => ({ recipient_email: p, kind: "claim_paid", title: "Your claim was reimbursed", body: input.reference ?? "", link: "/expenses/claims" })));
   refresh();
   return { ok: true, count: rows.length, total: round2(rows.reduce((s, r) => s + r.amount, 0)) };
 }
@@ -370,7 +421,17 @@ export async function invoiceFromExpenses(projectId: string): Promise<Result<{ i
     doc_type: "invoice",
     number: null,
     client_id: client.id,
-    client: { name: client.name, email: client.email, phone: client.phone, address: client.address, city: client.city, pin: client.pin, state_code: client.state_code, country: client.country, gstin: client.gstin },
+    client: {
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+      address: client.address,
+      city: client.city,
+      pin: client.pin,
+      state_code: client.state_code,
+      country: client.country,
+      gstin: client.gstin,
+    },
     bank_account_id: null,
     project_id: projectId,
     source_id: null,
@@ -397,7 +458,13 @@ export async function invoiceFromExpenses(projectId: string): Promise<Result<{ i
     items,
   });
   if (!res.ok) return fail(res.message);
-  const { error } = await supabase.from("expenses").update({ invoiced_document_id: res.id }).in("id", usable.map((r) => r.id as string));
+  const { error } = await supabase
+    .from("expenses")
+    .update({ invoiced_document_id: res.id })
+    .in(
+      "id",
+      usable.map((r) => r.id as string),
+    );
   if (error) return fail(`Invoice drafted, but linking the expenses failed: ${error.message}`);
   revalidatePath(`/projects/${projectId}`);
   refresh();
@@ -408,10 +475,15 @@ export async function invoiceFromExpenses(projectId: string): Promise<Result<{ i
 // GST: GSTR-2B matching and ITC month; TDS challans
 // ---------------------------------------------------------------------------
 /** Matches bills with a GSTIN in [from, to] against the 2B CSV from the GST portal and saves the result. */
-export async function reconcile2b(csv: string, from: string, to: string): Promise<Result<{ matched: number; mismatch: number; missing: number; notInBooks: { gstin: string; invoice_no: string; tax: number }[] }>> {
+export async function reconcile2b(
+  csv: string,
+  from: string,
+  to: string,
+): Promise<Result<{ matched: number; mismatch: number; missing: number; notInBooks: { gstin: string; invoice_no: string; tax: number }[] }>> {
   const { supabase } = await requireMember("member");
   const portal = readPortal2b(csv);
-  if (!portal.length) return fail("Couldn't find B2B lines in that file. Download GSTR-2B from the GST portal, open it in Excel or Sheets, save the B2B sheet as CSV, and upload that.");
+  if (!portal.length)
+    return fail("Couldn't find B2B lines in that file. Download GSTR-2B from the GST portal, open it in Excel or Sheets, save the B2B sheet as CSV, and upload that.");
   const { data } = await supabase
     .from("expenses")
     .select("id, bill_no, cgst, sgst, igst, itc_status, vendors(gstin)")
@@ -419,7 +491,12 @@ export async function reconcile2b(csv: string, from: string, to: string): Promis
     .lte("expense_date", to)
     .neq("itc_status", "ineligible");
   const ours = (data ?? [])
-    .map((e) => ({ id: e.id as string, gstin: ((e.vendors as { gstin?: string } | null)?.gstin ?? "") as string, bill_no: e.bill_no as string, tax: Number(e.cgst) + Number(e.sgst) + Number(e.igst) }))
+    .map((e) => ({
+      id: e.id as string,
+      gstin: ((e.vendors as { gstin?: string } | null)?.gstin ?? "") as string,
+      bill_no: e.bill_no as string,
+      tax: Number(e.cgst) + Number(e.sgst) + Number(e.igst),
+    }))
     .filter((e) => e.gstin && e.tax > 0);
   const m = match2b(ours, portal);
   for (const status of ["matched", "mismatch", "missing"] as const) {
@@ -428,13 +505,23 @@ export async function reconcile2b(csv: string, from: string, to: string): Promis
   }
   refresh();
   const count = (s: string) => m.results.filter((r) => r.status === s).length;
-  return { ok: true, matched: count("matched"), mismatch: count("mismatch"), missing: count("missing"), notInBooks: m.notInBooks.map((p) => ({ gstin: p.gstin, invoice_no: p.invoice_no, tax: p.tax })) };
+  return {
+    ok: true,
+    matched: count("matched"),
+    mismatch: count("mismatch"),
+    missing: count("missing"),
+    notInBooks: m.notInBooks.map((p) => ({ gstin: p.gstin, invoice_no: p.invoice_no, tax: p.tax })),
+  };
 }
 
 export async function saveChallan(input: { month: string; amount: number; challan_no: string; bsr_code: string; paid_on: string; expense_ids: string[] }): Promise<Result> {
   const { supabase } = await requireMember("admin");
   if (!/^\d{4}-\d{2}-01$/.test(input.month) || !isoDate.safeParse(input.paid_on).success || !(input.amount > 0)) return fail("Month, amount and payment date are required");
-  const { data, error } = await supabase.from("tds_challans").insert({ month: input.month, amount: input.amount, challan_no: input.challan_no, bsr_code: input.bsr_code, paid_on: input.paid_on }).select("id").single();
+  const { data, error } = await supabase
+    .from("tds_challans")
+    .insert({ month: input.month, amount: input.amount, challan_no: input.challan_no, bsr_code: input.bsr_code, paid_on: input.paid_on })
+    .select("id")
+    .single();
   if (error) return fail(error.message);
   if (input.expense_ids.length) await supabase.from("expenses").update({ tds_challan_id: data.id }).in("id", input.expense_ids);
   refresh();

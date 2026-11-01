@@ -22,9 +22,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           Kaagaz
         </h1>
         <p className="mt-6 text-sm text-neutral-600">Projects, clients and billing for the Kora Kaagaz team.</p>
-        {message && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200">{message}</p>}
+        {message && <p className="mt-4 rounded-lg bg-danger/5 px-3 py-2 text-sm text-danger ring-1 ring-danger/20">{message}</p>}
         <form action={signInWithGoogle} className="mt-6">
-          <button className="flex w-full items-center justify-center gap-3 rounded-lg border border-neutral-300 bg-white px-3 py-2.5 text-sm font-medium hover:bg-neutral-50">
+          <button className="flex w-full items-center justify-center gap-3 rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium hover:bg-neutral-50">
             <GoogleIcon />
             Continue with Google
           </button>

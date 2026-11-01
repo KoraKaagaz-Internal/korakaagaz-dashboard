@@ -34,13 +34,13 @@ export function TaskList({ projectId, tasks, phases, people, canWork }: { projec
         const done = g.tasks.filter((t) => t.status === "done").length;
         return (
           <section key={g.phase?.id ?? "none"} className="rounded-xl bg-white border border-line">
-            <h3 className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5 text-sm font-semibold">
+            <h3 className="flex items-center justify-between border-b border-line px-4 py-2.5 text-sm font-semibold">
               <span>{g.phase?.name ?? (phases.length ? "No phase" : "Tasks")}</span>
               <span className="text-xs font-normal text-neutral-500">
                 {done}/{g.tasks.length} done{g.phase?.due_date ? ` · due ${formatInvoiceDate(g.phase.due_date)}` : ""}
               </span>
             </h3>
-            <ul className="divide-y divide-neutral-100">
+            <ul className="divide-y divide-line">
               {g.tasks.map((t) => {
                 const overdue = t.due_date && t.status !== "done" && t.due_date < today;
                 return (
@@ -68,7 +68,7 @@ export function TaskList({ projectId, tasks, phases, people, canWork }: { projec
                     <span className="hidden sm:inline">
                       <TaskStatusPill status={t.status} />
                     </span>
-                    <span className={`w-20 text-right text-xs ${overdue ? "font-medium text-red-700" : "text-neutral-500"}`}>
+                    <span className={`w-20 text-right text-xs ${overdue ? "font-medium text-danger" : "text-neutral-500"}`}>
                       {t.due_date ? formatInvoiceDate(t.due_date).replace(/, \d{4}$/, "") : ""}
                     </span>
                     <span className="hidden w-12 text-right text-xs text-neutral-500 tabular-nums md:inline">{t.estimate_hours ? `${t.estimate_hours}h` : ""}</span>

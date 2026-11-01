@@ -41,13 +41,7 @@ export async function GET(request: NextRequest) {
 
   // 2. Payment reminders.
   if (settings.reminders_enabled) {
-    const { data: rows } = await supabase
-      .from("documents")
-      .select("*")
-      .eq("doc_type", "invoice")
-      .eq("status", "issued")
-      .eq("reminders_enabled", true)
-      .not("due_date", "is", null);
+    const { data: rows } = await supabase.from("documents").select("*").eq("doc_type", "invoice").eq("status", "issued").eq("reminders_enabled", true).not("due_date", "is", null);
     const ids = (rows ?? []).map((r) => r.id);
     const { data: bals } = ids.length ? await supabase.from("document_balances").select("*").in("id", ids) : { data: [] };
     const balById = new Map((bals ?? []).map((b) => [b.id, b]));
@@ -58,8 +52,12 @@ export async function GET(request: NextRequest) {
       if (!REMINDER_OFFSETS.includes(offset)) continue;
       const to = splitEmails(doc.client.email);
       if (!to.length) continue;
-      const { count } = await supabase.from("email_log").select("id", { count: "exact", head: true })
-        .eq("document_id", doc.id).eq("kind", "reminder").gte("sent_at", `${today}T00:00:00+05:30`);
+      const { count } = await supabase
+        .from("email_log")
+        .select("id", { count: "exact", head: true })
+        .eq("document_id", doc.id)
+        .eq("kind", "reminder")
+        .gte("sent_at", `${today}T00:00:00+05:30`);
       if (count) continue;
 
       const values = messageValues(doc, settings.business_name, `${site}/d/${doc.share_token}`, today);
@@ -69,8 +67,14 @@ export async function GET(request: NextRequest) {
       if (dry) continue;
       const result = await sendMail({ to, subject, text: body, html: textToHtml(body) });
       await supabase.from("email_log").insert({
-        document_id: doc.id, client_id: doc.client_id, kind: "reminder", to_email: to.join(", "), subject,
-        status: result.status, error: result.status === "failed" ? result.error : result.status === "skipped" ? result.reason : "", sent_by: null,
+        document_id: doc.id,
+        client_id: doc.client_id,
+        kind: "reminder",
+        to_email: to.join(", "),
+        subject,
+        status: result.status,
+        error: result.status === "failed" ? result.error : result.status === "skipped" ? result.reason : "",
+        sent_by: null,
       });
     }
   }
@@ -87,7 +91,10 @@ export async function GET(request: NextRequest) {
       report.errors.push({ recurring: r.number, error: copy.message });
       continue;
     }
-    await supabase.from("documents").update({ recurring: { ...rule, next: addMonths(rule.next, rule.every === "quarter" ? 3 : 1) } }).eq("id", r.id);
+    await supabase
+      .from("documents")
+      .update({ recurring: { ...rule, next: addMonths(rule.next, rule.every === "quarter" ? 3 : 1) } })
+      .eq("id", r.id);
     const note = `A draft for the next ${rule.every}ly invoice (from ${r.number ?? "a recurring invoice"}) is ready to review:\n${site}/documents/${copy.id}`;
     await sendMail({ to: [process.env.SMTP_USER || "team@korakaagaz.co"], subject: `Recurring draft ready: ${r.number ?? ""}`, text: note });
   }
@@ -99,7 +106,22 @@ export async function GET(request: NextRequest) {
     if (!rule?.next || rule.next > today) continue;
     report.recurringExpenses.push({ from: e.id, date: rule.next });
     if (dry) continue;
-    const { id, created_at: _c, updated_at: _u, recurring: _r, receipt_path: _p, receipt_name: _n, gstr2b: _g, itc_month: _m, tds_challan_id: _t, invoiced_document_id: _i, approval: _a, decided_by: _d, decided_at: _da, ...copy } = e;
+    const {
+      id,
+      created_at: _c,
+      updated_at: _u,
+      recurring: _r,
+      receipt_path: _p,
+      receipt_name: _n,
+      gstr2b: _g,
+      itc_month: _m,
+      tds_challan_id: _t,
+      invoiced_document_id: _i,
+      approval: _a,
+      decided_by: _d,
+      decided_at: _da,
+      ...copy
+    } = e;
     void [_c, _u, _r, _p, _n, _g, _m, _t, _i, _a, _d, _da];
     const { error } = await supabase.from("expenses").insert({
       ...copy,
@@ -113,19 +135,37 @@ export async function GET(request: NextRequest) {
       report.errors.push({ recurringExpense: id, error: error.message });
       continue;
     }
-    await supabase.from("expenses").update({ recurring: { ...rule, next: nextRecurring(rule.next, rule.every) } }).eq("id", id);
+    await supabase
+      .from("expenses")
+      .update({ recurring: { ...rule, next: nextRecurring(rule.next, rule.every) } })
+      .eq("id", id);
     const { data: admin } = await supabase.from("members").select("email").eq("role", "admin").maybeSingle();
-    if (admin) await supabase.from("notifications").insert({ recipient_email: admin.email, actor_email: admin.email, kind: "recurring_expense", title: `Recurring expense ready to confirm: ${e.description || e.vendor_name || "expense"}`, link: "/expenses?status=draft" });
+    if (admin)
+      await supabase
+        .from("notifications")
+        .insert({
+          recipient_email: admin.email,
+          actor_email: admin.email,
+          kind: "recurring_expense",
+          title: `Recurring expense ready to confirm: ${e.description || e.vendor_name || "expense"}`,
+          link: "/expenses?status=draft",
+        });
   }
 
   // 5. Lead follow-ups due today: a nudge to each owner (overdue ones are on Home already).
   report.followUps = [];
-  const { data: due } = await supabase.from("leads").select("id, name, company, owner_email").eq("follow_up_on", today).in("stage", ["enquiry", "discovery", "proposal", "negotiation"]);
+  const { data: due } = await supabase
+    .from("leads")
+    .select("id, name, company, owner_email")
+    .eq("follow_up_on", today)
+    .in("stage", ["enquiry", "discovery", "proposal", "negotiation"]);
   for (const l of due ?? []) {
     if (!l.owner_email) continue;
     report.followUps.push({ lead: l.id });
     if (dry) continue;
-    await supabase.from("notifications").insert({ recipient_email: l.owner_email, actor_email: l.owner_email, kind: "follow_up", title: `Follow up today: ${l.company || l.name}`, link: `/crm/${l.id}` });
+    await supabase
+      .from("notifications")
+      .insert({ recipient_email: l.owner_email, actor_email: l.owner_email, kind: "follow_up", title: `Follow up today: ${l.company || l.name}`, link: `/crm/${l.id}` });
   }
 
   return NextResponse.json({ ok: true, dry, today, ...report });

@@ -49,7 +49,7 @@ export function ClientForm({ client, onSaved, onCancel }: { client?: Client; onS
             }}
           />
           {gst && (
-            <span className={`mt-1 block text-xs ${gst.ok ? "text-green-700" : "text-red-600"}`}>
+            <span className={`mt-1 block text-xs ${gst.ok ? "text-ok" : "text-danger"}`}>
               {gst.ok ? (
                 <>
                   Valid format · {STATES[gst.state]} · PAN {gst.pan} ·{" "}
@@ -117,7 +117,7 @@ export function ClientForm({ client, onSaved, onCancel }: { client?: Client; onS
             Cancel
           </button>
         )}
-        {error && <span className="text-sm text-red-600">{error}</span>}
+        {error && <span className="text-sm text-danger">{error}</span>}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DocumentTemplate } from "@/components/invoice/DocumentTemplate";
 import { ScaledPreview } from "@/components/invoice/ScaledPreview";
-import { Card, StatusPill, displayStatus } from "@/components/ui";
+import { Card, PageHeader, StatusPill, displayStatus } from "@/components/ui";
 import { getDocument, getSettings, listAudit, listDocuments, listEmailLog, listPayments, relatedDocuments, requireMember } from "@/lib/data";
 import { DEFAULT_MESSAGES, fillTemplate, messageValues } from "@/lib/messages";
 import { formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
@@ -57,16 +57,16 @@ export default async function DocumentPage({ params, searchParams }: { params: P
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
       <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <Link href={`/documents?type=${doc.doc_type}`} className="text-sm text-neutral-500 hover:text-navy">
-            ← {label.plural}
-          </Link>
-          <h1 className="text-2xl font-semibold">
-            {label.short} {doc.number ?? "(draft)"}
-          </h1>
-          <StatusPill status={displayStatus(doc)} />
-        </div>
-        {flash && <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-800 ring-1 ring-green-200">{flash}</p>}
+        <PageHeader
+          back={{ href: `/documents?type=${doc.doc_type}`, label: label.plural }}
+          title={
+            <>
+              {label.short} {doc.number ?? "(draft)"}
+            </>
+          }
+          meta={<StatusPill status={displayStatus(doc)} />}
+        />
+        {flash && <p className="rounded-lg bg-ok/10 px-3 py-2 text-sm text-ok ring-1 ring-ok/20">{flash}</p>}
         <ScaledPreview>
           <DocumentTemplate doc={doc} supplier={doc.supplier} status={doc.status} reference={reference} />
         </ScaledPreview>
@@ -181,7 +181,7 @@ export default async function DocumentPage({ params, searchParams }: { params: P
                   <span className="truncate">
                     {e.kind} → {e.to_email}
                   </span>
-                  <span className={`text-xs ${e.status === "sent" ? "text-green-700" : e.status === "failed" ? "text-red-600" : "text-neutral-500"}`} title={e.error}>
+                  <span className={`text-xs ${e.status === "sent" ? "text-ok" : e.status === "failed" ? "text-danger" : "text-neutral-500"}`} title={e.error}>
                     {e.status} · {formatInvoiceDate(e.sent_at)}
                   </span>
                 </li>

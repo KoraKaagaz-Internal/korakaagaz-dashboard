@@ -8,7 +8,7 @@ import { formatInvoiceDate } from "@/lib/money";
 import { displayName, type Person } from "@/lib/pm";
 import type { LeaveRow } from "@/lib/time-data";
 
-const STATUS: Record<string, string> = { pending: "bg-amber-100 text-amber-800", approved: "bg-green-100 text-green-800", declined: "bg-neutral-200 text-neutral-600" };
+const STATUS: Record<string, string> = { pending: "bg-warn/10 text-warn", approved: "bg-ok/10 text-ok", declined: "bg-neutral-200 text-neutral-600" };
 
 export function LeaveManager({
   leave,
@@ -78,7 +78,7 @@ export function LeaveManager({
           </div>
         </div>
         {msg && (
-          <p className={`mt-2 text-sm ${msg.ok ? "text-green-700" : "text-red-700"}`} role="status">
+          <p className={`mt-2 text-sm ${msg.ok ? "text-ok" : "text-danger"}`} role="status">
             {msg.text}
           </p>
         )}
@@ -86,7 +86,7 @@ export function LeaveManager({
 
       {isAdmin && pendingList.length > 0 && (
         <Card title={`Waiting for you · ${pendingList.length}`}>
-          <ul className="divide-y divide-neutral-100 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {pendingList.map((l) => (
               <li key={l.id} className="flex flex-wrap items-center gap-3 py-2">
                 <span className="w-36 font-medium">{displayName(l.member_email, people)}</span>
@@ -108,7 +108,7 @@ export function LeaveManager({
 
       <Card title="Leave">
         {leave.length ? (
-          <ul className="divide-y divide-neutral-100 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {leave.map((l) => (
               <li key={l.id} className="flex flex-wrap items-center gap-3 py-2">
                 <span className="w-36">{displayName(l.member_email, people)}</span>
@@ -130,13 +130,13 @@ export function LeaveManager({
       </Card>
 
       <Card title="Studio holidays">
-        <ul className="divide-y divide-neutral-100 text-sm">
+        <ul className="divide-y divide-line text-sm">
           {holidays.map((x) => (
             <li key={x.day} className="flex items-center gap-3 py-1.5">
               <span className={`w-36 ${x.day < today ? "text-neutral-400" : ""}`}>{formatInvoiceDate(x.day)}</span>
               <span className="flex-1">{x.name}</span>
               {isAdmin && (
-                <button className="text-xs text-neutral-400 hover:text-red-600" onClick={() => run(() => deleteHoliday(x.day))} aria-label={`Remove ${x.name}`}>
+                <button className="text-xs text-neutral-400 hover:text-danger" onClick={() => run(() => deleteHoliday(x.day))} aria-label={`Remove ${x.name}`}>
                   Remove
                 </button>
               )}

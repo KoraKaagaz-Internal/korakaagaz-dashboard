@@ -2,9 +2,9 @@ import type { Health, Priority, TaskStatus } from "@/lib/pm";
 import { HEALTH_LABEL, TASK_STATUS_LABEL } from "@/lib/pm";
 
 const HEALTH_STYLE: Record<Health, string> = {
-  on_track: "bg-green-100 text-green-800",
-  at_risk: "bg-amber-100 text-amber-800",
-  late: "bg-red-100 text-red-800",
+  on_track: "bg-ok/10 text-ok",
+  at_risk: "bg-warn/10 text-warn",
+  late: "bg-danger/10 text-danger",
   closed: "bg-neutral-100 text-neutral-600",
 };
 
@@ -14,10 +14,10 @@ export function HealthPill({ health }: { health: Health }) {
 
 const STATUS_STYLE: Record<TaskStatus, string> = {
   todo: "bg-neutral-100 text-neutral-700",
-  doing: "bg-blue-100 text-blue-800",
+  doing: "bg-blue-100 text-navy",
   review: "bg-violet-100 text-violet-800",
-  client_review: "bg-amber-100 text-amber-800",
-  done: "bg-green-100 text-green-800",
+  client_review: "bg-warn/10 text-warn",
+  done: "bg-ok/10 text-ok",
 };
 
 export function TaskStatusPill({ status }: { status: TaskStatus }) {
@@ -27,7 +27,7 @@ export function TaskStatusPill({ status }: { status: TaskStatus }) {
 export function PriorityFlag({ priority }: { priority: Priority }) {
   if (priority === "normal" || priority === "low") return null;
   return (
-    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase ${priority === "urgent" ? "bg-red-600 text-white" : "bg-red-50 text-red-700"}`}>{priority}</span>
+    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase ${priority === "urgent" ? "bg-danger text-white" : "bg-danger/5 text-danger"}`}>{priority}</span>
   );
 }
 

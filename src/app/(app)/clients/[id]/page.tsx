@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Card, StatusPill, btn, displayStatus } from "@/components/ui";
+import { Card, PageHeader, StatusPill, btn, displayStatus } from "@/components/ui";
 import { getClient, listDocuments, listProjects, requireMember } from "@/lib/data";
 import { stateLabel } from "@/lib/gst";
 import { buildLedger } from "@/lib/ledger";
@@ -24,38 +24,40 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <Link href="/clients" className="text-sm text-neutral-500 hover:text-navy">
-            ← Clients
-          </Link>
-          <h1 className="text-2xl font-semibold">{client.name}</h1>
-          <p className="text-sm text-neutral-500">
+      <PageHeader
+        back={{ href: "/clients", label: "Clients" }}
+        title={client.name}
+        subtitle={
+          <>
             {[client.address, client.city, client.country !== "India" ? client.country : stateLabel(client.state_code), client.gstin && `GSTIN ${client.gstin}`]
               .filter(Boolean)
               .join(" · ")}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <a className={btn.secondary} href={`/api/export/ledger?client=${id}${range.from ? `&from=${range.from}` : ""}${range.to ? `&to=${range.to}` : ""}`}>
-            Statement CSV
-          </a>
-          {canEdit && <StatementButton clientId={id} disabled={outstanding <= 0} />}
-          {canEdit && (
-            <>
-              <Link className={btn.secondary} href={`/projects/new?client=${id}`}>
-                New project
-              </Link>
-              <Link className={btn.secondary} href={`/documents/new?type=quote&client=${id}`}>
-                New quote
-              </Link>
-              <Link className={btn.primary} href={`/documents/new?type=invoice&client=${id}`}>
-                New invoice
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
+          </>
+        }
+        actions={
+          <>
+            <div className="flex flex-wrap gap-2">
+              <a className={btn.secondary} href={`/api/export/ledger?client=${id}${range.from ? `&from=${range.from}` : ""}${range.to ? `&to=${range.to}` : ""}`}>
+                Statement CSV
+              </a>
+              {canEdit && <StatementButton clientId={id} disabled={outstanding <= 0} />}
+              {canEdit && (
+                <>
+                  <Link className={btn.secondary} href={`/projects/new?client=${id}`}>
+                    New project
+                  </Link>
+                  <Link className={btn.secondary} href={`/documents/new?type=quote&client=${id}`}>
+                    New quote
+                  </Link>
+                  <Link className={btn.primary} href={`/documents/new?type=invoice&client=${id}`}>
+                    New invoice
+                  </Link>
+                </>
+              )}
+            </div>
+          </>
+        }
+      />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Stat label="Outstanding" value={formatMoney(outstanding)} />
@@ -80,10 +82,10 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
       <Card title="Statement of account">
         <form className="mb-3 flex flex-wrap items-end gap-2 text-sm">
           <label>
-            From <input className="rounded-md border border-neutral-300 px-2 py-1" type="date" name="from" defaultValue={range.from} />
+            From <input className="rounded-md border border-line px-2 py-1" type="date" name="from" defaultValue={range.from} />
           </label>
           <label>
-            To <input className="rounded-md border border-neutral-300 px-2 py-1" type="date" name="to" defaultValue={range.to} />
+            To <input className="rounded-md border border-line px-2 py-1" type="date" name="to" defaultValue={range.to} />
           </label>
           <button className={btn.secondary}>Apply</button>
         </form>
@@ -98,7 +100,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
                 <th className="text-right font-medium">Balance</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-line">
               {ledger.opening !== 0 && (
                 <tr>
                   <td className="py-2 text-neutral-600">{formatInvoiceDate(range.from)}</td>
@@ -133,7 +135,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
       </Card>
 
       <Card title="All documents">
-        <ul className="divide-y divide-neutral-100 text-sm">
+        <ul className="divide-y divide-line text-sm">
           {docs.map((d) => (
             <li key={d.id}>
               <Link href={`/documents/${d.id}`} className="flex items-center gap-3 py-2 hover:text-navy">

@@ -47,7 +47,7 @@ export function BankAccounts({ banks }: { banks: BankAccount[] }) {
         )
       }
     >
-      <ul className="divide-y divide-neutral-100 text-sm">
+      <ul className="divide-y divide-line text-sm">
         {banks.map((b) => (
           <li key={b.id} className="flex items-start gap-3 py-2.5">
             <div className="flex-1">
@@ -110,7 +110,7 @@ export function BankAccounts({ banks }: { banks: BankAccount[] }) {
         ))}
       </ul>
       {open && (
-        <div className="mt-3 grid gap-3 border-t border-neutral-100 pt-3 sm:grid-cols-2">
+        <div className="mt-3 grid gap-3 border-t border-line pt-3 sm:grid-cols-2">
           <Field label="Label">
             <Input value={form.label} onChange={(e) => set("label", e.target.value)} placeholder="Primary / USD account" />
           </Field>
@@ -178,7 +178,7 @@ export function BankAccounts({ banks }: { banks: BankAccount[] }) {
                 Cancel
               </button>
             )}
-            {msg && <span className="text-sm text-red-600">{msg}</span>}
+            {msg && <span className="text-sm text-danger">{msg}</span>}
           </div>
         </div>
       )}

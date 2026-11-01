@@ -15,19 +15,38 @@ const eventSchema = z.object({
   id: uuid.optional(),
   type: z.enum(["shoot", "meeting", "deadline", "other"]),
   title: z.string().trim().min(1, "Title is required").max(200),
-  project_id: uuid.nullable().or(z.literal("").transform(() => null)).default(null),
+  project_id: uuid
+    .nullable()
+    .or(z.literal("").transform(() => null))
+    .default(null),
   starts_at: z.string().datetime({ offset: true }),
   ends_at: z.string().datetime({ offset: true }),
   all_day: z.boolean().default(false),
   location: z.string().trim().max(300).default(""),
-  map_url: z.string().trim().refine((u) => u === "" || /^https?:\/\//.test(u), "Map link must start with https://").default(""),
+  map_url: z
+    .string()
+    .trim()
+    .refine((u) => u === "" || /^https?:\/\//.test(u), "Map link must start with https://")
+    .default(""),
   status: z.enum(["tentative", "confirmed", "cancelled"]).default("confirmed"),
-  call_time: z.string().regex(/^\d{2}:\d{2}$/).nullable().or(z.literal("").transform(() => null)).default(null),
+  call_time: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable()
+    .or(z.literal("").transform(() => null))
+    .default(null),
   notes: z.string().max(5000).default(""),
   shot_list: z.string().max(10000).default(""),
   contacts: z.string().max(2000).default(""),
   people: z
-    .array(z.object({ member_email: z.string().email().nullable(), external_name: z.string().trim().default(""), role: z.string().trim().default(""), phone: z.string().trim().default("") }))
+    .array(
+      z.object({
+        member_email: z.string().email().nullable(),
+        external_name: z.string().trim().default(""),
+        role: z.string().trim().default(""),
+        phone: z.string().trim().default(""),
+      }),
+    )
     .default([]),
   kit: z.array(uuid).default([]),
 });
@@ -52,9 +71,7 @@ export async function saveEvent(input: EventInput): Promise<Result<{ id: string;
   if (!parsed.success) return fail(parsed.error.issues.map((i) => i.message).join(", "));
   const { id, people, kit, ...e } = parsed.data;
   if (e.ends_at < e.starts_at) return fail("It ends before it starts");
-  const { data, error } = id
-    ? await supabase.from("events").update(e).eq("id", id).select("id").single()
-    : await supabase.from("events").insert(e).select("id").single();
+  const { data, error } = id ? await supabase.from("events").update(e).eq("id", id).select("id").single() : await supabase.from("events").insert(e).select("id").single();
   if (error) return fail(error.message);
   const eventId = data.id as string;
 
@@ -78,10 +95,28 @@ export async function saveEvent(input: EventInput): Promise<Result<{ id: string;
   const added = rows.map((r) => r.member_email).filter((m): m is string => !!m && !had.has(m) && m !== email);
   if (added.length) {
     const when = new Date(e.starts_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: e.all_day ? undefined : "short", timeZone: "Asia/Kolkata" });
-    await supabase.from("notifications").insert(added.map((m) => ({ recipient_email: m, kind: "booked", title: `Booked: ${e.title}`, body: `${when}${e.location ? ` · ${e.location}` : ""}${e.status === "tentative" ? " (tentative)" : ""}`, link: `/calendar/${eventId}` })));
+    await supabase
+      .from("notifications")
+      .insert(
+        added.map((m) => ({
+          recipient_email: m,
+          kind: "booked",
+          title: `Booked: ${e.title}`,
+          body: `${when}${e.location ? ` · ${e.location}` : ""}${e.status === "tentative" ? " (tentative)" : ""}`,
+          link: `/calendar/${eventId}`,
+        })),
+      );
   }
 
-  const conflicts = await checkConflicts({ id: eventId, starts_at: e.starts_at, ends_at: e.ends_at, status: e.status, type: e.type, people: rows.map((r) => r.member_email).filter(Boolean) as string[], kit });
+  const conflicts = await checkConflicts({
+    id: eventId,
+    starts_at: e.starts_at,
+    ends_at: e.ends_at,
+    status: e.status,
+    type: e.type,
+    people: rows.map((r) => r.member_email).filter(Boolean) as string[],
+    kit,
+  });
   revalidatePath("/calendar");
   if (e.project_id) revalidatePath(`/projects/${e.project_id}`);
   return { ok: true, id: eventId, conflicts };

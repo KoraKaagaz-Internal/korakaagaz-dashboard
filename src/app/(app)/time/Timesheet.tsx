@@ -169,7 +169,7 @@ export function Timesheet({
                 <th className="w-16 text-right font-medium">Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
+            <tbody className="divide-y divide-line">
               {rows.map((r) => {
                 const rowTotal = entries.filter((e) => e.project_id === r.project_id && e.task_id === r.task_id).reduce((s, e) => s + e.minutes, 0);
                 return (
@@ -192,7 +192,7 @@ export function Timesheet({
                             aria-label={`${r.label}, ${d}`}
                             aria-invalid={bad.has(id) || undefined}
                             placeholder="–"
-                            className={`w-16 rounded-md border px-1.5 py-1 text-center tabular-nums outline-none focus:border-navy ${bad.has(id) ? "border-red-500 bg-red-50" : c.rejected ? "border-amber-400 bg-amber-50" : "border-neutral-200"} ${isWeekend(d) ? "bg-neutral-50" : ""}`}
+                            className={`w-16 rounded-md border px-1.5 py-1 text-center tabular-nums outline-none focus:border-navy ${bad.has(id) ? "border-danger bg-danger/5" : c.rejected ? "border-warn bg-warn/10" : "border-line"} ${isWeekend(d) ? "bg-neutral-50" : ""}`}
                           />
                           {(c.locked > 0 || c.running) && (
                             <div className="mt-0.5 text-[10px] text-neutral-500" title={c.running ? "Timer running" : "Submitted or approved"}>
@@ -215,10 +215,10 @@ export function Timesheet({
               )}
             </tbody>
             <tfoot>
-              <tr className="border-t border-neutral-200 text-xs text-neutral-600">
+              <tr className="border-t border-line text-xs text-neutral-600">
                 <td className="py-2 font-medium">Day total</td>
                 {days.map((d) => (
-                  <td key={d} className={`text-center tabular-nums ${dayTotal(d) > 600 ? "font-semibold text-red-700" : ""}`}>
+                  <td key={d} className={`text-center tabular-nums ${dayTotal(d) > 600 ? "font-semibold text-danger" : ""}`}>
                     {dayTotal(d) ? hhmm(dayTotal(d)) : ""}
                   </td>
                 ))}
@@ -286,7 +286,7 @@ export function Timesheet({
         </div>
       )}
       {msg && (
-        <p className={`text-sm ${msg.ok ? "text-green-700" : "text-red-700"}`} role="status">
+        <p className={`text-sm ${msg.ok ? "text-ok" : "text-danger"}`} role="status">
           {msg.text}
         </p>
       )}

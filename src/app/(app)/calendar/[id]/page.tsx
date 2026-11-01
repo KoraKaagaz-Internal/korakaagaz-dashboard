@@ -9,6 +9,7 @@ import { getEvent, listKit, loggableProjects } from "@/lib/time-data";
 import { EventForm } from "../EventForm";
 import { TYPE_LABEL } from "../EventChip";
 import { PrintButton } from "./PrintButton";
+import { PageHeader, button } from "@/components/ui";
 
 const time = (iso: string) => new Date(iso).toLocaleTimeString("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" });
 
@@ -23,12 +24,7 @@ export default async function EventPage({ params, searchParams }: { params: Prom
   if (sp.edit && canEdit) {
     return (
       <div className="mx-auto max-w-4xl space-y-5">
-        <div>
-          <Link href={`/calendar/${id}`} className="text-sm text-neutral-500 hover:text-navy">
-            ← Back
-          </Link>
-          <h1 className="text-2xl font-semibold">Edit event</h1>
-        </div>
+        <PageHeader back={{ href: `/calendar/${id}`, label: "Back" }} title="Edit event" />
         <EventForm event={event} date={istDate(event.starts_at)} projects={await loggableProjects()} people={people} kit={kit} />
       </div>
     );
@@ -54,14 +50,14 @@ export default async function EventPage({ params, searchParams }: { params: Prom
         <div className="flex gap-2">
           <PrintButton />
           {canEdit && (
-            <Link href={`/calendar/${id}?edit=1`} className="rounded-lg bg-navy px-3 py-1.5 text-sm font-medium text-white">
+            <Link href={`/calendar/${id}?edit=1`} className={button("primary", "sm")}>
               Edit
             </Link>
           )}
         </div>
       </div>
       {sp.conflicts && (
-        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-amber-200 print:hidden" role="alert">
+        <p className="rounded-lg bg-warn/10 px-3 py-2 text-sm text-warn ring-1 ring-warn/20 print:hidden" role="alert">
           Saved, but someone or some kit is double-booked. Check the Crew &amp; kit view.
         </p>
       )}
@@ -70,7 +66,7 @@ export default async function EventPage({ params, searchParams }: { params: Prom
         <div className="text-xs font-medium tracking-[0.2em] text-neutral-500 uppercase">{event.type === "shoot" ? "Call sheet" : TYPE_LABEL[event.type]} · Kora Kaagaz</div>
         <h1 className="mt-1 text-2xl font-semibold">
           {event.title}
-          {event.status !== "confirmed" && <span className="ml-2 align-middle text-sm font-medium text-amber-700 uppercase">{event.status}</span>}
+          {event.status !== "confirmed" && <span className="ml-2 align-middle text-sm font-medium text-warn uppercase">{event.status}</span>}
         </h1>
         {event.project_id && (
           <Link href={`/projects/${event.project_id}`} className="text-sm text-neutral-500 hover:text-navy">
@@ -112,7 +108,7 @@ export default async function EventPage({ params, searchParams }: { params: Prom
           <section className="mt-6">
             <h2 className="mb-2 text-sm font-semibold">Crew</h2>
             <table className="w-full text-sm">
-              <tbody className="divide-y divide-neutral-100">
+              <tbody className="divide-y divide-line">
                 {event.people.map((p, i) => (
                   <tr key={i}>
                     <td className="py-1.5 font-medium">{p.member_email ? displayName(p.member_email, people) : p.external_name}</td>

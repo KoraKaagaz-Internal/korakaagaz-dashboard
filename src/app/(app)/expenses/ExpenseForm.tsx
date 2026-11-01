@@ -454,7 +454,7 @@ export function ExpenseForm({
             <Field label="Due date">
               <Input type="date" value={f.due_date} onChange={(e) => setF({ ...f, due_date: e.target.value })} />
             </Field>
-            {vendor?.msme && <p className="self-end pb-2 text-xs text-amber-800 sm:col-span-2">MSME vendor: pay within 45 days (15 without a written agreement).</p>}
+            {vendor?.msme && <p className="self-end pb-2 text-xs text-warn sm:col-span-2">MSME vendor: pay within 45 days (15 without a written agreement).</p>}
           </div>
         )}
         {f.kind === "claim" && <p className="text-sm text-neutral-600">The admin approves it, then reimburses you. You&apos;ll get a notification at each step.</p>}
@@ -533,7 +533,7 @@ export function ExpenseForm({
           Cancel
         </button>
         {msg && (
-          <p className="text-sm text-red-700" role="alert">
+          <p className="text-sm text-danger" role="alert">
             {msg}
           </p>
         )}

@@ -158,7 +158,7 @@ async function Billing({ projectId, budget, canEdit }: { projectId: string; budg
         {docs.length === 0 ? (
           <p className="text-sm text-neutral-500">Nothing billed yet. New quotes and invoices from here are tagged to this project.</p>
         ) : (
-          <ul className="divide-y divide-neutral-100 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {docs.map((d) => (
               <li key={d.id}>
                 <Link href={`/documents/${d.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
@@ -184,7 +184,7 @@ async function Billing({ projectId, budget, canEdit }: { projectId: string; budg
         }
       >
         {expenses.length ? (
-          <ul className="divide-y divide-neutral-100 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {expenses.map((e) => (
               <li key={e.id}>
                 <Link href={`/expenses/${e.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
@@ -192,7 +192,7 @@ async function Billing({ projectId, budget, canEdit }: { projectId: string; budg
                   <span className="min-w-0 flex-1 truncate">
                     {e.vendor || e.description} <span className="text-neutral-500">· {e.category}</span>
                   </span>
-                  {e.billable && <span className="text-xs text-blue-800">{e.invoiced_document_id ? "billed" : "to bill"}</span>}
+                  {e.billable && <span className="text-xs text-navy">{e.invoiced_document_id ? "billed" : "to bill"}</span>}
                   <span className="tabular-nums">{formatMoney(e.total, e.currency)}</span>
                 </Link>
               </li>

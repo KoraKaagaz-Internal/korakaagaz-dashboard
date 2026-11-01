@@ -23,13 +23,29 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const to = addDays(todayIso(), 366);
 
   const [{ data: bookings }, { data: assigned }, { data: leave }, { data: holidays }] = await Promise.all([
-    db.from("event_people").select("events(id, type, title, starts_at, ends_at, all_day, location, status, call_time, notes, updated_at, projects(code, name))").eq("member_email", email),
+    db
+      .from("event_people")
+      .select("events(id, type, title, starts_at, ends_at, all_day, location, status, call_time, notes, updated_at, projects(code, name))")
+      .eq("member_email", email),
     db.from("task_assignees").select("tasks(id, title, due_date, status, updated_at, projects(code, name, id))").eq("member_email", email),
     db.from("leave_requests").select("id, from_date, to_date, kind, half_day").eq("member_email", email).eq("status", "approved").gte("to_date", from),
     db.from("holidays").select("day, name").gte("day", from).lte("day", to),
   ]);
 
-  type Ev = { id: string; type: string; title: string; starts_at: string; ends_at: string; all_day: boolean; location: string; status: string; call_time: string | null; notes: string; updated_at: string; projects: { code: string; name: string } | null };
+  type Ev = {
+    id: string;
+    type: string;
+    title: string;
+    starts_at: string;
+    ends_at: string;
+    all_day: boolean;
+    location: string;
+    status: string;
+    call_time: string | null;
+    notes: string;
+    updated_at: string;
+    projects: { code: string; name: string } | null;
+  };
   type Tk = { id: string; title: string; due_date: string | null; status: string; updated_at: string; projects: { code: string; name: string; id: string } | null };
   const items: IcsItem[] = [];
   for (const b of (bookings ?? []) as unknown as { events: Ev | null }[]) {

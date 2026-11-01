@@ -220,7 +220,7 @@ export function DocumentActions({
             </ConfirmButton>
           )}
         </div>
-        {msg && <p className={`mt-3 text-sm ${msg.ok ? "text-green-700" : "text-red-600"}`}>{msg.text}</p>}
+        {msg && <p className={`mt-3 text-sm ${msg.ok ? "text-ok" : "text-danger"}`}>{msg.text}</p>}
       </Card>
 
       {panel === "email" && (
@@ -246,7 +246,7 @@ export function DocumentActions({
 
       {payments.length > 0 && (
         <Card title="Payments">
-          <ul className="divide-y divide-neutral-100 text-sm">
+          <ul className="divide-y divide-line text-sm">
             {payments.map((p) => (
               <li key={p.id} className="flex items-center gap-2 py-2">
                 <span className="w-24 text-neutral-600">{formatInvoiceDate(p.paid_on)}</span>
@@ -460,7 +460,7 @@ function PaymentPanel({
       </button>
 
       {receipts.length > 0 && (
-        <div className="mt-5 border-t border-neutral-100 pt-4">
+        <div className="mt-5 border-t border-line pt-4">
           <p className="mb-2 text-sm font-medium">Or adjust an advance (receipt voucher)</p>
           <div className="grid gap-2 sm:grid-cols-[1fr_140px_auto]">
             <Select value={receipt} onChange={(e) => setReceipt(e.target.value)}>

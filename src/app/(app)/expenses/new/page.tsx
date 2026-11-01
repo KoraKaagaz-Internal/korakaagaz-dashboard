@@ -4,6 +4,7 @@ import { cashAccounts, listCategories, listVendors } from "@/lib/expense-data";
 import { todayIso } from "@/lib/money";
 import { loggableProjects } from "@/lib/time-data";
 import { ExpenseForm } from "../ExpenseForm";
+import { PageHeader } from "@/components/ui";
 
 export default async function NewExpensePage({ searchParams }: { searchParams: Promise<{ kind?: string; project?: string; vendor?: string }> }) {
   const { canEdit, isStaff } = await requireTeam();
@@ -18,12 +19,7 @@ export default async function NewExpensePage({ searchParams }: { searchParams: P
   const kind = sp.kind === "bill" || sp.kind === "claim" ? sp.kind : "receipt";
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <div>
-        <Link href={canEdit ? "/expenses" : "/expenses/claims"} className="text-sm text-neutral-500 hover:text-navy">
-          ← {canEdit ? "Expenses" : "My claims"}
-        </Link>
-        <h1 className="text-2xl font-semibold">{canEdit ? "New expense" : "New claim"}</h1>
-      </div>
+      <PageHeader back={{ href: canEdit ? "/expenses" : "/expenses/claims", label: canEdit ? "Expenses" : "My claims" }} title={canEdit ? "New expense" : "New claim"} />
       <ExpenseForm
         expense={null}
         categories={categories}

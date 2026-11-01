@@ -36,10 +36,10 @@ export function ClientsManager({ initial, canEdit }: { initial: Client[]; canEdi
           <ClientForm onSaved={upsert} onCancel={() => setEditing(null)} />
         </Card>
       )}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <Card>
         {shown.length === 0 && <p className="text-sm text-neutral-500">No clients yet.</p>}
-        <ul className="divide-y divide-neutral-100">
+        <ul className="divide-y divide-line">
           {shown.map((c) => (
             <li key={c.id} className="py-3">
               {editing === c.id ? (

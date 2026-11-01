@@ -41,7 +41,7 @@ export function CategoryEditor({ categories }: { categories: Category[] }) {
               <th />
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-100">
+          <tbody className="divide-y divide-line">
             {rows.map((c) => (
               <tr key={c.id}>
                 <td className="py-1.5 pr-2">
@@ -99,7 +99,7 @@ export function CategoryEditor({ categories }: { categories: Category[] }) {
         </button>
       </div>
       {msg && (
-        <p className="mt-2 text-sm text-red-700" role="alert">
+        <p className="mt-2 text-sm text-danger" role="alert">
           {msg}
         </p>
       )}

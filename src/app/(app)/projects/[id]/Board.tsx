@@ -113,7 +113,7 @@ export function Board({ projectId, tasks, phases, people, canWork }: { projectId
   return (
     <div>
       {error && (
-        <p className="mb-2 text-sm text-red-700" role="alert">
+        <p className="mb-2 text-sm text-danger" role="alert">
           {error}
         </p>
       )}
@@ -179,7 +179,7 @@ function Card({ task: t, phase, people, today, onOpen, lifted }: { task: Task; p
       {phase && <div className="mt-1 text-xs text-neutral-500">{phase}</div>}
       <div className="mt-2 flex items-center justify-between gap-2 text-xs">
         <span className="flex items-center gap-2 text-neutral-500">
-          {t.due_date && <span className={overdue ? "font-medium text-red-700" : ""}>{formatInvoiceDate(t.due_date).replace(/, \d{4}$/, "")}</span>}
+          {t.due_date && <span className={overdue ? "font-medium text-danger" : ""}>{formatInvoiceDate(t.due_date).replace(/, \d{4}$/, "")}</span>}
           {t.subtasks && (
             <span title="Subtasks done">
               ☑ {t.subtasks.done}/{t.subtasks.total}

@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { submitEnquiry } from "@/app/actions/crm";
 
-const input = "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-navy";
+const input = "w-full rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-navy";
 
 export function EnquiryForm({ services, source, bookingUrl }: { services: string[]; source: string; bookingUrl: string | null }) {
   const [f, setF] = useState({ name: "", email: "", phone: "", company: "", service: "", budget: "", message: "", website: "" });
@@ -84,14 +84,25 @@ export function EnquiryForm({ services, source, bookingUrl }: { services: string
       </div>
       <label className="block">
         {label("Tell us about the project", true)}
-        <textarea className={input} required rows={5} value={f.message} onChange={(e) => setF({ ...f, message: e.target.value })} placeholder="What you're making, for whom, and when you'd like it." />
+        <textarea
+          className={input}
+          required
+          rows={5}
+          value={f.message}
+          onChange={(e) => setF({ ...f, message: e.target.value })}
+          placeholder="What you're making, for whom, and when you'd like it."
+        />
       </label>
       {/* hidden from people; bots fill it in */}
       <label className="absolute -left-[9999px]" aria-hidden="true">
         Website
         <input tabIndex={-1} autoComplete="off" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} />
       </label>
-      {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+      {msg && (
+        <p className="text-sm text-danger" role="alert">
+          {msg}
+        </p>
+      )}
       <button disabled={pending} className="rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">
         {pending ? "Sending…" : "Send enquiry"}
       </button>
