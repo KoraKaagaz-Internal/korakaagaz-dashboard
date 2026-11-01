@@ -84,7 +84,7 @@ export default async function AgreementPrint({ params, searchParams }: { params:
                     <div className="text-neutral-500">{s.email}</div>
                   </td>
                   <td className="pr-2">Code emailed to {s.email}</td>
-                  <td className="pr-2">{s.signed_at ? formatDateTime(s.signed_at) : "—"}</td>
+                  <td className="pr-2">{s.signed_at ? formatDateTime(s.signed_at, { year: true }) : "—"}</td>
                   <td className="text-neutral-600">
                     {s.signed_ip ?? "—"}
                     <div className="max-w-56 truncate text-neutral-400">{ua[s.id]}</div>
@@ -99,7 +99,7 @@ export default async function AgreementPrint({ params, searchParams }: { params:
             <tbody>
               {(events ?? []).map((e, i) => (
                 <tr key={i} className="border-b border-line align-top">
-                  <td className="py-1 pr-2 whitespace-nowrap">{formatDateTime(e.at as string)}</td>
+                  <td className="py-1 pr-2 whitespace-nowrap">{formatDateTime(e.at as string, { year: true })}</td>
                   <td className="pr-2">{ACTION[e.action as string] ?? e.action}</td>
                   <td className="pr-2">{e.actor}</td>
                   <td className="pr-2 text-neutral-500">{e.ip ?? ""}</td>

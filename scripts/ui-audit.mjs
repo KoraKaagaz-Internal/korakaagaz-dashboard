@@ -62,6 +62,10 @@ const pages = [
   vendor && `/vendors/${vendor}`,
   "/reports",
   "/search?q=a",
+  "/agreements",
+  "/agreements/new",
+  "/agreements/templates",
+  "/verify",
   "/team",
   "/team/workload",
   "/team/leave",
@@ -99,7 +103,7 @@ try {
       const name = `${tag}-${path.replace(/[/?=&]+/g, "_").replace(/^_|_$/g, "") || "home"}`.slice(0, 80);
       await page.screenshot({ path: `.visual/audit/${name}.png`, fullPage: true });
       const status = res?.status?.();
-      const problems = [status !== 200 && `status ${status}`, overflow > 1 && `overflows ${overflow}px`, ms > 3000 && `${ms} ms`, errors.length && `console: ${errors[0]}`].filter(
+      const problems = [status !== 200 && status !== 304 && `status ${status}`, overflow > 1 && `overflows ${overflow}px`, ms > 3000 && `${ms} ms`, errors.length && `console: ${errors[0]}`].filter(
         Boolean,
       );
       check(`${tag === "d" ? "desktop" : "phone"} ${path}`, !problems.length, problems.join("; ") || `${ms} ms`);

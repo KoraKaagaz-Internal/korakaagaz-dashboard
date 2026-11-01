@@ -222,13 +222,13 @@ export function formatShortDate(iso: string | null | undefined, today = todayIso
 }
 
 /** An instant shown in India time: "26 Sep, 3:05 pm". */
-export function formatDateTime(instant: string | Date | null | undefined): string {
+export function formatDateTime(instant: string | Date | null | undefined, opts: { year?: boolean } = {}): string {
   if (!instant) return "";
   const t = new Date(instant);
   if (Number.isNaN(t.getTime())) return "";
   const date = t.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
   const time = t.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true }).toLowerCase();
-  return `${formatShortDate(date)}, ${time}`;
+  return `${opts.year ? formatShortDate(date, "0000-00-00") : formatShortDate(date)}, ${time}`;
 }
 
 /** "today", "tomorrow", "in 3 days", "2 days ago" for a date relative to today (India). */

@@ -63,14 +63,14 @@ export function SignatureBlocks({ signers, images }: { signers: Signer[]; images
               )}
               <div className="font-medium">{s.signature_name}</div>
               <div className="text-xs text-neutral-500">
-                {s.email} · signed {formatDateTime(s.signed_at)} IST{s.signed_ip ? ` · IP ${s.signed_ip}` : ""}
+                {s.email} · signed {formatDateTime(s.signed_at, { year: true })} IST{s.signed_ip ? ` · IP ${s.signed_ip}` : ""}
               </div>
             </>
           ) : (
             <>
               <div className="my-1 h-10" />
               <div className="font-medium">{s.name}</div>
-              <div className="text-xs text-neutral-500">{s.declined_at ? `declined ${formatDateTime(s.declined_at)}` : `${s.email} · not signed yet`}</div>
+              <div className="text-xs text-neutral-500">{s.declined_at ? `declined ${formatDateTime(s.declined_at, { year: true })}` : `${s.email} · not signed yet`}</div>
             </>
           )}
         </div>

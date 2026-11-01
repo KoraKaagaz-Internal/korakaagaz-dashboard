@@ -64,6 +64,12 @@ function helpers(page) {
   const body = () => page.evaluate(() => document.body.innerText);
   return { go, tap, button, confirm, body };
 }
+// set an input's value the way React notices (select-all doesn't work in every headless setup)
+const setValue = (h, v) =>
+  h.evaluate((el, val) => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(el, val);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  }, v);
 const otpHash = (signerId, code) => createHmac("sha256", SECRET).update(`otp:${signerId}:${code}`).digest("hex");
 
 const browser = await puppeteer.launch();
@@ -104,8 +110,7 @@ try {
 
   // edit the title in the editor and save
   const title = await admin.waitForSelector("::-p-xpath(//label[span[normalize-space()='Title']]//input)");
-  await title.click({ clickCount: 3 });
-  await title.type(`E2E Proposal ${stamp}`);
+  await setValue(title, `E2E Proposal ${stamp}`);
   await A.button("Save draft");
   const renamed = await until(async () => (await api(`/rest/v1/agreements?id=eq.${agId}&select=title`))[0]?.title === `E2E Proposal ${stamp}`);
   check("editing and saving the draft", !!renamed);
@@ -138,11 +143,11 @@ try {
   // wrong code first
   const codeBox = await pub.waitForSelector("input[autocomplete='one-time-code']");
   await codeBox.type("111111");
-  await P.tap("::-p-xpath(//label[contains(., 'agree to sign electronically')]//input)");
+  await P.tap("::-p-xpath(//label[contains(., 'sign it electronically')]//input)");
   await P.tap("::-p-xpath(//button[starts-with(normalize-space(), 'Accept and sign')])");
   await pub.waitForFunction(() => document.body.innerText.includes("isn't right"));
   check("a wrong code is refused and counted", (await api(`/rest/v1/agreement_signers?id=eq.${signer.id}&select=otp_attempts`))[0].otp_attempts === 1);
-  await codeBox.click({ clickCount: 3 });
+  await setValue(codeBox, "");
   await codeBox.type("424242");
   // the studio's own email gets the "signed" copy; point it at a test address for this run
   await api(`/rest/v1/agreements?id=eq.${agId}`, { method: "PATCH", body: JSON.stringify({ created_by: `e2e-owner-${stamp}@example.com` }) });
@@ -234,7 +239,7 @@ try {
   await until(async () => (await api(`/rest/v1/agreements?id=eq.${ndaId}&select=status`))[0]?.status === "sent");
   const [ndaClient] = await api(`/rest/v1/agreement_signers?agreement_id=eq.${ndaId}&party=eq.client&select=token`);
   await P.go(`/s/${ndaClient.token}`);
-  await P.button("I don't want to sign this");
+  await P.tap("::-p-xpath(//button[contains(., 'want to sign this')])");
   await (await pub.waitForSelector("textarea")).type("Our legal team uses its own template");
   await P.button("Decline");
   const declined = await until(async () => (await api(`/rest/v1/agreements?id=eq.${ndaId}&select=status`))[0]?.status === "declined");

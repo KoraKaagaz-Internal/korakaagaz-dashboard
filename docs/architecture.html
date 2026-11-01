@@ -87,8 +87,17 @@
   <span class="pill">Last updated 2026-11-02</span>
   <h1>Kora Kaagaz Studio</h1>
   <p><b>Live:</b> <a href="https://app.korakaagaz.co">app.korakaagaz.co</a> (also <a href="https://invoice-generator-flax-pi.vercel.app">invoice-generator-flax-pi.vercel.app</a>) · Supabase project <code>invoice-generator</code> (ref <code>komdaeylldwknhwcjevv</code>, Mumbai) · Vercel project <code>invoice-generator</code> · Market research: <a href="market-research.html">market-research.html</a></p>
-  <p><b>Where it's going:</b> one tool for the whole studio. Live so far: invoicing; projects and tasks; time, team and calendar; expenses with GST credit and TDS; analytics; and the CRM. Next, in order: documents with e-signatures; client onboarding and a client portal; proofing; then a studio dashboard with automations. The plan and research are in <a href="market-research.html#agency">market-research.html</a>.</p>
+  <p><b>Where it's going:</b> one tool for the whole studio. Live so far: invoicing; projects and tasks; time, team and calendar; expenses with GST credit and TDS; analytics; the CRM; and agreements with e-signatures. Next, in order: client onboarding and a client portal; proofing; then a studio dashboard with automations. The plan and research are in <a href="market-research.html#agency">market-research.html</a>.</p>
   <p><b>Projects (live):</b> start a project from a studio template (brand identity, product shoot, campaign shoot, social retainer, packaging, website). Then work it on a board, list or timeline, with a task side panel for assignees, dates, estimates, checklist, comments with @mentions and files. Each project also has deliverables with revision limits, a team, a staff-only budget, a billing tab and an activity feed. "My work" lists everyone's tasks, and a bell shows notifications. <b>Freelancers</b> see only the projects they're added to and never see clients or money.</p>
+  <p><b>Agreements and e-signatures (live):</b></p>
+  <ul>
+    <li><b>Templates</b> for a proposal (with optional add-ons), service agreement, mutual NDA, freelancer agreement, model release and usage licence. Fields like <code>{{client.name}}</code>, <code>{{fee}}</code> and <code>{{studio.city}}</code> fill in from the client, project, lead and settings. Templates are editable at <code>/agreements/templates</code>.</li>
+    <li><b>Draft → send:</b> edit the text (light markdown with a preview), pricing lines, signers, dates and the email note. Sending locks the text; anything still shown as <code>[field]</code> blocks sending.</li>
+    <li><b>Signing</b> at <code>/s/&lt;token&gt;</code> (each signer has their own link, no account): read, tick add-ons (proposals), get a 6-digit code by email, type a name or draw a signature, agree, sign. Or decline with a reason.</li>
+    <li><b>Evidence:</b> every step (sent, opened, code sent, wrong code, verified, signed) is logged with time, IP and device in an append-only, SHA-256 hash-chained log. When everyone has signed, the app prints the agreement plus a <b>signing certificate</b> page to PDF, stores it, records its SHA-256 fingerprint and emails it to everyone. <code>/verify</code> checks any copy in the browser.</li>
+    <li><b>After signing:</b> a proposal becomes a draft quote with the accepted lines in one click. Unsigned links lapse on their date, signers are chased every 3 days (3 times at most), and contracts with an end date trigger a renewal reminder.</li>
+    <li>Agreements show on the lead, client and project (Money tab), in search, and in "+ New".</li>
+  </ul>
   <p><b>CRM (live):</b></p>
   <ul>
     <li><b>Leads board</b> with stages Enquiry → Discovery call → Proposal sent → Negotiation → Won / Lost. Lost asks for a reason, and each lead remembers how far it got.</li>
@@ -136,8 +145,7 @@
   <h2>Roadmap</h2>
   <p class="muted">Agreed with the owner on 2026-11-02: everything below gets built, in this order.</p>
   <ol>
-    <li><s>Invoicing, projects &amp; tasks, time/team/calendar, expenses, analytics, CRM</s> (live)</li>
-    <li>Documents: proposal and contract templates, click-to-sign with email OTP and audit certificate, document hub with renewals</li>
+    <li><s>Invoicing, projects &amp; tasks, time/team/calendar, expenses, analytics, CRM, agreements and e-sign</s> (live)</li>
     <li>Client onboarding and magic-link client portal</li>
     <li>Proofing and approvals on creative work</li>
     <li>Automations (fixed rules with toggles) and a studio dashboard</li>
@@ -158,7 +166,7 @@
   <h2>System map</h2>
   <p class="muted">Click a box for details.</p>
   <div class="map">
-    <svg viewBox="0 0 560 420" role="img" aria-label="System map">
+    <svg viewBox="0 0 560 470" role="img" aria-label="System map">
       <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
       <path class="edge" d="M110,70 L200,70"/>
       <path class="edge" d="M320,70 L420,70"/>
@@ -167,6 +175,8 @@
       <path class="edge" d="M260,200 L260,255"/>
       <path class="edge" d="M320,280 L420,280"/>
       <path class="edge" d="M60,95 L60,360 L200,360"/>
+      <path class="edge" d="M60,360 L60,440 L200,440"/>
+      <path class="edge" d="M320,440 L480,440 L480,385"/>
       <path class="edge" d="M320,360 L420,360"/>
       <path class="edge" d="M480,200 L480,255"/>
       <g class="node" data-k="browser"><rect x="10" y="45" width="100" height="50"/><text x="60" y="68" text-anchor="middle">Team</text><text class="sub" x="60" y="84" text-anchor="middle">staff · freelancers</text></g>
@@ -176,6 +186,7 @@
       <g class="node" data-k="db"><rect x="420" y="150" width="120" height="50"/><text x="480" y="173" text-anchor="middle">Postgres</text><text class="sub" x="480" y="189" text-anchor="middle">RLS · locks · audit</text></g>
       <g class="node" data-k="pdf"><rect x="200" y="255" width="120" height="50"/><text x="260" y="278" text-anchor="middle">PDF + email</text><text class="sub" x="260" y="294" text-anchor="middle">Chromium · Gmail</text></g>
       <g class="node" data-k="storage"><rect x="420" y="255" width="120" height="50"/><text x="480" y="278" text-anchor="middle">Storage</text><text class="sub" x="480" y="294" text-anchor="middle">PDFs · project files</text></g>
+      <g class="node" data-k="sign"><rect x="200" y="415" width="120" height="50"/><text x="260" y="438" text-anchor="middle">Signing link /s/…</text><text class="sub" x="260" y="454" text-anchor="middle">email code, no login</text></g>
       <g class="node" data-k="share"><rect x="200" y="335" width="120" height="50"/><text x="260" y="358" text-anchor="middle">Share link /d/…</text><text class="sub" x="260" y="374" text-anchor="middle">clients, no login</text></g>
       <g class="node" data-k="cron"><rect x="420" y="335" width="120" height="50"/><text x="480" y="358" text-anchor="middle">Daily cron</text><text class="sub" x="480" y="374" text-anchor="middle">09:00 IST</text></g>
     </svg>
@@ -205,12 +216,13 @@
     <tr><td>Send, record payments, credit notes, cancel</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Accept / decline a quote</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✓</td><td>✗</td></tr>
     <tr><td>Log time (timer, timesheet), submit the week</td><td>✓</td><td>✓</td><td>✗</td><td>on their projects</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Approve time, approve leave, set rates and capacity, holidays</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Approve time, approve leave, holidays</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>See everyone's time, leave and the workload view</td><td>✓</td><td>✓</td><td>✓</td><td>own only</td><td>✗</td><td>✗</td></tr>
     <tr><td>Set weekly hours and turn timesheet approval on/off</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Create events, book crew and kit, edit the kit list</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>See events</td><td>all</td><td>all</td><td>all</td><td>their projects' events + ones they're booked on</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Draft an invoice from approved time</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Agreements: templates, drafts, send, chase, void, quote from proposal</td><td>✓</td><td>✓</td><td>read only</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Sign or decline an agreement</td><td colspan="5">only the named signer, through their own link plus a code sent to their email</td><td>✗</td></tr>
     <tr><td>Add bills and receipts, vendors, pay bills, re-bill expenses, GST &amp; TDS page</td><td>✓</td><td>✓</td><td>read only</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>File own expense claims (with receipt)</td><td>✓</td><td>✓</td><td>✗</td><td>✓ (own projects)</td><td>✗</td><td>✗</td></tr>
     <tr><td>Approve and reimburse claims, record TDS deposits, edit categories</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
@@ -243,6 +255,10 @@
     <tr><td><code>events</code>, <code>event_people</code>, <code>event_kit</code>, <code>kit</code></td><td>Shoots, meetings, deadlines with times, location, map link, tentative/confirmed/cancelled, call time, shot list, contacts; crew (team or outside, with role/phone); kit bookings</td><td>Editors write. Freelancers see events on their projects or ones they're booked on (<code>on_event()</code>).</td></tr>
     <tr><td><code>leave_requests</code>, <code>holidays</code></td><td>Leave (dates, half day, type, status) and studio holidays</td><td>Anyone requests their own; only the admin decides. Staff see all leave; freelancers their own.</td></tr>
     <tr><td><code>leads</code></td><td>Name, company, contact, source, service, budget, value, stage, furthest stage, lost reason, owner, follow-up, message, linked client/project, hashed IP (form rate limit), won/lost dates</td><td>Staff read; editors write; never readable by freelancers or anon. Public submissions go through validated server code with the service key.</td></tr>
+    <tr><td><code>agreement_templates</code></td><td>Name, type, description, body with merge fields, default pricing, usual length in months</td><td>Staff read; editors write.</td></tr>
+    <tr><td><code>agreements</code></td><td>Number, title, type, status, client/project/lead, body, pricing (with the client's add-on choices), GST rate, dates (link expiry, start, end, renewal notice), signed-PDF path and SHA-256, quote link</td><td>Staff read; editors write drafts. Once sent the text is locked (trigger); only the signing flow (service key) can mark it signed or set the fingerprint; only drafts can be deleted.</td></tr>
+    <tr><td><code>agreement_signers</code></td><td>Name, email, party, private link token, hashed one-time code with expiry and counters, viewed/signed/declined times, typed name, drawn signature, IP and device</td><td>Staff can read names and status only: the token, code and signature-image columns aren't granted to the API roles. Signers change only through server code.</td></tr>
+    <tr><td><code>agreement_events</code></td><td>Every step with time, actor, IP, device and details; each row's SHA-256 covers the previous row's</td><td>Append-only: updates and deletes are refused even for the service key (rows go only when a draft agreement is deleted). Staff can add notes as themselves only.</td></tr>
     <tr><td><code>lead_activities</code></td><td>Calls, WhatsApp, email, meetings, notes, stage changes</td><td>Authors can only post as themselves.</td></tr>
     <tr><td><code>settings.booking</code>, <code>settings.enquiry_services</code></td><td>Booking page (slug, length, days, hours, buffer, notice, horizon, location) and the form's service list</td><td>Admin edits in Leads → Enquiry form &amp; booking.</td></tr>
     <tr><td><code>vendors</code></td><td>Name, type, GSTIN, PAN, state, contact, bank/UPI, default category, TDS nature, company flag, MSME flag</td><td>Staff read; editors write. GSTIN checked by checksum; state and PAN derived from it.</td></tr>
@@ -309,11 +325,12 @@
   <pre>npm install
 npm run dev                                   # http://localhost:3000 (needs .env.local)
 npm test                                      # unit tests: GST, money, words, numbering, pagination, reports, GSTR-1
-node scripts/security-test.mjs                # 127 database permission checks, as anon/viewer/member/freelancer
+node scripts/security-test.mjs                # 144 database permission checks, as anon/viewer/member/freelancer
 node scripts/e2e.mjs http://localhost:3000    # 32 billing checks; WIPES the workspace, so it refuses to run once real data or team members exist
 node scripts/e2e-projects.mjs http://localhost:3000   # 44 project/time/calendar checks; safe on real data
 node scripts/e2e-money.mjs http://localhost:3000      # 25 expenses/claims/GST/Reports checks; safe on real data
 node scripts/e2e-crm.mjs http://localhost:3000        # 21 CRM checks incl. public enquiry + booking; safe on real data
+node scripts/e2e-agreements.mjs https://app.korakaagaz.co  # 27 checks: draft, send, sign with code, sealed PDF, verify, quote, decline; safe on real data
 node scripts/perf-check.mjs https://app.korakaagaz.co  # page timings (median of 3)
 node scripts/ui-audit.mjs https://app.korakaagaz.co    # every page at 1440px + 390px: overflow, console errors, speed, no window.confirm, no brand hex
 # Local test build that won't clash with a running `next dev`:
@@ -331,6 +348,15 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-02</td><td><b>Phase 4: agreements and e-signatures.</b>
+      <ul>
+        <li>Migration 0015: <code>agreement_templates</code> (6 India-focused starters), <code>agreements</code> (AG-0001… numbers; text locked once sent; only the signing flow can mark signed or set the fingerprint), <code>agreement_signers</code> (token and code columns hidden from the API roles), <code>agreement_events</code> (append-only, SHA-256 hash-chained), <code>verify_agreement_hash()</code>.</li>
+        <li>Public <code>/s/&lt;token&gt;</code> signing with an emailed 6-digit code (HMAC-hashed, 10 minutes, 5 tries, 5 sends an hour), typed or drawn signature, consent, decline. On the last signature: PDF of the agreement plus a signing certificate, SHA-256 recorded, stored in <code>files/agreements/</code>, emailed to everyone. <code>/verify</code> checks a copy in the browser.</li>
+        <li>Staff: <code>/agreements</code> list, editor with preview and field picker, templates, chase/copy link, void, duplicate, "Create quote from proposal". Shown on leads, clients, projects, search and "+ New".</li>
+        <li>Daily job: lapses unsigned links, chases signers every 3 days (max 3), renewal reminders before contracts end.</li>
+        <li>Email is never sent to reserved test domains (<code>example.com</code>, <code>.test</code>), so automated tests don't bounce.</li>
+        <li>Tests: security-test 144 (17 new for agreements), new <code>e2e-agreements.mjs</code> 27 checks (full proposal signing on production, PDF fingerprint = download, tampered copy fails verify, quote from proposal, decline). ui-audit covers the new pages.</li>
+      </ul></td></tr>
     <tr><td>2026-11-02</td><td><b>Email switched on.</b> The Gmail app password for team@korakaagaz.co is stored as the Vercel secret <code>SMTP_PASS</code> (set with <code>scripts/set-smtp-pass.sh</code>, never written to disk). Settings → General gains an Email card with the status and a <b>Send test email</b> button (admin only, sends to the studio inbox).</td></tr>
     <tr><td>2026-11-02</td><td><b>Page restyle (calm redesign, part D)</b>.
       <ul>
@@ -468,6 +494,9 @@ vercel deploy --prod
   <dl class="gloss">
     <dt>Issue</dt><dd>Turning a draft into a real document: it gets the next number in its series and becomes locked. Changes after that go through a credit note or cancellation, as GST requires.</dd>
     <dt>Place of supply</dt><dd>The state where the client is (or "Outside India"). It decides IGST (different state) vs CGST+SGST (same state).</dd>
+    <dt>E-signature (s.3A)</dt><dd>Section 3A of the IT Act, 2000 allows electronic signatures. We use a typed or drawn signature with the signer's email verified by a one-time code, plus a full log and a fingerprinted PDF. Aadhaar eSign (paid, per signature) gives a stronger legal presumption if a deal ever needs it.</dd>
+    <dt>SHA-256 fingerprint</dt><dd>A 64-character code computed from a file. Change one byte and the code changes completely, so matching codes prove a copy is the one that was signed.</dd>
+    <dt>Hash chain</dt><dd>Each signing-log entry includes the fingerprint of the entry before it, so editing or deleting any past entry breaks every later one.</dd>
     <dt>SAC</dt><dd>Services Accounting Code, the services version of HSN. Design work is usually 998391.</dd>
     <dt>LUT</dt><dd>Letter of Undertaking, filed each financial year so exports can be invoiced without IGST.</dd>
     <dt>Receipt voucher</dt><dd>The GST document for an advance payment (Rule 50); later adjusted against the final invoice.</dd>
@@ -490,6 +519,7 @@ vercel deploy --prod
     db: ["Postgres", "Workspace-wide tables with RLS by role. <code>next_doc_number()</code> gives FY series per type. Triggers lock issued documents, block deleting them, and write the append-only <code>audit_events</code>. <code>document_balances</code> view computes paid/partial/overdue."],
     pdf: ["PDF + email", "Chromium renders <code>/print/[id]</code> (with the member's cookies) or <code>/print/share/[token]</code> (public) at 852 × 1278 px. Emails go from team@korakaagaz.co via Gmail SMTP with the PDF attached. Without an app password they're logged as skipped."],
     storage: ["Storage", "Private <code>invoices</code> bucket keeps the latest PDF of each issued document. Private <code>files</code> bucket (50 MB per file) holds project uploads at <code>projects/&lt;project id&gt;/…</code>; storage policies let only people on that project read or write them. Browsers upload straight to Storage (Vercel caps request bodies at 4.5 MB) and big photos are shrunk to WebP first. Raws and PSDs stay on Google Drive as links."],
+    sign: ["Signing link /s/…", "<code>/s/&lt;token&gt;</code>: one per signer. Server code with the service key loads exactly that signer's agreement; codes are HMAC-hashed, expire in 10 minutes, allow 5 tries and 5 sends an hour. The finished PDF is printed from <code>/print/agreement/&lt;id&gt;?sig=HMAC</code>, fingerprinted and stored at <code>files/agreements/&lt;id&gt;/</code>."],
     share: ["Client share link", "<code>/d/&lt;token&gt;</code>: the document, a PDF download, a UPI pay button on phones, and Accept/Decline for quotes. It uses an anon-only RPC that returns exactly one non-draft document and counts views."],
     cron: ["Daily job", "Vercel Cron calls <code>/api/cron/daily</code> at 09:00 IST with <code>CRON_SECRET</code>. It expires old quotes, emails reminders (3 days before, on the due date, then +7, +14 and +30 days), creates recurring retainer drafts (never sent automatically), and keeps the free Supabase project awake. <code>?dry=1</code> previews."],
   };
@@ -508,8 +538,17 @@ vercel deploy --prod
       "Work it on the <b>Board</b> (drag cards between To do → In progress → Internal review → With client → Done), the <b>List</b> (grouped by phase), or the <b>Timeline</b>.",
       "Click a task for the side panel: assign people (they're added to the project and notified), set dates and estimate, tick the checklist, comment with @name, attach files or Drive links.",
       "Everyone sees their tasks in <b>My work</b> (overdue, today, next 7 days) and gets notifications in the bell.",
-      "<b>Billing</b> tab: new quotes and invoices from here are tagged to the project; quoted vs billed vs received against the budget.",
+      "<b>Money</b> tab: quotes, invoices, expenses and agreements tagged to the project, quoted vs billed vs received against the budget, and hours.",
       "Mark the project Done when delivered. The <b>Activity</b> tab keeps the history.",
+    ],
+    "Send and sign an agreement": [
+      "<b>Agreements → New agreement</b> (or from a lead, client or project): pick a template. Client, project and studio details fill in.",
+      "Edit the text, pricing lines (mark extras as optional), signers and dates. Anything still shown as [field] must be filled first.",
+      "<b>Send for signature</b>: the text locks and each signer gets their own link by email (or copy it to WhatsApp).",
+      "The signer opens <code>/s/…</code>, ticks any add-ons, asks for a code (emailed), types their name or draws, agrees and signs. Every step is logged with time and IP.",
+      "When the last person signs, the app renders the agreement plus a signing certificate to PDF, records its SHA-256 fingerprint, stores it and emails everyone a copy.",
+      "Proposal? <b>Create quote from proposal</b> drafts a quote with the accepted lines. Anyone can check a PDF at <code>/verify</code>.",
+      "Unsigned? The daily job chases signers every 3 days and lapses the link on its date. Signed contracts with an end date get a renewal reminder.",
     ],
     "Time to invoice": [
       "Start a timer from a task (▶ Start timer) or the Time page. It runs in the header bar; Stop saves the minutes as draft time for today.",
@@ -616,6 +655,11 @@ vercel deploy --prod
     ["src/app/(app)/crm/*", "Leads board (dnd-kit) and list, lead page with history and convert, enquiry form &amp; booking settings"],
     ["src/app/enquire · src/app/book/[slug]", "Public enquiry form (embeddable) and discovery-call booking page"],
     ["scripts/e2e-crm.mjs", "21 end-to-end CRM checks incl. public pages; safe on real data (restores booking settings)"],
+    ["scripts/e2e-agreements.mjs", "27 end-to-end checks of agreements and signing; signers use @example.com, which is never emailed"],
+    ["src/lib/agreements.ts · agreement-data.ts · agreement-sign.ts", "Kinds, merge fields, safe markdown, pricing and add-ons (pure, tested); staff queries; signing engine (tokens, HMAC codes, events, sealing the PDF, emails)"],
+    ["src/app/(app)/agreements/* · actions/agreements.ts", "List, new (template picker), editor, sent view with signers and history, templates; create, save, send, remind, void, duplicate, quote from proposal"],
+    ["src/app/s/[token]/* · print/agreement/[id] · verify/*", "Public signing page and actions, the HMAC-gated print page (agreement + certificate), signed-PDF download, fingerprint check"],
+    ["src/components/agreements/*", "Agreement body, price table, signature blocks; the agreement list used on leads, clients and projects"],
     ["supabase/migrations/0009_expenses.sql · 0010 · 0011_analytics.sql", "Vendors, categories (seeded), expenses, payments, TDS challans, balances view, guard trigger, receipt storage rules, cash accounts; monthly time-cost RPC for analytics"],
     ["src/lib/expenses.ts", "Purchase GST split, TDS natures + suggestion with limits, GSTR-3B Table 4 input-credit buckets, re-bill lines with markup, recurring dates, GSTR-2B CSV reader + matcher"],
     ["src/lib/compliance.ts", "GST/TDS/income-tax due dates (monthly or QRMP, state-wise 22nd/24th, March TDS on 30 April)"],
@@ -668,7 +712,7 @@ vercel deploy --prod
     ["src/app/(app)/Nav.tsx · HeaderMenus.tsx · search/page.tsx", "Sidebar with icons, phone bottom bar + More sheet; + New and profile menus; global search"],
     ["src/app/(app)/team/TeamTabs.tsx · settings/SettingsTabs.tsx", "Shared tab headers for Team (People/Workload/Leave) and Settings (General/Items/Categories/Enquiry & booking)"],
     ["scripts/ui-audit.mjs", "Visits every page at desktop and phone width; fails on overflow, console errors, slow loads, window.confirm or brand hex in pages (safe on real data)"],
-    ["scripts/security-test.mjs", "127 database permission checks as anon, viewer, member and freelancer (incl. storage, time, calendar, leave, expenses, leads)"],
+    ["scripts/security-test.mjs", "144 database permission checks as anon, viewer, member and freelancer (incl. storage, time, calendar, leave, expenses, leads)"],
     ["scripts/e2e.mjs", "32 end-to-end checks (refuses to run over real data)"],
     ["scripts/visual-diff.mjs", "Template vs reference image"],
     ["vercel.json", "Cron schedule (03:30 UTC = 09:00 IST)"],
