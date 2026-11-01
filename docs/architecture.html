@@ -331,6 +331,7 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-02</td><td><b>Email switched on.</b> The Gmail app password for team@korakaagaz.co is stored as the Vercel secret <code>SMTP_PASS</code> (set with <code>scripts/set-smtp-pass.sh</code>, never written to disk). Settings → General gains an Email card with the status and a <b>Send test email</b> button (admin only, sends to the studio inbox).</td></tr>
     <tr><td>2026-11-02</td><td><b>Page restyle (calm redesign, part D)</b>.
       <ul>
         <li>Every page uses the same header (back link, title, one-line subtitle, actions, tabs). Invoices, Expenses and Leads lists use one filter bar (folds into "Filters" on phones) and become stacked cards on phones. Empty states tell "nothing yet" from "nothing matches".</li>

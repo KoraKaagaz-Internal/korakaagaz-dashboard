@@ -3,6 +3,7 @@ import { mailConfigured } from "@/lib/mail";
 import { BankAccounts } from "./BankAccounts";
 import { SettingsForm } from "./SettingsForm";
 import { SettingsHeader } from "./SettingsTabs";
+import { TestEmail } from "./TestEmail";
 import { TimeApproval } from "./TimeApproval";
 
 export default async function SettingsPage() {
@@ -14,6 +15,7 @@ export default async function SettingsPage() {
       <SettingsForm settings={settings} mailReady={mailConfigured()} />
       <BankAccounts banks={banks} />
       <TimeApproval on={settings.time_approval} />
+      <TestEmail ready={mailConfigured()} />
     </div>
   );
 }

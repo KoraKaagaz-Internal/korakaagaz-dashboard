@@ -133,3 +133,17 @@ export async function setTimeApproval(on: boolean) {
   revalidatePath("/time");
   return { ok: true as const };
 }
+
+/** Admin: send a short test email to the studio inbox to check SMTP works. */
+export async function sendTestEmail() {
+  const { email } = await requireMember("admin");
+  const { sendMail } = await import("@/lib/mail");
+  const to = process.env.SMTP_USER || "team@korakaagaz.co";
+  const r = await sendMail({
+    to: [to],
+    subject: "Kora Kaagaz Studio: test email",
+    text: `This is a test from Kora Kaagaz Studio, sent by ${email}.\n\nIf you can read this, invoices, reminders and invites will be emailed from ${to}.`,
+  });
+  if (r.status === "sent") return { ok: true as const, message: `Sent to ${to}. Check the inbox.` };
+  return { ok: false as const, message: r.status === "skipped" ? r.reason : `Gmail refused it: ${r.error}` };
+}
