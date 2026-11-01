@@ -1,5 +1,6 @@
 import "@/styles/invoice.css";
 import { EXPORT_IGST_ENDORSEMENT, LUT_ENDORSEMENT, OUTSIDE_INDIA, stateLabel } from "@/lib/gst";
+import { clientAddressLines, fitClientName } from "@/lib/invoice-layout";
 import { amountInWords, computeTotals, formatAmount, formatInvoiceDate, formatMoney, formatQty, lineAmount } from "@/lib/money";
 import { estimateNotesHeight, paginate, payBlockHeight } from "@/lib/paginate";
 import { qrPath, upiUri } from "@/lib/upi";
@@ -66,12 +67,8 @@ export function DocumentTemplate({ doc, supplier, status = "draft", reference }:
   const businessName = supplier.business_name || "Kora Kaagaz";
   const client = doc.client;
 
-  const region = client.country && client.country !== "India" ? client.country : stateLabel(client.state_code);
-  const clientLines = [
-    client.address,
-    [[client.city, client.pin].filter(Boolean).join(" "), region].filter(Boolean).join(" · "),
-    client.gstin ? `GSTIN: ${client.gstin}` : "",
-  ].filter(Boolean);
+  const clientLines = clientAddressLines(client);
+  const nameFit = fitClientName(client.name || "—");
 
   const bank = supplier.bank;
   const showQr = !!bank?.upi_id && currency === "INR" && ["invoice", "proforma"].includes(doc.doc_type) && totals.total > 0 && status !== "cancelled";
@@ -121,7 +118,9 @@ export function DocumentTemplate({ doc, supplier, status = "draft", reference }:
 
               <div className="kk-billed">
                 <div className="kk-label">{doc.doc_type === "quote" ? "Prepared for" : doc.doc_type === "receipt" ? "Received from" : "Billed to"}</div>
-                <div className={`kk-client-name${client.name.length > 16 ? " is-long" : ""}`}>{client.name || "—"}</div>
+                <div className={`kk-client-name${nameFit.wrap ? " is-wrapped" : ""}`} style={{ fontSize: nameFit.size }}>
+                  {client.name || "—"}
+                </div>
                 {clientLines.length > 0 && <div className="kk-client-extra">{clientLines.join("\n")}</div>}
               </div>
 

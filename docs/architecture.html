@@ -330,6 +330,12 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-02</td><td>Invoice template: long client names were cut off with "…".
+      <ul>
+        <li>The name now shrinks to fit the 280px column (37px down to 20px). Very long names wrap onto two 22px lines in the same height, so the layout below never moves.</li>
+        <li>City, PIN and state are no longer repeated when the address already contains them; "State code NN" is kept for GST.</li>
+        <li>Logic lives in <code>src/lib/invoice-layout.ts</code> with unit tests. <code>/dev/sample?name=…&amp;addr=…</code> previews any client.</li>
+      </ul></td></tr>
     <tr><td>2026-11-02</td><td><b>Phase 3: CRM.</b>
       <ul>
         <li>Migrations 0012–0013: leads, lead activities, booking and enquiry settings, furthest-stage tracking.</li>
@@ -598,6 +604,7 @@ vercel deploy --prod
     ["supabase/migrations/0004_share_tracking.sql", "Share RPC with optional view tracking + source reference"],
     ["src/components/invoice/DocumentTemplate.tsx", "The template for all five document types (supplier block, GST fields, QR, words, signatory, watermark, pages)"],
     ["src/styles/invoice.css", "Template measurements and colours"],
+    ["src/lib/invoice-layout.ts", "Client-name auto-fit and de-duplicated address lines for the template"],
     ["src/lib/gst.ts", "State codes, GSTIN checksum, auto GST mode, PIN → state, export endorsements"],
     ["src/lib/money.ts", "Totals, round-off, Indian formatting, amount in words, FY, dates"],
     ["src/lib/upi.ts", "UPI link + QR (works in browser and server)"],

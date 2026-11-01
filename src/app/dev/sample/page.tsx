@@ -26,6 +26,8 @@ export default async function SamplePage({ searchParams }: { searchParams: Promi
       items: doc.items.map((i) => ({ ...i, unit_price: 1800 })),
     };
   }
+  // ?name=…&addr=… to try long client names and addresses
+  if (params.name || params.addr) doc = { ...doc, client: { ...doc.client, name: params.name ?? doc.client.name, address: params.addr ?? doc.client.address, city: params.city ?? doc.client.city, pin: params.pin ?? doc.client.pin, state_code: params.state ?? doc.client.state_code } };
   const supplier = full ? { ...SAMPLE_GST_SUPPLIER, lut_number: params.export ? "AD2104260012345" : "" } : SAMPLE_SUPPLIER;
 
   return (

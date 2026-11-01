@@ -125,8 +125,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.kk-client-name.is-long {
-  font-size: 28px;
+/* very long names: two lines in the same 44px as one large line */
+.kk-client-name.is-wrapped {
+  line-height: 22px;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  text-overflow: clip;
 }
 .kk-client-extra {
   margin-top: 2px;
