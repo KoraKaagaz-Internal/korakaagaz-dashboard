@@ -50,10 +50,10 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
           canEdit && (
             <>
               <ButtonLink href="/expenses/new?kind=bill" size="sm">
-                Add bill
+                New bill
               </ButtonLink>
               <ButtonLink href="/expenses/new" variant="primary" size="sm">
-                Add expense
+                New expense
               </ButtonLink>
             </>
           )
@@ -80,8 +80,14 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
       >
         {!unpaidView && (
           <>
-            <Input type="date" name="from" aria-label="From date" defaultValue={from} className="!h-8 !w-auto !py-1" />
-            <Input type="date" name="to" aria-label="To date" defaultValue={to} className="!h-8 !w-auto !py-1" />
+            <label className="flex items-center gap-1.5 text-xs text-neutral-500">
+              From
+              <Input type="date" name="from" aria-label="From date" defaultValue={from} className="!h-8 !w-auto !py-1" />
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-neutral-500">
+              To
+              <Input type="date" name="to" aria-label="To date" defaultValue={to} className="!h-8 !w-auto !py-1" />
+            </label>
           </>
         )}
         <Select name="category" defaultValue={sp.category ?? ""} aria-label="Category" className="!h-8 !w-auto !py-1">

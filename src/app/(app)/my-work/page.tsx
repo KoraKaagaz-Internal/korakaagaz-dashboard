@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PriorityFlag, TaskStatusPill } from "@/components/pm/Pills";
 import { TaskDrawer } from "@/components/pm/TaskDrawer";
 import { requireTeam } from "@/lib/data";
-import { formatInvoiceDate, todayIso } from "@/lib/money";
+import { formatShortDate, todayIso } from "@/lib/money";
 import { BUCKET_LABEL, dueBucket, displayName, type Bucket } from "@/lib/pm";
 import { listMyTasks, teamDirectory } from "@/lib/pm-data";
 import { DoneBox } from "./DoneBox";
@@ -60,7 +60,7 @@ export default async function MyWorkPage() {
                   <TaskStatusPill status={t.status} />
                 </span>
                 <span className={`w-16 text-right text-xs ${g.bucket === "overdue" ? "font-medium text-danger" : "text-neutral-500"}`}>
-                  {t.due_date ? formatInvoiceDate(t.due_date).replace(/, \d{4}$/, "") : ""}
+                  {t.due_date ? formatShortDate(t.due_date) : ""}
                 </span>
               </li>
             ))}

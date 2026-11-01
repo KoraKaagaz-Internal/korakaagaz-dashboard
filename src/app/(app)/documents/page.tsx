@@ -95,8 +95,14 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
             </option>
           ))}
         </Select>
-        <Input type="date" name="from" aria-label="From date" defaultValue={filters.from} className="!h-8 !w-auto !py-1" />
-        <Input type="date" name="to" aria-label="To date" defaultValue={filters.to} className="!h-8 !w-auto !py-1" />
+        <label className="flex items-center gap-1.5 text-xs text-neutral-500">
+          From
+          <Input type="date" name="from" aria-label="From date" defaultValue={filters.from} className="!h-8 !w-auto !py-1" />
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-neutral-500">
+          To
+          <Input type="date" name="to" aria-label="To date" defaultValue={filters.to} className="!h-8 !w-auto !py-1" />
+        </label>
       </FilterBar>
 
       {docs.length === 0 ? (

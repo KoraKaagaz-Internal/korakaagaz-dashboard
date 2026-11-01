@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { updateTask } from "@/app/actions/projects";
 import { AvatarStack } from "@/components/pm/Avatar";
 import { PriorityFlag, TaskStatusPill } from "@/components/pm/Pills";
-import { formatInvoiceDate, todayIso } from "@/lib/money";
+import { formatInvoiceDate, formatShortDate, todayIso } from "@/lib/money";
 import type { Person, Phase, Task } from "@/lib/pm";
 import { useOpenTask } from "./useOpenTask";
 import { QuickAdd } from "./QuickAdd";
@@ -68,9 +68,7 @@ export function TaskList({ projectId, tasks, phases, people, canWork }: { projec
                     <span className="hidden sm:inline">
                       <TaskStatusPill status={t.status} />
                     </span>
-                    <span className={`w-20 text-right text-xs ${overdue ? "font-medium text-danger" : "text-neutral-500"}`}>
-                      {t.due_date ? formatInvoiceDate(t.due_date).replace(/, \d{4}$/, "") : ""}
-                    </span>
+                    <span className={`w-20 text-right text-xs ${overdue ? "font-medium text-danger" : "text-neutral-500"}`}>{t.due_date ? formatShortDate(t.due_date) : ""}</span>
                     <span className="hidden w-12 text-right text-xs text-neutral-500 tabular-nums md:inline">{t.estimate_hours ? `${t.estimate_hours}h` : ""}</span>
                     <AvatarStack emails={t.assignees} people={people} max={2} />
                   </li>

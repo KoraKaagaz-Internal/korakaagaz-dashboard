@@ -37,7 +37,7 @@ import { upcoming } from "@/lib/compliance";
 import { leadFunnel, pipeline } from "@/lib/crm";
 import { getSettings, requireMember } from "@/lib/data";
 import { GSTR1_SECTIONS } from "@/lib/gstr1";
-import { addDays, daysBetween, formatInvoiceDate, todayIso } from "@/lib/money";
+import { addDays, daysBetween, formatShortDate, todayIso } from "@/lib/money";
 import { displayName } from "@/lib/pm";
 import { teamDirectory } from "@/lib/pm-data";
 import { weekStart } from "@/lib/time";
@@ -587,7 +587,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
               {dues.slice(0, 5).map((d) => (
                 <li key={`${d.date}${d.title}`} className="flex justify-between gap-2">
                   <span>{d.title}</span>
-                  <span className={daysBetween(today, d.date) <= 7 ? "font-medium text-danger" : "text-neutral-500"}>{formatInvoiceDate(d.date).replace(/, \d{4}$/, "")}</span>
+                  <span className={daysBetween(today, d.date) <= 7 ? "font-medium text-danger" : "text-neutral-500"}>{formatShortDate(d.date)}</span>
                 </li>
               ))}
             </ul>
@@ -679,7 +679,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           title="Team hours by week"
           subtitle="Hours logged ÷ hours available (after leave and holidays). ▲ = over capacity."
           table={{
-            columns: ["Person", ...weeks.map((w) => formatInvoiceDate(w).replace(/, \d{4}$/, ""))],
+            columns: ["Person", ...weeks.map((w) => formatShortDate(w))],
             rows: util.map((u) => [names(u.email), ...u.weeks.map((w) => (w.pct === null ? "—" : `${w.pct}%`))]),
           }}
         >

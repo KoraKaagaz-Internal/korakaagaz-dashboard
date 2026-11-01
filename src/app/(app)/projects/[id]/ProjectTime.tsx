@@ -1,6 +1,6 @@
 import { ProgressBar } from "@/components/pm/Pills";
 import { Card } from "@/components/ui";
-import { formatInvoiceDate, todayIso } from "@/lib/money";
+import { formatShortDate, todayIso } from "@/lib/money";
 import { displayName, type Person } from "@/lib/pm";
 import { hhmm, monthRange, retainerBurn } from "@/lib/time";
 import { projectEntries, timeApprovalOn } from "@/lib/time-data";
@@ -79,7 +79,7 @@ export async function ProjectTime({ project, people }: { project: Project; peopl
             <ul className="divide-y divide-line text-sm">
               {entries.slice(0, 100).map((e) => (
                 <li key={e.id} className="flex items-center gap-3 py-1.5">
-                  <span className="w-20 text-xs text-neutral-500">{formatInvoiceDate(e.work_date).replace(/, \d{4}$/, "")}</span>
+                  <span className="w-20 text-xs text-neutral-500">{formatShortDate(e.work_date)}</span>
                   <span className="w-28 truncate">{displayName(e.member_email, people)}</span>
                   <span className="min-w-0 flex-1 truncate text-neutral-600">
                     {e.task_title || "General"}

@@ -95,17 +95,15 @@ export async function saveEvent(input: EventInput): Promise<Result<{ id: string;
   const added = rows.map((r) => r.member_email).filter((m): m is string => !!m && !had.has(m) && m !== email);
   if (added.length) {
     const when = new Date(e.starts_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: e.all_day ? undefined : "short", timeZone: "Asia/Kolkata" });
-    await supabase
-      .from("notifications")
-      .insert(
-        added.map((m) => ({
-          recipient_email: m,
-          kind: "booked",
-          title: `Booked: ${e.title}`,
-          body: `${when}${e.location ? ` · ${e.location}` : ""}${e.status === "tentative" ? " (tentative)" : ""}`,
-          link: `/calendar/${eventId}`,
-        })),
-      );
+    await supabase.from("notifications").insert(
+      added.map((m) => ({
+        recipient_email: m,
+        kind: "booked",
+        title: `Booked: ${e.title}`,
+        body: `${when}${e.location ? ` · ${e.location}` : ""}${e.status === "tentative" ? " (tentative)" : ""}`,
+        link: `/calendar/${eventId}`,
+      })),
+    );
   }
 
   const conflicts = await checkConflicts({

@@ -7,7 +7,7 @@ import { NumberInput } from "@/components/NumberInput";
 import { AvatarStack } from "@/components/pm/Avatar";
 import { PeoplePicker } from "@/components/pm/PeoplePicker";
 import { Card, ConfirmButton, Field, Input, Select, Textarea, btn } from "@/components/ui";
-import { formatInvoiceDate, formatMoney } from "@/lib/money";
+import { formatInvoiceDate, formatMoney, formatShortDate } from "@/lib/money";
 import { PROJECT_TYPES, displayName, type Person } from "@/lib/pm";
 import type { ProjectBundle } from "@/lib/pm-data";
 import type { Billing, ProjectFinance } from "@/lib/types";
@@ -265,7 +265,7 @@ function Phases({ bundle, canEdit, run, pending }: { bundle: ProjectBundle; canE
               <span className={`flex-1 ${tasks.length && done === tasks.length ? "text-neutral-400 line-through" : ""}`}>{ph.name}</span>
               <span className="text-xs text-neutral-500">
                 {done}/{tasks.length}
-                {ph.due_date ? ` · ${formatInvoiceDate(ph.due_date).replace(/, \d{4}$/, "")}` : ""}
+                {ph.due_date ? ` · ${formatShortDate(ph.due_date)}` : ""}
               </span>
               {canEdit && (
                 <button

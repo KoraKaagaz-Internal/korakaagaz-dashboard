@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { decideClaims, payClaims } from "@/app/actions/expenses";
 import { Card, Field, Input, Select, btn } from "@/components/ui";
-import { formatInvoiceDate, formatMoney } from "@/lib/money";
+import { formatMoney, formatShortDate } from "@/lib/money";
 
 interface Claim {
   id: string;
@@ -40,7 +40,7 @@ function Selectable({ list, sel, setSel, names }: { list: Claim[]; sel: Set<stri
             {c.description || c.vendor || c.category}
             <span className="text-neutral-500">
               {" "}
-              · {c.category} · {formatInvoiceDate(c.expense_date).replace(/, \d{4}$/, "")}
+              · {c.category} · {formatShortDate(c.expense_date)}
               {c.receipt ? " · 📎" : " · no receipt"}
             </span>
           </Link>

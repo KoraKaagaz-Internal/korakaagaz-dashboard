@@ -216,15 +216,13 @@ export async function saveExpense(input: ExpenseInput): Promise<Result<{ id: str
     const { data: people } = await supabase.rpc("team_directory");
     const admin = ((people ?? []) as { email: string; role: string }[]).find((p) => p.role === "admin");
     if (admin && admin.email !== email) {
-      await supabase
-        .from("notifications")
-        .insert({
-          recipient_email: admin.email,
-          kind: "claim_submitted",
-          title: `${email.split("@")[0]} filed a claim: ₹${gst.total.toLocaleString("en-IN")}`,
-          body: e.description,
-          link: "/expenses/claims",
-        });
+      await supabase.from("notifications").insert({
+        recipient_email: admin.email,
+        kind: "claim_submitted",
+        title: `${email.split("@")[0]} filed a claim: ₹${gst.total.toLocaleString("en-IN")}`,
+        body: e.description,
+        link: "/expenses/claims",
+      });
     }
   }
   refresh();
@@ -292,17 +290,15 @@ export async function decideClaims(ids: string[], approve: boolean, note = ""): 
     .select("created_by, total, description");
   if (error) return fail(error.message.replace(/^.*?: /, ""));
   if (data?.length) {
-    await supabase
-      .from("notifications")
-      .insert(
-        data.map((c) => ({
-          recipient_email: c.created_by,
-          kind: "claim_decided",
-          title: `Claim ${approve ? "approved" : "sent back"}: ₹${Number(c.total).toLocaleString("en-IN")}`,
-          body: approve ? c.description : note || c.description,
-          link: "/expenses/claims",
-        })),
-      );
+    await supabase.from("notifications").insert(
+      data.map((c) => ({
+        recipient_email: c.created_by,
+        kind: "claim_decided",
+        title: `Claim ${approve ? "approved" : "sent back"}: ₹${Number(c.total).toLocaleString("en-IN")}`,
+        body: approve ? c.description : note || c.description,
+        link: "/expenses/claims",
+      })),
+    );
   }
   refresh();
   return { ok: true, count: data?.length ?? 0 };

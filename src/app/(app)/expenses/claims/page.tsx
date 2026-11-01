@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, PageHeader, button } from "@/components/ui";
 import { requireTeam } from "@/lib/data";
 import { cashAccounts, listExpenses } from "@/lib/expense-data";
-import { formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
+import { formatInvoiceDate, formatMoney, formatShortDate, todayIso } from "@/lib/money";
 import { teamDirectory } from "@/lib/pm-data";
 import { ExpenseTabs } from "../Tabs";
 import { ClaimsAdmin } from "./ClaimsAdmin";
@@ -64,7 +64,7 @@ export default async function ClaimsPage() {
           <ul className="divide-y divide-line text-sm">
             {(isAdmin ? claims : mine).map((c) => (
               <li key={c.id} className="flex flex-wrap items-center gap-3 py-2">
-                <span className="w-24 text-neutral-500">{formatInvoiceDate(c.expense_date).replace(/, \d{4}$/, "")}</span>
+                <span className="w-24 text-neutral-500">{formatShortDate(c.expense_date)}</span>
                 {isAdmin && <span className="w-28 truncate">{names[c.created_by] || c.created_by.split("@")[0]}</span>}
                 <Link href={`/expenses/${c.id}`} className="min-w-0 flex-1 truncate hover:text-navy">
                   {c.description || c.vendor || c.category}

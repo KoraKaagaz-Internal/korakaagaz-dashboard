@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Card, PageHeader, button } from "@/components/ui";
 import { requireMember } from "@/lib/data";
 import { getVendor, listCategories, listExpenses } from "@/lib/expense-data";
-import { financialYear, formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
+import { financialYear, formatMoney, formatShortDate, todayIso } from "@/lib/money";
 import { VendorForm } from "../VendorForm";
 
 export default async function VendorPage({ params }: { params: Promise<{ id: string }> }) {
@@ -29,7 +29,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
           <>
             {canEdit && (
               <Link href={`/expenses/new?kind=bill&vendor=${vendor.id}`} className={button("primary", "sm")}>
-                Add bill
+                New bill
               </Link>
             )}
           </>
@@ -55,7 +55,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
             {expenses.map((e) => (
               <li key={e.id}>
                 <Link href={`/expenses/${e.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
-                  <span className="w-24 text-neutral-500">{formatInvoiceDate(e.expense_date).replace(/, \d{4}$/, "")}</span>
+                  <span className="w-24 text-neutral-500">{formatShortDate(e.expense_date)}</span>
                   <span className="min-w-0 flex-1 truncate">
                     {e.bill_no ? `${e.bill_no} · ` : ""}
                     {e.description || e.category}

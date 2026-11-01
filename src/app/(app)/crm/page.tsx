@@ -39,7 +39,7 @@ export default async function CrmPage({ searchParams }: { searchParams: Promise<
               )}
               {canEdit && (
                 <Link href="/crm/new" className={button("primary", "sm")}>
-                  Add lead
+                  New lead
                 </Link>
               )}
             </div>

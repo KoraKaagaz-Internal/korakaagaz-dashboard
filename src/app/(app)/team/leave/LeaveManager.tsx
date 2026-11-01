@@ -8,6 +8,8 @@ import { formatInvoiceDate } from "@/lib/money";
 import { displayName, type Person } from "@/lib/pm";
 import type { LeaveRow } from "@/lib/time-data";
 
+const KIND_LABEL: Record<string, string> = { casual: "Casual leave", sick: "Sick leave", unpaid: "Unpaid leave", other: "Other" };
+const STATUS_LABEL: Record<string, string> = { pending: "Waiting approval", approved: "Approved", declined: "Declined" };
 const STATUS: Record<string, string> = { pending: "bg-warn/10 text-warn", approved: "bg-ok/10 text-ok", declined: "bg-neutral-200 text-neutral-600" };
 
 export function LeaveManager({
@@ -91,7 +93,7 @@ export function LeaveManager({
               <li key={l.id} className="flex flex-wrap items-center gap-3 py-2">
                 <span className="w-36 font-medium">{displayName(l.member_email, people)}</span>
                 <span className="flex-1">
-                  {range(l)} · <span className="capitalize">{l.kind}</span>
+                  {range(l)} · {KIND_LABEL[l.kind] ?? l.kind}
                   {l.note && <span className="text-neutral-500"> · {l.note}</span>}
                 </span>
                 <button className={btn.secondary} disabled={pending} onClick={() => run(() => decideLeave(l.id, true))}>
@@ -113,9 +115,9 @@ export function LeaveManager({
               <li key={l.id} className="flex flex-wrap items-center gap-3 py-2">
                 <span className="w-36">{displayName(l.member_email, people)}</span>
                 <span className="flex-1">
-                  {range(l)} · <span className="capitalize">{l.kind}</span>
+                  {range(l)} · {KIND_LABEL[l.kind] ?? l.kind}
                 </span>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${STATUS[l.status]}`}>{l.status}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS[l.status]}`}>{STATUS_LABEL[l.status] ?? l.status}</span>
                 {l.status === "pending" && l.member_email === me && (
                   <button className={btn.ghost} onClick={() => run(() => cancelLeave(l.id))}>
                     Withdraw

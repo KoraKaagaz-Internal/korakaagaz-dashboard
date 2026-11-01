@@ -367,6 +367,7 @@ export function DocumentEditor({
               <div key={i} className="rounded-xl border border-line p-3">
                 <div className="mb-2 flex items-center gap-1 text-xs text-neutral-500">
                   <span className="font-mono">{String(i + 1).padStart(2, "0")}</span>
+                  {item.qty > 0 && item.unit_price > 0 && <span className="ml-2 tabular-nums">= {money(item.qty * item.unit_price)}</span>}
                   <span className="ml-auto" />
                   {item.title && !catalog.some((c) => c.name === item.title) && (
                     <button type="button" className={btn.ghost} onClick={() => saveToCatalog(i)}>
@@ -393,13 +394,21 @@ export function DocumentEditor({
                     Remove
                   </button>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-[1fr_90px_70px_110px]">
-                  <Input placeholder="Title" value={item.title} onChange={(e) => setItem(i, { title: e.target.value })} />
-                  <Input placeholder="SAC" aria-label="SAC code" value={item.sac} onChange={(e) => setItem(i, { sac: e.target.value.replace(/\D/g, "").slice(0, 8) })} />
-                  <NumberInput min={0} aria-label="Quantity" value={item.qty} onValue={(n) => setItem(i, { qty: n })} />
-                  <NumberInput min={0} aria-label="Unit price" value={item.unit_price} onValue={(n) => setItem(i, { unit_price: n })} />
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-[1fr_90px_70px_110px]">
+                  <Field label="Item" className="col-span-3 sm:col-span-1">
+                    <Input placeholder="e.g. Product shoot, 20 SKUs" aria-label="Title" value={item.title} onChange={(e) => setItem(i, { title: e.target.value })} />
+                  </Field>
+                  <Field label="SAC">
+                    <Input inputMode="numeric" aria-label="SAC code" value={item.sac} onChange={(e) => setItem(i, { sac: e.target.value.replace(/\D/g, "").slice(0, 8) })} />
+                  </Field>
+                  <Field label="Qty">
+                    <NumberInput min={0} aria-label="Quantity" value={item.qty} onValue={(n) => setItem(i, { qty: n })} />
+                  </Field>
+                  <Field label={`Rate (${doc.currency})`}>
+                    <NumberInput min={0} aria-label="Unit price" value={item.unit_price} onValue={(n) => setItem(i, { unit_price: n })} />
+                  </Field>
                   <Textarea
-                    className="sm:col-span-4"
+                    className="col-span-3 sm:col-span-4"
                     placeholder="Description (deliverables, revisions included…)"
                     value={item.description}
                     onChange={(e) => setItem(i, { description: e.target.value })}

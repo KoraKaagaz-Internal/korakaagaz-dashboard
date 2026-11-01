@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card, InfoTip, PageHeader } from "@/components/ui";
 import { requireMember } from "@/lib/data";
-import { addDays, formatInvoiceDate, todayIso } from "@/lib/money";
+import { addDays, formatShortDate, todayIso } from "@/lib/money";
 import { teamDirectory } from "@/lib/pm-data";
 import { availableDays, weekCapacity, weekLoad, weekStart } from "@/lib/time";
 import { TeamTabs } from "../TeamTabs";
@@ -68,7 +68,7 @@ export default async function WorkloadPage({ searchParams }: { searchParams: Pro
                 <th className="py-2 font-medium">Person</th>
                 {weeks.map((w) => (
                   <th key={w} className="text-center font-medium">
-                    {formatInvoiceDate(w).replace(/, \d{4}$/, "")}
+                    {formatShortDate(w)}
                   </th>
                 ))}
               </tr>

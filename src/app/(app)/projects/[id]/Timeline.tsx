@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { addDays, daysBetween, formatInvoiceDate } from "@/lib/money";
+import { addDays, daysBetween, formatInvoiceDate, formatShortDate } from "@/lib/money";
 import { TASK_STATUS_LABEL, timelineRange, type Phase, type Task } from "@/lib/pm";
 
 const DAY = 22; // px per day
@@ -33,7 +33,7 @@ export function Timeline({ tasks, phases, today, projectId }: { tasks: Task[]; p
             <div className="relative" style={{ width }}>
               {weeks.map((w) => (
                 <span key={w} className="absolute top-2 border-l border-line pl-1" style={{ left: x(w) }}>
-                  {formatInvoiceDate(w).replace(/, \d{4}$/, "")}
+                  {formatShortDate(w)}
                 </span>
               ))}
             </div>

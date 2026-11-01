@@ -178,7 +178,7 @@ async function Billing({ projectId, budget, canEdit }: { projectId: string; budg
         actions={
           canEdit ? (
             <Link href={`/expenses/new?project=${projectId}`} className="text-sm text-navy hover:underline">
-              Add expense
+              New expense
             </Link>
           ) : undefined
         }

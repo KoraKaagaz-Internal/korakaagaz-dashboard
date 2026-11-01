@@ -4,7 +4,7 @@ import { upcoming } from "@/lib/compliance";
 import { getSettings, requireMember } from "@/lib/data";
 import { listChallans, listExpenses } from "@/lib/expense-data";
 import { itcSummary, tdsNature } from "@/lib/expenses";
-import { daysBetween, formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
+import { daysBetween, formatInvoiceDate, formatMoney, formatShortDate, todayIso } from "@/lib/money";
 import { monthRange } from "@/lib/time";
 import { ExpenseTabs } from "../Tabs";
 import { Challan } from "./Challan";
@@ -189,9 +189,7 @@ export default async function GstPage({ searchParams }: { searchParams: Promise<
         <ul className="divide-y divide-line text-sm">
           {dues.map((d) => (
             <li key={`${d.date}-${d.title}`} className="flex items-center gap-3 py-1.5">
-              <span className={`w-28 ${daysBetween(today, d.date) <= 7 ? "font-semibold text-danger" : "text-neutral-600"}`}>
-                {formatInvoiceDate(d.date).replace(/, \d{4}$/, "")}
-              </span>
+              <span className={`w-28 ${daysBetween(today, d.date) <= 7 ? "font-semibold text-danger" : "text-neutral-600"}`}>{formatShortDate(d.date)}</span>
               <span className="flex-1">{d.title}</span>
               <span className="text-xs text-neutral-500">{d.detail}</span>
             </li>

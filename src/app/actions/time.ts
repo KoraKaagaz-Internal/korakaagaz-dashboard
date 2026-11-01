@@ -233,15 +233,13 @@ export async function requestLeave(input: z.input<typeof leaveSchema>): Promise<
   const { data: people } = await supabase.rpc("team_directory");
   const admin = ((people ?? []) as { email: string; role: string }[]).find((p) => p.role === "admin");
   if (admin && admin.email !== email) {
-    await supabase
-      .from("notifications")
-      .insert({
-        recipient_email: admin.email,
-        kind: "leave_requested",
-        title: `${email.split("@")[0]} asked for leave`,
-        body: `${l.from_date} → ${l.to_date}${l.note ? ` · ${l.note}` : ""}`,
-        link: "/team/leave",
-      });
+    await supabase.from("notifications").insert({
+      recipient_email: admin.email,
+      kind: "leave_requested",
+      title: `${email.split("@")[0]} asked for leave`,
+      body: `${l.from_date} → ${l.to_date}${l.note ? ` · ${l.note}` : ""}`,
+      link: "/team/leave",
+    });
   }
   revalidatePath("/team/leave");
   return { ok: true };
@@ -256,14 +254,12 @@ export async function decideLeave(id: string, approve: boolean): Promise<Result>
     .select("member_email, from_date, to_date")
     .single();
   if (error) return fail(error.message);
-  await supabase
-    .from("notifications")
-    .insert({
-      recipient_email: data.member_email,
-      kind: "leave_decided",
-      title: `Leave ${approve ? "approved" : "declined"}: ${data.from_date} → ${data.to_date}`,
-      link: "/team/leave",
-    });
+  await supabase.from("notifications").insert({
+    recipient_email: data.member_email,
+    kind: "leave_decided",
+    title: `Leave ${approve ? "approved" : "declined"}: ${data.from_date} → ${data.to_date}`,
+    link: "/team/leave",
+  });
   revalidatePath("/team/leave");
   revalidatePath("/team/workload");
   return { ok: true };

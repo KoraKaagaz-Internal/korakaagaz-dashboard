@@ -22,7 +22,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { moveTask } from "@/app/actions/projects";
 import { AvatarStack } from "@/components/pm/Avatar";
 import { PriorityFlag } from "@/components/pm/Pills";
-import { formatInvoiceDate, todayIso } from "@/lib/money";
+import { formatShortDate, todayIso } from "@/lib/money";
 import { TASK_STATUSES, sortBetween, type Person, type Phase, type Task, type TaskStatus } from "@/lib/pm";
 import { QuickAdd } from "./QuickAdd";
 import { useOpenTask } from "./useOpenTask";
@@ -179,7 +179,7 @@ function Card({ task: t, phase, people, today, onOpen, lifted }: { task: Task; p
       {phase && <div className="mt-1 text-xs text-neutral-500">{phase}</div>}
       <div className="mt-2 flex items-center justify-between gap-2 text-xs">
         <span className="flex items-center gap-2 text-neutral-500">
-          {t.due_date && <span className={overdue ? "font-medium text-danger" : ""}>{formatInvoiceDate(t.due_date).replace(/, \d{4}$/, "")}</span>}
+          {t.due_date && <span className={overdue ? "font-medium text-danger" : ""}>{formatShortDate(t.due_date)}</span>}
           {t.subtasks && (
             <span title="Subtasks done">
               ☑ {t.subtasks.done}/{t.subtasks.total}

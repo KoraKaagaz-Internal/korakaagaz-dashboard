@@ -141,15 +141,13 @@ export async function GET(request: NextRequest) {
       .eq("id", id);
     const { data: admin } = await supabase.from("members").select("email").eq("role", "admin").maybeSingle();
     if (admin)
-      await supabase
-        .from("notifications")
-        .insert({
-          recipient_email: admin.email,
-          actor_email: admin.email,
-          kind: "recurring_expense",
-          title: `Recurring expense ready to confirm: ${e.description || e.vendor_name || "expense"}`,
-          link: "/expenses?status=draft",
-        });
+      await supabase.from("notifications").insert({
+        recipient_email: admin.email,
+        actor_email: admin.email,
+        kind: "recurring_expense",
+        title: `Recurring expense ready to confirm: ${e.description || e.vendor_name || "expense"}`,
+        link: "/expenses?status=draft",
+      });
   }
 
   // 5. Lead follow-ups due today: a nudge to each owner (overdue ones are on Home already).

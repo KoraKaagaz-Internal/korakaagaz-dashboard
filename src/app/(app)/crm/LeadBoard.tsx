@@ -24,7 +24,7 @@ import { moveLead } from "@/app/actions/crm";
 import { Select, btn } from "@/components/ui";
 import { LOST_REASONS, SOURCE_LABEL, STAGES, type Lead, type Stage } from "@/lib/crm";
 import { compactInr } from "@/lib/format";
-import { formatInvoiceDate } from "@/lib/money";
+import { formatShortDate } from "@/lib/money";
 import { sortBetween } from "@/lib/pm";
 
 type Cols = Record<Stage, Lead[]>;
@@ -196,7 +196,7 @@ function Card({ lead: l, today, lifted }: { lead: Lead; today: string; lifted?: 
         {l.follow_up_on && l.stage !== "won" && l.stage !== "lost" && (
           <span className={due ? "font-semibold text-danger" : "text-neutral-500"}>
             {due ? "Follow up " : ""}
-            {formatInvoiceDate(l.follow_up_on).replace(/, \d{4}$/, "")}
+            {formatShortDate(l.follow_up_on)}
           </span>
         )}
         {l.stage === "lost" && l.lost_reason && <span className="text-neutral-500">{l.lost_reason}</span>}

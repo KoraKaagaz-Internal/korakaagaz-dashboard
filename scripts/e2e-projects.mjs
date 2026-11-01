@@ -206,8 +206,13 @@ try {
 
   // ------------------------------------------------------------ timer from the task panel
   await A.go(`/projects/${projectId}?tab=list&task=${callSheet.id}`);
-  await tap(admin, "::-p-xpath(//div[@role='dialog']//button[contains(., 'Start timer')])");
-  await admin.waitForSelector("::-p-xpath(//div[@role='status']//button[normalize-space()='Stop'])");
+  // the button is disabled while the panel is still saving; click once it's enabled, retry once
+  const stopSel = "::-p-xpath(//div[@role='status']//button[normalize-space()='Stop'])";
+  for (let i = 0; i < 2; i++) {
+    await tap(admin, "::-p-xpath(//div[@role='dialog']//button[contains(., 'Start timer') and not(@disabled)])");
+    if (await admin.waitForSelector(stopSel, { timeout: 15000 }).catch(() => null)) break;
+  }
+  await admin.waitForSelector(stopSel);
   check("starting a timer shows it in the header", true);
   await admin.keyboard.press("Escape"); // close the task panel; its backdrop covers the header
   await admin.waitForFunction(() => !document.querySelector("[role=dialog]"));

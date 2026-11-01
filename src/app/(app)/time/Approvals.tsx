@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { decideTime } from "@/app/actions/time";
 import { Card, Input, btn } from "@/components/ui";
-import { formatInvoiceDate } from "@/lib/money";
+import { formatInvoiceDate, formatShortDate } from "@/lib/money";
 import { hhmm, weekStart } from "@/lib/time";
 
 interface Row {
@@ -89,7 +89,7 @@ export function Approvals({ rows, names }: { rows: Row[]; names: Record<string, 
                       })
                     }
                   />
-                  <span className="w-24 text-xs text-neutral-500">{formatInvoiceDate(r.work_date).replace(/, \d{4}$/, "")}</span>
+                  <span className="w-24 text-xs text-neutral-500">{formatShortDate(r.work_date)}</span>
                   <span className="min-w-0 flex-1 truncate">
                     {r.project_code} · {r.task_title || r.project_name}
                     {r.note && <span className="text-neutral-500"> · {r.note}</span>}

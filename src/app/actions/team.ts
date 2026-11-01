@@ -18,15 +18,13 @@ export async function inviteMember(email: string, role: Exclude<Role, "admin">) 
   if (data === "invited") {
     const result = await sendMail({ to: [clean], subject: "You're invited to Kora Kaagaz Studio", text });
     mail = result.status;
-    await supabase
-      .from("email_log")
-      .insert({
-        kind: "invite",
-        to_email: clean,
-        subject: "Invite",
-        status: result.status,
-        error: result.status === "failed" ? result.error : result.status === "skipped" ? result.reason : "",
-      });
+    await supabase.from("email_log").insert({
+      kind: "invite",
+      to_email: clean,
+      subject: "Invite",
+      status: result.status,
+      error: result.status === "failed" ? result.error : result.status === "skipped" ? result.reason : "",
+    });
   }
   revalidatePath("/team");
   return { ok: true as const, result: data as string, mail, inviteText: text };
