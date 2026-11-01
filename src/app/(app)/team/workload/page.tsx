@@ -1,16 +1,17 @@
 import Link from "next/link";
-import { Card } from "@/components/ui";
+import { Card, InfoTip, PageHeader } from "@/components/ui";
 import { requireMember } from "@/lib/data";
 import { addDays, formatInvoiceDate, todayIso } from "@/lib/money";
 import { teamDirectory } from "@/lib/pm-data";
 import { availableDays, weekCapacity, weekLoad, weekStart } from "@/lib/time";
+import { TeamTabs } from "../TeamTabs";
 import { listEvents, listHolidays, listLeave, teamCapacity } from "@/lib/time-data";
 
 const WEEKS = 6;
 
 /** Staff: booked hours vs capacity per person per week (tasks due + shoots/meetings, minus leave). */
 export default async function WorkloadPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
-  const { supabase } = await requireMember();
+  const { supabase, isAdmin } = await requireMember();
   const sp = await searchParams;
   const first = weekStart(/^\d{4}-\d{2}-\d{2}$/.test(sp.from ?? "") ? sp.from! : todayIso());
   const weeks = Array.from({ length: WEEKS }, (_, i) => addDays(first, i * 7));
@@ -41,17 +42,12 @@ export default async function WorkloadPage({ searchParams }: { searchParams: Pro
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <Link href="/team/leave" className="text-sm text-neutral-500 hover:text-navy">
-            Leave &amp; holidays →
-          </Link>
-          <h1 className="text-2xl font-semibold">Workload</h1>
-          <p className="text-sm text-neutral-500">
-            Hours booked per week (estimates of open tasks due that week, split between assignees, plus shoots and meetings) against each person&apos;s capacity after leave and
-            holidays.
-          </p>
-        </div>
+      <PageHeader title="Team" tabs={<TeamTabs current="workload" isAdmin={isAdmin} isStaff />} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="flex items-center gap-1.5 text-sm text-neutral-500">
+          Hours booked per week against each person&apos;s available hours.
+          <InfoTip>Booked = estimates of open tasks due that week (split between assignees) plus shoots and meetings. Available = weekly hours minus leave and holidays.</InfoTip>
+        </p>
         <div className="flex items-center gap-1 text-sm">
           <Link href={`/team/workload?from=${addDays(first, -7 * WEEKS)}`} className="rounded-md px-2 py-1 hover:bg-neutral-100" aria-label="Earlier">
             ←

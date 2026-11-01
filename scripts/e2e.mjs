@@ -53,7 +53,9 @@ if (people.length) {
   process.exit(2);
 }
 if (existing.length && process.env.E2E_FORCE_RESET !== "1") {
-  console.error("Refusing to run: the workspace already has clients or documents, and this test wipes them afterwards.\nRun it against an empty project, or set E2E_FORCE_RESET=1 if this is only leftover test data.");
+  console.error(
+    "Refusing to run: the workspace already has clients or documents, and this test wipes them afterwards.\nRun it against an empty project, or set E2E_FORCE_RESET=1 if this is only leftover test data.",
+  );
   process.exit(2);
 }
 
@@ -67,9 +69,10 @@ function helpers(page) {
     await h.evaluate((el) => el.scrollIntoView({ block: "center" }));
     return h;
   };
+  // the inline ConfirmButton dialog's confirm (last) button
+  const confirm = async () => centred(await page.waitForSelector("::-p-xpath((//span[@role='dialog']//button)[last()])"));
   const button = async (text) => centred(await page.waitForSelector(`::-p-xpath(//button[normalize-space()='${text}'] | //a[normalize-space()='${text}'])`));
-  const field = async (label) =>
-    centred(await page.waitForSelector(`::-p-xpath(//label[span[normalize-space()='${label}']]//*[self::input or self::textarea or self::select])`));
+  const field = async (label) => centred(await page.waitForSelector(`::-p-xpath(//label[span[normalize-space()='${label}']]//*[self::input or self::textarea or self::select])`));
   const fill = async (h, value) => {
     await centred(h);
     await h.click();
@@ -83,7 +86,7 @@ function helpers(page) {
   };
   const text = (sel) => page.$eval(sel, (el) => el.textContent?.trim() ?? "");
   const waitText = (t) => page.waitForFunction((s) => document.body.innerText.includes(s), { timeout: 60000 }, t);
-  return { go, button, field, fill, text, waitText };
+  return { go, button, confirm, field, fill, text, waitText };
 }
 
 async function resetWorkspace() {
@@ -117,7 +120,11 @@ try {
   check("uninvited Google account sees the invitation message", (await admin.evaluate(() => document.body.innerText)).includes("isn't invited"));
 
   await A.go(await signInUrl(ADMIN_EMAIL));
-  check("admin signs in and the dashboard renders", new URL(admin.url()).pathname === "/" && (await admin.evaluate(() => document.body.innerText)).includes("Outstanding"), admin.url());
+  check(
+    "admin signs in and the dashboard renders",
+    new URL(admin.url()).pathname === "/" && (await admin.evaluate(() => document.body.innerText)).includes("Outstanding"),
+    admin.url(),
+  );
 
   // ---------------------------------------------------------------- settings
   await A.go("/settings");
@@ -147,8 +154,16 @@ try {
     await (await A.button("Save client")).click();
     await admin.waitForSelector(`::-p-xpath(//a[normalize-space()='${fields[0][1]}'])`);
   };
-  await addClient([["Name", "SuperDMC"], ["Email (invoices and reminders go here)", "accounts@superdmc.example"], ["GSTIN (if registered)", "21AAPFU0939F1Z7"]]);
-  await addClient([["Name", "Globex Ltd"], ["Country", "United Kingdom"], ["Email (invoices and reminders go here)", "ap@globex.example"]]);
+  await addClient([
+    ["Name", "SuperDMC"],
+    ["Email (invoices and reminders go here)", "accounts@superdmc.example"],
+    ["GSTIN (if registered)", "21AAPFU0939F1Z7"],
+  ]);
+  await addClient([
+    ["Name", "Globex Ltd"],
+    ["Country", "United Kingdom"],
+    ["Email (invoices and reminders go here)", "ap@globex.example"],
+  ]);
   const clients = await api("/rest/v1/clients?select=id,name,state_code,country");
   const superdmc = clients.find((c) => c.name === "SuperDMC");
   const globex = clients.find((c) => c.name === "Globex Ltd");
@@ -169,6 +184,7 @@ try {
   await admin.waitForFunction(() => document.querySelector(".kk-trow-total .kk-big")?.textContent === "23,600");
   check("quote preview: catalog item + CGST/SGST = 23,600", true);
   await (await A.button("Save and issue")).click();
+  await (await A.confirm()).click();
   await admin.waitForFunction(() => /\/documents\/[0-9a-f-]{36}$/.test(location.pathname), { timeout: 60000 });
   quoteId = admin.url().split("/").at(-1).split("?")[0];
   await A.waitText("QT/26-27/001");
@@ -182,11 +198,14 @@ try {
   check("client opens share link while signed out", (await cp.evaluate(() => document.body.innerText)).includes("QT/26-27/001"));
   await (await C.button("Accept quote")).click();
   await C.waitText("The quote is accepted");
-  const pdfHead = await cp.evaluate(async (u) => {
-    const r = await fetch(u);
-    const b = new Uint8Array(await r.arrayBuffer());
-    return String.fromCharCode(...b.slice(0, 5)) + ` ${r.status} ${b.length}`;
-  }, `${shareUrl.replace("/d/", "/api/share/")}/pdf`);
+  const pdfHead = await cp.evaluate(
+    async (u) => {
+      const r = await fetch(u);
+      const b = new Uint8Array(await r.arrayBuffer());
+      return String.fromCharCode(...b.slice(0, 5)) + ` ${r.status} ${b.length}`;
+    },
+    `${shareUrl.replace("/d/", "/api/share/")}/pdf`,
+  );
   check("client downloads PDF from share link", pdfHead.startsWith("%PDF-"), pdfHead);
   await client.close();
 
@@ -197,6 +216,7 @@ try {
   await (await A.button("Convert to invoice")).click();
   await admin.waitForFunction(() => /\/edit$/.test(location.pathname), { timeout: 60000 });
   await (await A.button("Save and issue")).click();
+  await (await A.confirm()).click();
   await admin.waitForFunction(() => /\/documents\/[0-9a-f-]{36}$/.test(location.pathname) && document.body.innerText.includes("KK/26-27/001"), { timeout: 60000 });
   invoiceId = admin.url().split("/").at(-1).split("?")[0];
   check("convert accepted quote to invoice KK/26-27/001", true);
@@ -241,6 +261,7 @@ try {
   await (await A.button("Credit note")).click();
   await admin.waitForFunction(() => /\/edit$/.test(location.pathname), { timeout: 60000 });
   await (await A.button("Save and issue")).click();
+  await (await A.confirm()).click();
   await admin.waitForFunction(() => document.body.innerText.includes("CN/26-27/001"), { timeout: 60000 });
   check("credit note CN/26-27/001 references the invoice", (await admin.evaluate(() => document.body.innerText)).includes("Against invoice KK/26-27/001"));
 
@@ -250,6 +271,7 @@ try {
   await A.fill(await A.field("INR per USD"), "83.5");
   await admin.waitForFunction(() => document.querySelector(".kk-trow-total .kk-big")?.textContent === "1,180");
   await (await A.button("Save and issue")).click();
+  await (await A.confirm()).click();
   await admin.waitForFunction(() => document.body.innerText.includes("KK/26-27/002"), { timeout: 60000 });
   check("export invoice in USD with IGST (no LUT yet)", (await admin.evaluate(() => document.body.innerText)).includes("EXPORT ON PAYMENT OF INTEGRATED TAX"));
 
@@ -291,6 +313,7 @@ try {
   await M.fill(await mp.waitForSelector("input[placeholder=Title]"), "Retainer: October");
   await M.fill(await mp.$("input[aria-label='Unit price']"), "5000");
   await (await M.button("Save and issue")).click();
+  await (await M.confirm()).click();
   await mp.waitForFunction(() => /\/documents\/[0-9a-f-]{36}$/.test(location.pathname), { timeout: 60000 });
   const pendingDoc = mp.url().split("/").at(-1).split("?")[0];
   check("member's invoice waits for approval", (await api(`/rest/v1/documents?id=eq.${pendingDoc}&select=status`))[0]?.status === "awaiting_approval");
@@ -300,6 +323,7 @@ try {
   check("dashboard lists it under approvals", (await admin.evaluate(() => document.body.innerText)).includes("Waiting for your approval"));
   await A.go(`/documents/${pendingDoc}`);
   await (await A.button("Approve and issue")).click();
+  await (await A.confirm()).click();
   await A.waitText("KK/26-27/003");
   check("admin approves → KK/26-27/003", true);
   await A.go("/");

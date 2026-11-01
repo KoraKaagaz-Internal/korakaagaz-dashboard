@@ -621,7 +621,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                     {projects.map((x) => (
                       <tr key={x.id}>
                         <td className="py-1.5">
-                          <Link href={`/projects/${x.id}?tab=time`} className="hover:text-navy">
+                          <Link href={`/projects/${x.id}?tab=money`} className="hover:text-navy">
                             <span className="font-mono text-xs text-neutral-400">{x.code}</span> {x.name}
                           </Link>
                           {x.overBudget && <span className="ml-1.5 text-xs text-red-700">▲ over hours</span>}

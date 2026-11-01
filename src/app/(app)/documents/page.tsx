@@ -33,7 +33,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Documents</h1>
+        <h1 className="text-2xl font-semibold">Invoices</h1>
         <div className="flex flex-wrap gap-2">
           <a href={`/api/export/documents${exportQs ? `?${exportQs}` : ""}`} className={btn.secondary}>
             Export CSV

@@ -84,7 +84,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
                 Project: {project.code} · {project.name}
               </Link>
             )}
-            {client && canEdit && <QuoteLink clientId={client.id} />}
+            {client && canEdit && <QuoteLink clientId={client.id} projectId={project?.id ?? null} />}
           </div>
           {quotes.length > 0 && (
             <ul className="mt-3 space-y-1 text-sm">

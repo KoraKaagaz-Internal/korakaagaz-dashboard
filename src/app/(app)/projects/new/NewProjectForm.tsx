@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { ClientForm } from "@/components/ClientForm";
 import { createProject } from "@/app/actions/projects";
 import { NumberInput } from "@/components/NumberInput";
 import { PeoplePicker } from "@/components/pm/PeoplePicker";
@@ -21,7 +22,7 @@ interface Tpl {
 
 export function NewProjectForm({
   templates,
-  clients,
+  clients: initialClients,
   people,
   me,
   today,
@@ -49,6 +50,8 @@ export function NewProjectForm({
   });
   const [fin, setFin] = useState({ budget: 0, billing: "fixed" as Billing, retainer_amount_month: 0 });
   const [members, setMembers] = useState<string[]>([me]);
+  const [clients, setClients] = useState(initialClients);
+  const [addingClient, setAddingClient] = useState(false);
   const [msg, setMsg] = useState("");
   const [pending, start] = useTransition();
 
@@ -101,15 +104,28 @@ export function NewProjectForm({
             <Input value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} placeholder="Acme rebrand" autoFocus />
           </Field>
           <Field label="Client">
-            <Select value={p.client_id} onChange={(e) => setP({ ...p, client_id: e.target.value })}>
+            <Select value={p.client_id} onChange={(e) => (e.target.value === "__new" ? setAddingClient(true) : setP({ ...p, client_id: e.target.value }))}>
               <option value="">Internal (no client)</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
+              <option value="__new">+ New client…</option>
             </Select>
           </Field>
+          {addingClient && (
+            <div className="rounded-xl border border-line p-4 sm:col-span-2">
+              <ClientForm
+                onCancel={() => setAddingClient(false)}
+                onSaved={(c) => {
+                  setClients((l) => [...l, { id: c.id, name: c.name }].sort((a, b) => a.name.localeCompare(b.name)));
+                  setP((x) => ({ ...x, client_id: c.id }));
+                  setAddingClient(false);
+                }}
+              />
+            </div>
+          )}
           <Field label="Type">
             <Select value={p.type} onChange={(e) => setP({ ...p, type: e.target.value })}>
               <option value="">—</option>

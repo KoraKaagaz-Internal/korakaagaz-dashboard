@@ -1,7 +1,9 @@
 import { listMembers, requireMember } from "@/lib/data";
 import { mailConfigured } from "@/lib/mail";
 import { adminCapacity } from "@/lib/time-data";
+import { InfoTip, PageHeader } from "@/components/ui";
 import { CapacityEditor } from "./CapacityEditor";
+import { TeamTabs } from "./TeamTabs";
 import { TeamManager } from "./TeamManager";
 
 export default async function TeamPage() {

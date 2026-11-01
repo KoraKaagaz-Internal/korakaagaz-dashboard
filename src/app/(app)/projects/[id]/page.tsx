@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Files } from "@/components/pm/Files";
 import { HealthPill, ProgressBar } from "@/components/pm/Pills";
 import { TaskDrawer } from "@/components/pm/TaskDrawer";
-import { Card, StatusPill, displayStatus } from "@/components/ui";
+import { Card, PageHeader, Section, StatusPill, Tabs, displayStatus } from "@/components/ui";
 import { listClients, listDocuments, requireTeam } from "@/lib/data";
-import { formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
+import { formatInvoiceDate, formatMoney, formatShortDate, todayIso } from "@/lib/money";
 import { displayName, progress, projectHealth } from "@/lib/pm";
 import { listExpenses } from "@/lib/expense-data";
 import { getProjectBundle, projectActivity, teamDirectory } from "@/lib/pm-data";
@@ -27,17 +27,20 @@ const TABS = [
   { key: "timeline", label: "Timeline" },
   { key: "overview", label: "Overview" },
   { key: "files", label: "Files" },
-  { key: "time", label: "Time" },
-  { key: "billing", label: "Billing", staff: true },
+  { key: "money", label: "Money" },
   { key: "activity", label: "Activity" },
 ];
+// old links
+const ALIASES: Record<string, string> = { time: "money", billing: "money", hours: "money" };
 
 export default async function ProjectPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { canEdit, canWork, isStaff, isAdmin, email } = await requireTeam();
   const { id } = await params;
   const { tab: rawTab } = await searchParams;
-  const tabs = TABS.filter((t) => !t.staff || isStaff);
-  const tab = tabs.some((t) => t.key === rawTab) ? rawTab! : "board";
+  // freelancers never see money: their tab is just hours
+  const tabs = TABS.map((t) => (t.key === "money" && !isStaff ? { ...t, label: "Hours" } : t));
+  const want = ALIASES[rawTab ?? ""] ?? rawTab;
+  const tab = tabs.some((t) => t.key === want) ? want! : "board";
   const [bundle, people] = await Promise.all([getProjectBundle(id), teamDirectory()]);
   const { project: p } = bundle;
   const today = todayIso();
@@ -46,16 +49,16 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <Link href="/projects" className="text-sm text-neutral-500 hover:text-navy">
-            ← Projects
-          </Link>
-          <h1 className="text-2xl font-semibold">
+      <PageHeader
+        back={{ href: "/projects", label: "Projects" }}
+        title={
+          <>
             <span className="mr-2 font-mono text-base font-normal text-neutral-400">{p.code}</span>
             {p.name}
-          </h1>
-          <p className="text-sm text-neutral-500">
+          </>
+        }
+        subtitle={
+          <>
             {p.client_id && isStaff ? (
               <Link href={`/clients/${p.client_id}`} className="hover:text-navy">
                 {bundle.client_name}
@@ -64,31 +67,22 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
               bundle.client_name || "Internal project"
             )}
             {p.owner_email ? ` · led by ${displayName(p.owner_email, people)}` : ""}
-            {p.due_date ? ` · due ${formatInvoiceDate(p.due_date)}` : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <HealthPill health={health} />
-          <StatusSelect id={p.id} status={p.status} disabled={!canEdit} />
-        </div>
-      </div>
-      <div className="max-w-md">
-        <ProgressBar pct={prog.pct} label={`${prog.done} of ${prog.total} tasks done`} />
-      </div>
-
-      <nav className="-mx-4 flex gap-1 overflow-x-auto border-b border-neutral-200 px-4" aria-label="Project sections">
-        {tabs.map((t) => (
-          <Link
-            key={t.key}
-            href={`/projects/${p.id}?tab=${t.key}`}
-            scroll={false}
-            aria-current={tab === t.key ? "page" : undefined}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm whitespace-nowrap ${tab === t.key ? "border-navy font-medium text-navy" : "border-transparent text-neutral-600 hover:text-neutral-900"}`}
-          >
-            {t.label}
-          </Link>
-        ))}
-      </nav>
+            {p.due_date ? ` · due ${formatShortDate(p.due_date)}` : ""}
+          </>
+        }
+        meta={
+          <span className="w-full max-w-md">
+            <ProgressBar pct={prog.pct} label={`${prog.done} of ${prog.total} tasks done`} />
+          </span>
+        }
+        actions={
+          <>
+            <HealthPill health={health} />
+            <StatusSelect id={p.id} status={p.status} disabled={!canEdit} />
+          </>
+        }
+        tabs={<Tabs label="Project sections" items={tabs.map((t) => ({ href: `/projects/${p.id}?tab=${t.key}`, label: t.label, active: tab === t.key }))} />}
+      />
 
       {tab === "board" && <Board projectId={p.id} tasks={bundle.tasks} phases={bundle.phases} people={people} canWork={canWork} />}
       {tab === "list" && <TaskList projectId={p.id} tasks={bundle.tasks} phases={bundle.phases} people={people} canWork={canWork} />}
@@ -107,8 +101,14 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
           <Files projectId={p.id} files={bundle.files} canWork={canWork} />
         </Card>
       )}
-      {tab === "time" && <ProjectTime project={p} people={people} />}
-      {tab === "billing" && isStaff && <Billing projectId={p.id} budget={bundle.finance?.budget ?? 0} canEdit={canEdit} />}
+      {tab === "money" && (
+        <div className="space-y-8">
+          {isStaff && <Billing projectId={p.id} budget={bundle.finance?.budget ?? 0} canEdit={canEdit} />}
+          <Section title="Hours">
+            <ProjectTime project={p} people={people} />
+          </Section>
+        </div>
+      )}
       {tab === "activity" && <Activity projectId={p.id} people={people} />}
 
       <TaskDrawer people={people} canWork={canWork} me={email} />
@@ -188,7 +188,7 @@ async function Billing({ projectId, budget, canEdit }: { projectId: string; budg
             {expenses.map((e) => (
               <li key={e.id}>
                 <Link href={`/expenses/${e.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
-                  <span className="w-24 text-neutral-500">{formatInvoiceDate(e.expense_date).replace(/, \d{4}$/, "")}</span>
+                  <span className="w-24 text-neutral-500">{formatShortDate(e.expense_date)}</span>
                   <span className="min-w-0 flex-1 truncate">
                     {e.vendor || e.description} <span className="text-neutral-500">· {e.category}</span>
                   </span>

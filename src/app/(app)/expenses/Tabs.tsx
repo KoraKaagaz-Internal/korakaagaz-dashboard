@@ -8,8 +8,8 @@ const TABS = [
   { href: "/vendors", label: "Vendors" },
 ];
 
-export function ExpenseTabs({ current, isAdmin }: { current: string; isAdmin: boolean }) {
-  const tabs = isAdmin ? [...TABS, { href: "/expenses/categories", label: "Categories" }] : TABS;
+export function ExpenseTabs({ current }: { current: string; isAdmin?: boolean }) {
+  const tabs = TABS;
   return (
     <nav className="-mx-4 flex gap-1 overflow-x-auto border-b border-neutral-200 px-4" aria-label="Expense sections">
       {tabs.map((t) => (

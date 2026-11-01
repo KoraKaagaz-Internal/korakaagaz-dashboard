@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { issueDocument, saveDocument } from "@/app/actions/documents";
@@ -8,7 +9,7 @@ import { ClientForm } from "@/components/ClientForm";
 import { NumberInput } from "@/components/NumberInput";
 import { DocumentTemplate } from "@/components/invoice/DocumentTemplate";
 import { ScaledPreview } from "@/components/invoice/ScaledPreview";
-import { Card, Field, Input, Select, Textarea, btn } from "@/components/ui";
+import { Card, ConfirmButton, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { OUTSIDE_INDIA, STATES, autoGstMode, stateLabel } from "@/lib/gst";
 import { addDays, computeTotals, formatMoney } from "@/lib/money";
 import { DOC_LABELS, type BankAccount, type CatalogItem, type Client, type DocumentDraft, type LineItem, type Project, type SupplierSnapshot } from "@/lib/types";
@@ -45,6 +46,8 @@ export function DocumentEditor({
 }) {
   const router = useRouter();
   const [doc, setDoc] = useState<DocumentDraft>(initial);
+  const [savedJson, setSavedJson] = useState(() => JSON.stringify(initial));
+  const dirty = useMemo(() => JSON.stringify(doc) !== savedJson, [doc, savedJson]);
   const [clients, setClients] = useState(initialClients);
   const [catalog, setCatalog] = useState(initialCatalog);
   const [addingClient, setAddingClient] = useState(false);
@@ -135,6 +138,7 @@ export function DocumentEditor({
       setMessage(null);
       const result = await saveDocument({ ...doc, id });
       if (!result.ok) return setMessage({ ok: false, text: result.message });
+      setSavedJson(JSON.stringify(doc));
       if (andIssue) {
         const issued = await issueDocument(result.id);
         if (!issued.ok) {
@@ -147,6 +151,14 @@ export function DocumentEditor({
       if (!id) router.replace(`/documents/${result.id}/edit`);
       router.refresh();
     });
+
+  // Warn before leaving with unsaved changes.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
 
   // Ctrl/Cmd + Enter saves the draft.
   useEffect(() => {
@@ -164,6 +176,26 @@ export function DocumentEditor({
     <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div className="space-y-5">
         <div>
+          {dirty ? (
+            <ConfirmButton
+              variant="ghost"
+              size="sm"
+              align="left"
+              className="mb-2 -ml-3"
+              confirm="Leave without saving? Your changes will be lost."
+              confirmLabel="Leave"
+              onConfirm={() => {
+                setSavedJson(JSON.stringify(doc));
+                router.push(id ? `/documents/${id}` : "/documents");
+              }}
+            >
+              <span aria-hidden>←</span> {id ? "Back" : "Invoices"}
+            </ConfirmButton>
+          ) : (
+            <Link href={id ? `/documents/${id}` : "/documents"} className="mb-2 inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-navy">
+              <span aria-hidden>←</span> {id ? "Back" : "Invoices"}
+            </Link>
+          )}
           <h1 className="text-2xl font-semibold">{id ? `Edit ${label.short.toLowerCase()}` : `New ${label.short.toLowerCase()}`}</h1>
           <p className="text-sm text-neutral-500">
             Drafts can be edited freely. Issuing assigns the number ({doc.number || numberPreview}) and locks the {label.short.toLowerCase()}, as GST requires.
@@ -537,9 +569,18 @@ export function DocumentEditor({
           <button type="button" className={btn.secondary} disabled={pending} onClick={() => save(false)} title="Ctrl/Cmd + Enter">
             {pending ? "Saving…" : "Save draft"}
           </button>
-          <button type="button" className={btn.primary} disabled={pending} onClick={() => save(true)}>
+          <ConfirmButton
+            variant="primary"
+            size="md"
+            align="left"
+            disabled={pending}
+            confirm={`Issue this ${label.short.toLowerCase()} for ${money(totals.total)}? It gets the number ${numberPreview} and can't be edited after.`}
+            confirmLabel="Issue"
+            onConfirm={() => save(true)}
+          >
             Save and issue
-          </button>
+          </ConfirmButton>
+          {dirty && <span className="text-xs text-neutral-500">Unsaved changes</span>}
           {message && <span className={`text-sm ${message.ok ? "text-green-700" : "text-red-600"}`}>{message.text}</span>}
         </div>
       </div>

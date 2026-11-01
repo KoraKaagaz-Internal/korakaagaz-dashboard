@@ -42,9 +42,17 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
           </a>
           {canEdit && <StatementButton clientId={id} disabled={outstanding <= 0} />}
           {canEdit && (
-            <Link className={btn.primary} href={`/documents/new?type=invoice&client=${id}`}>
-              New invoice
-            </Link>
+            <>
+              <Link className={btn.secondary} href={`/projects/new?client=${id}`}>
+                New project
+              </Link>
+              <Link className={btn.secondary} href={`/documents/new?type=quote&client=${id}`}>
+                New quote
+              </Link>
+              <Link className={btn.primary} href={`/documents/new?type=invoice&client=${id}`}>
+                New invoice
+              </Link>
+            </>
           )}
         </div>
       </div>

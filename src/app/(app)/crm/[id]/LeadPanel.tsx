@@ -215,9 +215,9 @@ export function DeleteLead({ id }: { id: string }) {
   );
 }
 
-export function QuoteLink({ clientId }: { clientId: string }) {
+export function QuoteLink({ clientId, projectId }: { clientId: string; projectId: string | null }) {
   return (
-    <Link href={`/documents/new?type=quote&client=${clientId}`} className={btn.secondary}>
+    <Link href={`/documents/new?type=quote&client=${clientId}${projectId ? `&project=${projectId}` : ""}`} className={btn.secondary}>
       Create a quote
     </Link>
   );

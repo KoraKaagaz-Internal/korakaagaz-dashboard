@@ -99,11 +99,63 @@ export function Timesheet({
   };
 
   const proj = projects.find((p) => p.id === pick.project_id);
+  const [day, setDay] = useState(days.includes(today) ? today : days[0]);
 
   return (
     <div className="space-y-4">
       <Card>
-        <div className="-mx-5 overflow-x-auto px-5">
+        {/* phones: pick a day, then one hours box per row */}
+        <div className="sm:hidden">
+          <div className="-mx-5 flex gap-1 overflow-x-auto px-5 pb-3" role="group" aria-label="Day">
+            {days.map((d, i) => (
+              <button
+                key={d}
+                type="button"
+                aria-pressed={day === d}
+                onClick={() => setDay(d)}
+                className={`flex min-w-11 flex-1 flex-col items-center rounded-lg px-1 py-1.5 text-xs ${day === d ? "bg-navy text-white" : d === today ? "text-navy ring-1 ring-navy/30" : "text-neutral-600 ring-1 ring-line"}`}
+              >
+                {DAY[i]}
+                <span className="tabular-nums">{dayTotal(d) ? hhmm(dayTotal(d)) : "–"}</span>
+              </button>
+            ))}
+          </div>
+          <ul className="divide-y divide-line">
+            {rows.map((r) => {
+              const c = cell(r.project_id, r.task_id, day);
+              const id = `${key(r.project_id, r.task_id)}|${day}`;
+              return (
+                <li key={key(r.project_id, r.task_id)} className="flex items-center gap-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">{r.label}</div>
+                    <div className="truncate text-xs text-neutral-500">
+                      {r.sub}
+                      {c.running ? " · ● timer" : c.locked ? ` · +${hhmm(c.locked)} sent` : ""}
+                    </div>
+                  </div>
+                  <input
+                    key={`m-${id}-${c.draft}`}
+                    defaultValue={c.draft ? hhmm(c.draft) : ""}
+                    disabled={!canWork || pending}
+                    inputMode="decimal"
+                    onBlur={(e) => save(r.project_id, r.task_id, day, e.target.value, c.draft)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+                    aria-label={`Hours for ${r.label} on ${shortDate(day)}`}
+                    aria-invalid={bad.has(id) || undefined}
+                    placeholder="0:00"
+                    className={`h-10 w-20 rounded-lg border px-2 text-center tabular-nums outline-none focus:border-navy ${bad.has(id) ? "border-danger bg-danger/5" : c.rejected ? "border-warn bg-warn/10" : "border-line"}`}
+                  />
+                </li>
+              );
+            })}
+            {!rows.length && <li className="py-6 text-center text-sm text-neutral-500">No time this week. Add a row below, or start a timer.</li>}
+          </ul>
+          <div className="mt-3 flex justify-between border-t border-line pt-3 text-sm font-medium">
+            <span>Week total</span>
+            <span className="tabular-nums">{hhmm(total)} h</span>
+          </div>
+        </div>
+        <div className="-mx-5 hidden overflow-x-auto px-5 sm:block">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="text-left text-xs text-neutral-500">
@@ -182,7 +234,7 @@ export function Timesheet({
 
       {canWork && (
         <div className="flex flex-wrap items-end gap-2">
-          <Select className="!w-64" value={pick.project_id} onChange={(e) => setPick({ project_id: e.target.value, task_id: "" })} aria-label="Project">
+          <Select className="sm:!w-64" value={pick.project_id} onChange={(e) => setPick({ project_id: e.target.value, task_id: "" })} aria-label="Project">
             <option value="">Project…</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -190,7 +242,7 @@ export function Timesheet({
               </option>
             ))}
           </Select>
-          <Select className="!w-64" value={pick.task_id} onChange={(e) => setPick({ ...pick, task_id: e.target.value })} disabled={!proj} aria-label="Task">
+          <Select className="sm:!w-64" value={pick.task_id} onChange={(e) => setPick({ ...pick, task_id: e.target.value })} disabled={!proj} aria-label="Task">
             <option value="">General (no task)</option>
             {proj?.tasks.map((t) => (
               <option key={t.id} value={t.id}>

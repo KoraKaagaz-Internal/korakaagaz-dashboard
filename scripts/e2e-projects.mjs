@@ -118,7 +118,11 @@ try {
   const tasks = await api(`/rest/v1/tasks?project_id=eq.${projectId}&select=id,title,status,sort`);
   check("project from the Product shoot template gets its 9 tasks", tasks.length === 9, `${tasks.length} tasks`);
   const [proj] = await api(`/rest/v1/projects?id=eq.${projectId}&select=code,client_id,due_date`);
-  check("project gets a KK code, the client, and a due date from the template", /^KK-\d{4}$/.test(proj.code) && proj.client_id === clientId && !!proj.due_date, JSON.stringify(proj));
+  check(
+    "project gets a KK code, the client, and a due date from the template",
+    /^KK-\d{4}$/.test(proj.code) && proj.client_id === clientId && !!proj.due_date,
+    JSON.stringify(proj),
+  );
   await A.waitText("Shot list and references");
   const todoCards = await admin.$$eval("section[aria-label='To do'] [role=button]", (els) => els.length);
   check("board shows the tasks in To do", todoCards >= 9, `${todoCards} cards`);
@@ -190,7 +194,14 @@ try {
   await tap(admin, "::-p-xpath(//div[@role='dialog']//button[normalize-space()='Comment' and not(@disabled)])");
   await admin.waitForSelector("::-p-xpath(//div[@role='dialog']//p[contains(., 'please draft this by Friday')])");
   const mention = await until(async () => (await api(`/rest/v1/notifications?recipient_email=eq.${encodeURIComponent(FREELANCER)}&kind=eq.mention`)).length);
-  check("an @mention notifies the freelancer", mention === 1, mention === 1 ? "" : JSON.stringify(await api(`/rest/v1/notifications?recipient_email=eq.${encodeURIComponent(FREELANCER)}&select=kind,title`)) + JSON.stringify(await api(`/rest/v1/task_comments?task_id=eq.${callSheet.id}&select=body`)));
+  check(
+    "an @mention notifies the freelancer",
+    mention === 1,
+    mention === 1
+      ? ""
+      : JSON.stringify(await api(`/rest/v1/notifications?recipient_email=eq.${encodeURIComponent(FREELANCER)}&select=kind,title`)) +
+          JSON.stringify(await api(`/rest/v1/task_comments?task_id=eq.${callSheet.id}&select=body`)),
+  );
   await admin.keyboard.press("Escape");
 
   // ------------------------------------------------------------ timer from the task panel
@@ -303,7 +314,11 @@ try {
     const f = await api(`/rest/v1/files?project_id=eq.${projectId}&kind=eq.upload`);
     return f.length ? f : null;
   });
-  check("upload a file straight to storage", files?.length === 1 && files[0].storage_path.startsWith(`projects/${projectId}/`), files ? "" : (await A.body()).match(/(.*e2e-pixel.*|.*rror.*)/)?.[0]);
+  check(
+    "upload a file straight to storage",
+    files?.length === 1 && files[0].storage_path.startsWith(`projects/${projectId}/`),
+    files ? "" : (await A.body()).match(/(.*e2e-pixel.*|.*rror.*)/)?.[0],
+  );
 
   await A.go(`/projects/${projectId}?tab=timeline`);
   await A.waitText("Red line = today");
@@ -334,7 +349,7 @@ try {
   check("freelancer sees only their project", fp.includes(PROJECT) && !/Budget ₹/.test(fp));
   await F.go(`/projects/${projectId}`);
   const tabs = await fl.$$eval("nav[aria-label='Project sections'] a", (els) => els.map((e) => e.textContent));
-  check("freelancer has no Billing tab", !tabs.includes("Billing"), tabs.join(","));
+  check("freelancer has no Money tab, only Hours", !tabs.includes("Money") && tabs.includes("Hours"), tabs.join(","));
   await F.go(`/projects/${projectId}?tab=overview`);
   check("freelancer doesn't see the budget", !(await F.body()).includes("Save budget") && !(await F.body()).includes("Budget\n"));
   const other = await api("/rest/v1/projects", { method: "POST", body: JSON.stringify({ name: `E2E private ${stamp}` }) });
@@ -360,7 +375,11 @@ try {
   const [fm] = await api(`/rest/v1/members?email=eq.${encodeURIComponent(FREELANCER)}&select=ics_token`);
   const feed = await fetch(`${base}/api/ics/${fm.ics_token}.ics`);
   const ics = await feed.text();
-  check("calendar feed lists the shoot, the task and the leave", feed.status === 200 && ics.startsWith("BEGIN:VCALENDAR") && ics.includes(`E2E shoot day ${stamp}`) && ics.includes("Due: Call sheet") && ics.includes("Leave"), `${feed.status}`);
+  check(
+    "calendar feed lists the shoot, the task and the leave",
+    feed.status === 200 && ics.startsWith("BEGIN:VCALENDAR") && ics.includes(`E2E shoot day ${stamp}`) && ics.includes("Due: Call sheet") && ics.includes("Leave"),
+    `${feed.status}`,
+  );
   const bad = await fetch(`${base}/api/ics/${"0".repeat(32)}.ics`);
   check("an unknown feed token gets 404", bad.status === 404);
 } catch (e) {

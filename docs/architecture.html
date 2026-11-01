@@ -330,6 +330,17 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-02</td><td><b>Navigation and flows (calm redesign, part C)</b>.
+      <ul>
+        <li>Sidebar: Home · My work; Work (Projects, Calendar, Time); Sales (Leads, Clients); Money (Invoices, Expenses, Reports); Studio (Team, Settings), with icons. Freelancers: My work, Projects, Calendar, Time, Leave, My claims.</li>
+        <li>Phones: bottom bar (Home, My work, Projects, Time, More) with a "More" sheet for everything else. Header: global search (<code>/search</code> across projects, clients, leads, invoices; "/" focuses it), a "+ New" menu and a profile menu with sign out.</li>
+        <li>Team pages share tabs: People · Workload · Leave &amp; holidays. Settings pages share tabs: General · Items · Expense categories · Enquiry &amp; booking (Kit stays under Calendar for members).</li>
+        <li>Projects: Time and Billing merge into one <b>Money</b> tab (quotes, invoices, expenses, budget, hours); freelancers see it as <b>Hours</b>. Old <code>?tab=time|billing</code> links still work.</li>
+        <li>Lead → cash: a lead's "Create a quote" keeps its project; client pages have New project / New quote / New invoice; a new project can create its client inline.</li>
+        <li>Invoice editor: confirms before issuing, warns about unsaved changes (also on leaving the page), has a back link.</li>
+        <li>Home: five key numbers, one "Needs attention" list (approvals, overdue invoices, follow-ups, bills due this week, claims, timesheets, filings), this week's shoots and task deadlines, revenue and ageing, drafts.</li>
+        <li>Time on phones: pick a day, then one hours box per row.</li>
+      </ul></td></tr>
     <tr><td>2026-11-02</td><td><b>Design system (calm redesign, part B)</b>.
       <ul>
         <li>Colour tokens in <code>globals.css</code> (navy, accent, line, subtle, ok/warn/danger) replace hard-coded hex; one keyboard focus ring everywhere; cards are flat with a hairline border.</li>
@@ -518,7 +529,7 @@ vercel deploy --prod
       "Attach the receipt (phone camera works), tag a project, tick <b>Bill this to the client</b> with a markup if it's a pass-through cost.",
       "Pay it later from the bill's page. The amount owed is the total minus TDS deducted.",
       "Team members file <b>claims</b> for money they spent. The admin approves and reimburses them in one batch, and everyone is notified at each step.",
-      "On the project's Billing tab, <b>Draft invoice from billable expenses</b> adds them at cost plus markup, and they can't be billed twice.",
+      "On the project's Money tab, <b>Draft invoice from billable expenses</b> adds them at cost plus markup, and they can't be billed twice.",
       "Month end: <b>GST &amp; TDS</b> shows input credit for GSTR-3B. Upload the portal's GSTR-2B CSV to match bills, record the TDS deposit, and download the purchase register and TDS CSVs for your CA.",
     ],
     "Read the numbers": [
