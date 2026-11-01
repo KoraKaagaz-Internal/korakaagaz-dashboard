@@ -17,6 +17,8 @@ export function Tabs({ items, label }: { items: TabItem[]; label: string }) {
           <Link
             key={t.href}
             href={t.href}
+            prefetch={false}
+            scroll={false}
             aria-current={t.active ? "page" : undefined}
             className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm whitespace-nowrap ${t.active ? "border-navy font-medium text-navy" : "border-transparent text-neutral-600 hover:text-ink"}`}
           >
