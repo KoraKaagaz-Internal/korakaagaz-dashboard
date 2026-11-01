@@ -218,11 +218,24 @@ export async function vendorTotals(vendorId: string, date: string, excludeId?: s
 export async function listChallans() {
   const { supabase } = await requireTeam();
   const { data } = await supabase.from("tds_challans").select("*").order("month", { ascending: false });
-  return ((data ?? []) as Row[]).map((c) => ({ id: c.id as string, month: c.month as string, amount: n(c.amount), challan_no: c.challan_no as string, bsr_code: c.bsr_code as string, paid_on: c.paid_on as string }));
+  return ((data ?? []) as Row[]).map((c) => ({
+    id: c.id as string,
+    month: c.month as string,
+    amount: n(c.amount),
+    challan_no: c.challan_no as string,
+    bsr_code: c.bsr_code as string,
+    paid_on: c.paid_on as string,
+  }));
 }
 
 export async function cashAccounts() {
   const { supabase } = await requireTeam();
   const { data } = await supabase.from("bank_accounts").select("id, label, kind, opening_balance, opening_date").order("kind").order("label");
-  return ((data ?? []) as Row[]).map((a) => ({ id: a.id as string, label: a.label as string, kind: a.kind as "bank" | "cash", opening_balance: n(a.opening_balance), opening_date: (a.opening_date as string) ?? null }));
+  return ((data ?? []) as Row[]).map((a) => ({
+    id: a.id as string,
+    label: a.label as string,
+    kind: a.kind as "bank" | "cash",
+    opening_balance: n(a.opening_balance),
+    opening_date: (a.opening_date as string) ?? null,
+  }));
 }

@@ -10,7 +10,13 @@ describe("computeTotals", () => {
   });
 
   it("sums multiple lines without float drift", () => {
-    const t = computeTotals({ ...base, items: [{ qty: 3, unit_price: 0.1 }, { qty: 1, unit_price: 0.2 }] });
+    const t = computeTotals({
+      ...base,
+      items: [
+        { qty: 3, unit_price: 0.1 },
+        { qty: 1, unit_price: 0.2 },
+      ],
+    });
     expect(t.subtotal).toBe(0.5);
   });
 

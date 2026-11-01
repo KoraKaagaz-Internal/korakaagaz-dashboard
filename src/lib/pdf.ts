@@ -21,9 +21,7 @@ export async function renderPdf(url: string, cookies: { name: string; value: str
   const browser = await launch();
   try {
     const target = new URL(url);
-    await browser.setCookie(
-      ...cookies.map((c) => ({ name: c.name, value: c.value, domain: target.hostname, path: "/", secure: target.protocol === "https:" })),
-    );
+    await browser.setCookie(...cookies.map((c) => ({ name: c.name, value: c.value, domain: target.hostname, path: "/", secure: target.protocol === "https:" })));
     const page = await browser.newPage();
     await page.setViewport({ width: 852, height: 1278, deviceScaleFactor: 2 });
     const res = await page.goto(url, { waitUntil: "networkidle0", timeout: 45000 });

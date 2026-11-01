@@ -78,7 +78,13 @@ export function leadFunnel(leads: Pick<Lead, "stage" | "source" | "created_at" |
     const list = inRange.filter((l) => l.source === s.key);
     const w = list.filter((l) => l.stage === "won");
     const d = list.filter((l) => l.stage === "won" || l.stage === "lost");
-    return { source: s.label, leads: list.length, won: w.length, value: round2(w.reduce((t, l) => t + l.value, 0)), winRate: d.length ? Math.round((w.length / d.length) * 100) : null };
+    return {
+      source: s.label,
+      leads: list.length,
+      won: w.length,
+      value: round2(w.reduce((t, l) => t + l.value, 0)),
+      winRate: d.length ? Math.round((w.length / d.length) * 100) : null,
+    };
   }).filter((s) => s.leads > 0);
   const days = won.filter((l) => l.won_at).map((l) => daysBetween(l.created_at.slice(0, 10), l.won_at!.slice(0, 10)));
   return {
@@ -154,5 +160,12 @@ export function freeSlots(b: BookingSettings, busy: { starts_at: string; ends_at
 }
 
 export function slugify(s: string) {
-  return s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "book";
+  return (
+    s
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40) || "book"
+  );
 }

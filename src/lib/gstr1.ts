@@ -66,7 +66,15 @@ export function b2cs(docs: DocumentRecord[], supplierState: string): Row[] {
     if (d.doc_type !== "invoice" || !live(d) || d.client.gstin || isExport(d)) continue;
     if (d.place_of_supply !== supplierState && inr(d, d.total) > B2CL_THRESHOLD) continue; // that's B2CL
     const key = `${d.place_of_supply}|${d.gst_rate}`;
-    const row = groups.get(key) ?? { Type: "OE", "Place Of Supply": pos(d.place_of_supply), "Applicable % of Tax Rate": "", Rate: d.gst_rate, "Taxable Value": 0, "Cess Amount": 0, "E-Commerce GSTIN": "" };
+    const row = groups.get(key) ?? {
+      Type: "OE",
+      "Place Of Supply": pos(d.place_of_supply),
+      "Applicable % of Tax Rate": "",
+      Rate: d.gst_rate,
+      "Taxable Value": 0,
+      "Cess Amount": 0,
+      "E-Commerce GSTIN": "",
+    };
     row["Taxable Value"] = round2(Number(row["Taxable Value"]) + inr(d, d.taxable));
     groups.set(key, row);
   }
@@ -122,8 +130,17 @@ export function hsn(docs: DocumentRecord[], kind: "b2b" | "b2c"): Row[] {
       const sac = item.sac || "998391";
       const key = `${sac}|${d.gst_rate}`;
       const row = groups.get(key) ?? {
-        HSN: sac, Description: item.title.slice(0, 30), UQC: "NA", "Total Quantity": 0, "Total Value": 0, Rate: d.gst_rate,
-        "Taxable Value": 0, "Integrated Tax Amount": 0, "Central Tax Amount": 0, "State/UT Tax Amount": 0, "Cess Amount": 0,
+        HSN: sac,
+        Description: item.title.slice(0, 30),
+        UQC: "NA",
+        "Total Quantity": 0,
+        "Total Value": 0,
+        Rate: d.gst_rate,
+        "Taxable Value": 0,
+        "Integrated Tax Amount": 0,
+        "Central Tax Amount": 0,
+        "State/UT Tax Amount": 0,
+        "Cess Amount": 0,
       };
       const add = (k: string, v: number) => (row[k] = round2(Number(row[k]) + inr(d, v * share)));
       add("Total Value", d.total);
@@ -177,14 +194,22 @@ export type Gstr1Section = keyof typeof GSTR1_SECTIONS;
 
 export function gstr1Section(section: Gstr1Section, docs: DocumentRecord[], supplierState: string): Row[] {
   switch (section) {
-    case "b2b": return b2b(docs);
-    case "b2cl": return b2cl(docs, supplierState);
-    case "b2cs": return b2cs(docs, supplierState);
-    case "exp": return exp(docs);
-    case "cdnr": return cdnr(docs);
-    case "hsn_b2b": return hsn(docs, "b2b");
-    case "hsn_b2c": return hsn(docs, "b2c");
-    case "docs": return docSeries(docs);
+    case "b2b":
+      return b2b(docs);
+    case "b2cl":
+      return b2cl(docs, supplierState);
+    case "b2cs":
+      return b2cs(docs, supplierState);
+    case "exp":
+      return exp(docs);
+    case "cdnr":
+      return cdnr(docs);
+    case "hsn_b2b":
+      return hsn(docs, "b2b");
+    case "hsn_b2c":
+      return hsn(docs, "b2c");
+    case "docs":
+      return docSeries(docs);
   }
 }
 

@@ -80,4 +80,3 @@ describe("retainer and months", () => {
     expect(monthRange("2026-12-31")).toEqual({ from: "2026-12-01", to: "2026-12-31" });
   });
 });
-

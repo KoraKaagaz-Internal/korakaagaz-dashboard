@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
     "/api/documents/[id]/pdf": ["./node_modules/@sparticuz/chromium/bin/**"],
     "/api/share/[token]/pdf": ["./node_modules/@sparticuz/chromium/bin/**"],
     "/documents/[id]": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/s/[token]": ["./node_modules/@sparticuz/chromium/bin/**"],
+    "/agreements/[id]": ["./node_modules/@sparticuz/chromium/bin/**"],
   },
 };
 

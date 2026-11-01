@@ -46,3 +46,50 @@ textarea:focus-visible {
     transform: none;
   }
 }
+
+/* Agreement documents (rendered from light markdown) */
+.ag-doc {
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--color-ink);
+}
+.ag-doc h1 {
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 30px;
+  line-height: 1.2;
+  color: var(--color-navy);
+  margin: 0 0 16px;
+}
+.ag-doc h2 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 28px 0 8px;
+}
+.ag-doc h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 20px 0 6px;
+}
+.ag-doc p {
+  margin: 0 0 12px;
+}
+.ag-doc ul,
+.ag-doc ol {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+.ag-doc ul {
+  list-style: disc;
+}
+.ag-doc ol {
+  list-style: decimal;
+}
+.ag-doc li {
+  margin: 2px 0;
+}
+.ag-doc mark.ag-missing {
+  background: color-mix(in srgb, var(--color-warn) 18%, white);
+  color: var(--color-warn);
+  border-radius: 4px;
+  padding: 0 3px;
+}

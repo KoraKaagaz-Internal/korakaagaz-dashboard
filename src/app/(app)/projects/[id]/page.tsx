@@ -17,6 +17,7 @@ import { ProjectTime } from "./ProjectTime";
 import { StatusSelect } from "./StatusSelect";
 import { TaskList } from "./TaskList";
 import { Timeline } from "./Timeline";
+import { AgreementList } from "@/components/agreements/AgreementList";
 
 // drag-and-drop code only loads with the board tab
 const Board = dynamic(() => import("./Board").then((m) => m.Board));
@@ -104,6 +105,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
       {tab === "money" && (
         <div className="space-y-8">
           {isStaff && <Billing projectId={p.id} budget={bundle.finance?.budget ?? 0} canEdit={canEdit} />}
+          {isStaff && <AgreementList filter={{ project: p.id }} newHref={`/agreements/new?project=${p.id}`} canEdit={canEdit} />}
           <Section title="Hours">
             <ProjectTime project={p} people={people} />
           </Section>

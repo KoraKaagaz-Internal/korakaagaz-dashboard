@@ -11,6 +11,7 @@ import { listTemplates, teamDirectory } from "@/lib/pm-data";
 import { DOC_LABELS } from "@/lib/types";
 import { EditToggle } from "./EditToggle";
 import { Convert, DeleteLead, LogActivity, QuoteLink, StagePicker } from "./LeadPanel";
+import { AgreementList } from "@/components/agreements/AgreementList";
 
 const KIND_ICON: Record<string, string> = { note: "✎", call: "☎", whatsapp: "💬", email: "✉", meeting: "◷", stage: "→", system: "•" };
 
@@ -99,6 +100,8 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
           )}
         </Card>
       )}
+
+      <AgreementList title="Proposals and contracts" filter={{ lead: l.id }} newHref={`/agreements/new?lead=${l.id}&kind=proposal`} canEdit={canEdit} />
 
       <div className="grid gap-5 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-5">

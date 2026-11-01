@@ -4,8 +4,21 @@ import type { DocumentRecord } from "./types";
 
 const d = (o: Omit<Partial<DocumentRecord>, "client"> & { client?: Partial<DocumentRecord["client"]> }): DocumentRecord =>
   ({
-    doc_type: "invoice", status: "issued", number: "KK/26-27/001", issue_date: "2026-10-05", currency: "INR", fx_rate: 1,
-    place_of_supply: "21", export_type: "none", reverse_charge: false, gst_rate: 18, taxable: 10000, total: 11800, cgst: 900, sgst: 900, igst: 0,
+    doc_type: "invoice",
+    status: "issued",
+    number: "KK/26-27/001",
+    issue_date: "2026-10-05",
+    currency: "INR",
+    fx_rate: 1,
+    place_of_supply: "21",
+    export_type: "none",
+    reverse_charge: false,
+    gst_rate: 18,
+    taxable: 10000,
+    total: 11800,
+    cgst: 900,
+    sgst: 900,
+    igst: 0,
     items: [{ title: "Design", description: "", sac: "998391", qty: 1, unit_price: 10000 }],
     ...o,
     client: { name: "Acme", gstin: "", state_code: "21", country: "India", email: "", phone: "", address: "", city: "", pin: "", ...o.client },

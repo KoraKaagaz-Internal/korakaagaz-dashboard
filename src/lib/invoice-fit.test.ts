@@ -10,7 +10,14 @@ describe("fitClientName", () => {
 });
 
 describe("clientAddressLines", () => {
-  const c = { address: "Third Floor, Flat no. T-9, R-8/30, Raj Nagar, Vandana Apartment, Ghaziabad, Uttar Pradesh, 201002", city: "Ghaziabad", pin: "201002", state_code: "09", country: "India", gstin: "09HQRPR4194C1Z4" };
+  const c = {
+    address: "Third Floor, Flat no. T-9, R-8/30, Raj Nagar, Vandana Apartment, Ghaziabad, Uttar Pradesh, 201002",
+    city: "Ghaziabad",
+    pin: "201002",
+    state_code: "09",
+    country: "India",
+    gstin: "09HQRPR4194C1Z4",
+  };
   it("doesn't repeat city, PIN and state already in the address", () => {
     expect(clientAddressLines(c)).toEqual([c.address, "State code 09", "GSTIN: 09HQRPR4194C1Z4"]);
   });

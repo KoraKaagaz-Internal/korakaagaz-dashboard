@@ -19,7 +19,9 @@ export interface Activity {
   at: string;
 }
 
-export async function getLead(id: string): Promise<{ lead: Lead; activities: Activity[]; client: { id: string; name: string } | null; project: { id: string; code: string; name: string } | null } | null> {
+export async function getLead(
+  id: string,
+): Promise<{ lead: Lead; activities: Activity[]; client: { id: string; name: string } | null; project: { id: string; code: string; name: string } | null } | null> {
   const { supabase } = await requireMember();
   if (!/^[0-9a-f-]{36}$/.test(id)) return null;
   const [{ data }, { data: acts }] = await Promise.all([

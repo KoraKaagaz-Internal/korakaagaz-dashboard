@@ -17,6 +17,9 @@ export type MailResult = { status: "sent" } | { status: "skipped"; reason: strin
  * Without SMTP_PASS (or with MAIL_DRY_RUN=1) nothing is sent and the caller logs "skipped".
  */
 export async function sendMail(input: MailInput): Promise<MailResult> {
+  // reserved test domains (RFC 2606) never get real mail: automated tests use them
+  input = { ...input, to: input.to.filter((e) => !isTestAddress(e)), cc: input.cc?.filter((e) => !isTestAddress(e)) };
+  if (!input.to.length) return { status: "skipped", reason: "test address" };
   const user = process.env.SMTP_USER || "team@korakaagaz.co";
   const pass = process.env.SMTP_PASS;
   if (!pass || process.env.MAIL_DRY_RUN === "1") {
@@ -38,6 +41,10 @@ export async function sendMail(input: MailInput): Promise<MailResult> {
   } catch (e) {
     return { status: "failed", error: (e as Error).message.slice(0, 500) };
   }
+}
+
+export function isTestAddress(email: string): boolean {
+  return /@(?:[^@]+\.)?example\.(?:com|org|net)$|\.(?:test|example|invalid)$/i.test(email.trim());
 }
 
 export function mailConfigured(): boolean {

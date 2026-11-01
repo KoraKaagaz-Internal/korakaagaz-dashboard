@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { dueBucket, initials, mentionedEmails, progress, projectHealth, sortBetween, timelineRange } from "./pm";
 
-const t = (status: string, due: string | null = null, extra: Record<string, unknown> = {}) =>
-  ({ status, due_date: due, parent_id: null, estimate_hours: 1, ...extra }) as never;
+const t = (status: string, due: string | null = null, extra: Record<string, unknown> = {}) => ({ status, due_date: due, parent_id: null, estimate_hours: 1, ...extra }) as never;
 
 describe("sortBetween", () => {
   it("puts a card between, before and after neighbours", () => {

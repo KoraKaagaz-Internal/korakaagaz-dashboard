@@ -3,8 +3,7 @@ import { DOC_LABELS, type DocumentRecord, type MessageKind } from "./types";
 
 export const DEFAULT_MESSAGES: Record<MessageKind, string> = {
   email_subject: "{doc_title} {doc_no} from {business}",
-  email_body:
-    "Hi {client},\n\nPlease find {doc_title_lower} {doc_no} for {amount} attached.{due_line}\n\nView it online and pay by UPI: {link}\n\nThank you,\n{business}",
+  email_body: "Hi {client},\n\nPlease find {doc_title_lower} {doc_no} for {amount} attached.{due_line}\n\nView it online and pay by UPI: {link}\n\nThank you,\n{business}",
   whatsapp: "Hi {client}, here is {doc_title_lower} {doc_no} for {amount} from {business}.{due_line} View & pay: {link}",
   reminder_subject: "Reminder: {doc_no} for {amount} {due_phrase}",
   reminder_body:
@@ -18,9 +17,13 @@ export function fillTemplate(template: string, values: Record<string, string>): 
   return template.replace(/\{(\w+)\}/g, (m, key: string) => (key in values ? values[key] : m));
 }
 
-
 /** Placeholder values for a document's messages. */
-export function messageValues(doc: Pick<DocumentRecord, "doc_type" | "number" | "total" | "currency" | "due_date" | "valid_until" | "client" | "balance">, business: string, link: string, today: string): Record<string, string> {
+export function messageValues(
+  doc: Pick<DocumentRecord, "doc_type" | "number" | "total" | "currency" | "due_date" | "valid_until" | "client" | "balance">,
+  business: string,
+  link: string,
+  today: string,
+): Record<string, string> {
   const title = DOC_LABELS[doc.doc_type].title;
   const due = doc.doc_type === "quote" ? doc.valid_until : doc.due_date;
   const overdue = !!due && due < today;

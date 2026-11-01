@@ -47,6 +47,7 @@ export function NewMenu({ isStaff, canEdit }: { isStaff: boolean; canEdit: boole
           { href: "/documents/new?type=quote", label: "Quote" },
           { href: "/projects/new", label: "Project" },
           { href: "/crm/new", label: "Lead" },
+          { href: "/agreements/new", label: "Proposal or contract" },
           { href: "/expenses/new", label: "Expense" },
           { href: "/calendar/new", label: "Event" },
         ]

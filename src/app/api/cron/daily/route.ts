@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { DEFAULT_PREFIXES, toDocument } from "@/lib/data";
+import { emailSigningLink, logEvent } from "@/lib/agreement-sign";
 import { copyDocumentToDraft } from "@/lib/doc-copy";
 import { sendMail, splitEmails, textToHtml } from "@/lib/mail";
 import { DEFAULT_MESSAGES, fillTemplate, messageValues } from "@/lib/messages";
@@ -164,6 +165,80 @@ export async function GET(request: NextRequest) {
     await supabase
       .from("notifications")
       .insert({ recipient_email: l.owner_email, actor_email: l.owner_email, kind: "follow_up", title: `Follow up today: ${l.company || l.name}`, link: `/crm/${l.id}` });
+  }
+
+  // 6. Agreements: lapse unsigned links, chase signers every 3 days (3 times at most), warn before contracts end.
+  report.agreementsExpired = [];
+  report.agreementReminders = [];
+  report.renewals = [];
+  const { data: lapsed } = await supabase.from("agreements").select("id, number, title, created_by").eq("status", "sent").lt("expires_on", today);
+  for (const a of lapsed ?? []) {
+    report.agreementsExpired.push(a.number);
+    if (dry) continue;
+    await supabase.from("agreements").update({ status: "expired" }).eq("id", a.id);
+    await logEvent(supabase, { agreement_id: a.id, action: "expired", actor: "system" });
+    if (a.created_by)
+      await supabase
+        .from("notifications")
+        .insert({
+          recipient_email: a.created_by,
+          actor_email: "system",
+          kind: "agreement_expired",
+          title: `Signing link lapsed: ${a.title}`,
+          body: "Duplicate it to send again.",
+          link: `/agreements/${a.id}`,
+        });
+  }
+  const threeDaysAgo = new Date(Date.parse(`${today}T03:30:00Z`) - 3 * 86400000).toISOString();
+  const { data: open } = await supabase.from("agreements").select("*").eq("status", "sent").lt("sent_at", threeDaysAgo);
+  for (const a of open ?? []) {
+    const { data: waiting } = await supabase
+      .from("agreement_signers")
+      .select("id, name, email, token, reminded_at, reminder_count")
+      .eq("agreement_id", a.id)
+      .is("signed_at", null)
+      .is("declined_at", null)
+      .lt("reminder_count", 3);
+    for (const sg of waiting ?? []) {
+      if (sg.reminded_at && sg.reminded_at > threeDaysAgo) continue;
+      report.agreementReminders.push({ agreement: a.number, to: sg.email });
+      if (dry) continue;
+      const r = await emailSigningLink(a, sg, settings.business_name, true);
+      if (r.status !== "sent") {
+        report.errors.push({ agreementReminder: a.number, error: r.status === "failed" ? r.error : r.reason });
+        continue;
+      }
+      await supabase
+        .from("agreement_signers")
+        .update({ reminded_at: new Date().toISOString(), reminder_count: Number(sg.reminder_count) + 1 })
+        .eq("id", sg.id);
+      await logEvent(supabase, { agreement_id: a.id, action: "reminded", actor: "system", detail: { signer: sg.email } });
+    }
+  }
+  const { data: ending } = await supabase
+    .from("agreements")
+    .select("id, number, title, ends_on, renewal_notice_days, created_by, clients(name)")
+    .eq("status", "signed")
+    .not("ends_on", "is", null)
+    .is("renewal_reminded_on", null);
+  for (const a of ending ?? []) {
+    if (addDays(a.ends_on as string, -Number(a.renewal_notice_days)) > today) continue;
+    report.renewals.push({ agreement: a.number, ends: a.ends_on });
+    if (dry) continue;
+    const who = (a.clients as { name?: string } | null)?.name;
+    const title = `${a.title}${who ? ` (${who})` : ""} ends on ${a.ends_on}`;
+    const to = a.created_by || settings.query_email;
+    if (to) {
+      await supabase
+        .from("notifications")
+        .insert({ recipient_email: to, actor_email: "system", kind: "agreement_renewal", title, body: "Renew it, or let it end.", link: `/agreements/${a.id}` });
+      const text = `${title}.
+
+Renew it (duplicate the agreement, update the dates and send), or let it end.
+${site}/agreements/${a.id}`;
+      await sendMail({ to: [to], subject: `Ending soon: ${a.title}`, text, html: textToHtml(text) });
+    }
+    await supabase.from("agreements").update({ renewal_reminded_on: today }).eq("id", a.id);
   }
 
   return NextResponse.json({ ok: true, dry, today, ...report });

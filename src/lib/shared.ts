@@ -19,6 +19,9 @@ export async function loadShared(token: string, track: boolean): Promise<Shared 
   const src = row.source as { doc_type: DocType; number: string | null; issue_date: string } | null;
   return {
     doc,
-    reference: src?.number && ["credit_for", "converted_from"].includes(String(row.source_relation)) ? { label: doc.doc_type === "credit_note" ? "Against" : `From ${DOC_LABELS[src.doc_type].short.toLowerCase()}`, number: src.number, date: src.issue_date } : null,
+    reference:
+      src?.number && ["credit_for", "converted_from"].includes(String(row.source_relation))
+        ? { label: doc.doc_type === "credit_note" ? "Against" : `From ${DOC_LABELS[src.doc_type].short.toLowerCase()}`, number: src.number, date: src.issue_date }
+        : null,
   };
 }

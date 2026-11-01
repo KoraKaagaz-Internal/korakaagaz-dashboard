@@ -25,7 +25,14 @@ export function buildLedger(docs: DocumentRecord[], payments: Record<string, unk
     if (!d) continue;
     const ref = p.mode === "advance" ? `advance ${p.reference}` : `${String(p.mode).toUpperCase()}${p.reference ? ` ${p.reference}` : ""}`;
     entries.push({ date: String(p.paid_on), particulars: `Payment for ${d.number} · ${ref}`, debit: 0, credit: inr(d, Number(p.amount)), docId: d.id });
-    if (Number(p.tds_amount) > 0) entries.push({ date: String(p.paid_on), particulars: `TDS deducted on ${d.number}${p.tds_section ? ` (${p.tds_section})` : ""}`, debit: 0, credit: inr(d, Number(p.tds_amount)), docId: d.id });
+    if (Number(p.tds_amount) > 0)
+      entries.push({
+        date: String(p.paid_on),
+        particulars: `TDS deducted on ${d.number}${p.tds_section ? ` (${p.tds_section})` : ""}`,
+        debit: 0,
+        credit: inr(d, Number(p.tds_amount)),
+        docId: d.id,
+      });
   }
   entries.sort((a, b) => a.date.localeCompare(b.date) || b.debit - a.debit);
 

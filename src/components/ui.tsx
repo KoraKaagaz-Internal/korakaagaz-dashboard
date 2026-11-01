@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { button } from "./ui/Button";
 
 export { Button, ButtonLink, button, type ButtonVariant } from "./ui/Button";
@@ -20,15 +20,15 @@ export function Field({ label, children, className = "" }: { label: string; chil
   );
 }
 
-export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
+export function Input(props: ComponentProps<"input">) {
   return <input {...props} className={`${inputCls} ${props.className ?? ""}`} />;
 }
 
-export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea(props: ComponentProps<"textarea">) {
   return <textarea rows={2} {...props} className={`${inputCls} ${props.className ?? ""}`} />;
 }
 
-export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
+export function Select(props: ComponentProps<"select">) {
   return <select {...props} className={`${inputCls} ${props.className ?? ""}`} />;
 }
 

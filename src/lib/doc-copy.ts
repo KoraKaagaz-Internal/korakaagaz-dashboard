@@ -5,8 +5,26 @@ import type { DocType } from "./types";
 
 export type CopyRelation = "converted_from" | "credit_for" | "revision_of" | "duplicated_from" | "recurring_from";
 
-const OMIT = new Set(["id", "status", "number", "fy", "share_token", "share_enabled", "first_viewed_at", "last_viewed_at", "view_count",
-  "issued_at", "sent_at", "accepted_at", "pdf_path", "created_by", "created_at", "updated_at", "document_items", "lost_reason"]);
+const OMIT = new Set([
+  "id",
+  "status",
+  "number",
+  "fy",
+  "share_token",
+  "share_enabled",
+  "first_viewed_at",
+  "last_viewed_at",
+  "view_count",
+  "issued_at",
+  "sent_at",
+  "accepted_at",
+  "pdf_path",
+  "created_by",
+  "created_at",
+  "updated_at",
+  "document_items",
+  "lost_reason",
+]);
 
 /**
  * Copies a document and its items into a new draft. Used for conversions, credit notes,

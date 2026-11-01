@@ -4,8 +4,16 @@ import type { DocumentRecord } from "./types";
 
 const doc = (o: Partial<DocumentRecord>): DocumentRecord =>
   ({
-    doc_type: "invoice", status: "issued", currency: "INR", fx_rate: 1, issue_date: "2026-10-01", due_date: "2026-10-08",
-    taxable: 10000, total: 11800, fy: "26-27", balance: { paid: 0, tds: 0, credited: 0, balance: 11800, payment_status: "unpaid", overdue: false },
+    doc_type: "invoice",
+    status: "issued",
+    currency: "INR",
+    fx_rate: 1,
+    issue_date: "2026-10-01",
+    due_date: "2026-10-08",
+    taxable: 10000,
+    total: 11800,
+    fy: "26-27",
+    balance: { paid: 0, tds: 0, credited: 0, balance: 11800, payment_status: "unpaid", overdue: false },
     ...o,
   }) as DocumentRecord;
 

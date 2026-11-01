@@ -7,6 +7,7 @@ import { buildLedger } from "@/lib/ledger";
 import { formatInvoiceDate, formatMoney } from "@/lib/money";
 import { DOC_LABELS } from "@/lib/types";
 import { StatementButton } from "./StatementButton";
+import { AgreementList } from "@/components/agreements/AgreementList";
 
 export default async function ClientPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ from?: string; to?: string }> }) {
   const { supabase, canEdit } = await requireMember();
@@ -64,6 +65,8 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
         <Stat label="Invoiced (all time)" value={formatMoney(docs.filter((d) => d.doc_type === "invoice" && d.status === "issued").reduce((s, d) => s + d.total, 0))} />
         <Stat label="Documents" value={String(docs.length)} />
       </div>
+
+      <AgreementList filter={{ client: id }} newHref={`/agreements/new?client=${id}`} canEdit={canEdit} />
 
       {projects.length > 0 && (
         <Card title="Projects">

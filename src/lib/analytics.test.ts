@@ -26,12 +26,43 @@ import {
 } from "./analytics";
 
 const doc = (o: Partial<ADoc>): ADoc => ({
-  id: "d", doc_type: "invoice", status: "issued", client_id: "c", client_name: "Acme", project_id: null, issue_date: "2026-10-05", due_date: "2026-10-20",
-  currency: "INR", fx_rate: 1, taxable: 1000, total: 1180, source_id: null, source_relation: null, recurring: null, balance: 1180, ...o,
+  id: "d",
+  doc_type: "invoice",
+  status: "issued",
+  client_id: "c",
+  client_name: "Acme",
+  project_id: null,
+  issue_date: "2026-10-05",
+  due_date: "2026-10-20",
+  currency: "INR",
+  fx_rate: 1,
+  taxable: 1000,
+  total: 1180,
+  source_id: null,
+  source_relation: null,
+  recurring: null,
+  balance: 1180,
+  ...o,
 });
 const exp = (o: Partial<AExp>): AExp => ({
-  expense_date: "2026-10-10", category: "Props & sets", category_kind: "pass_through", project_id: null, taxable: 100, total: 118, itc_status: "eligible", rcm: false, fx_rate: 1,
-  kind: "receipt", approval: null, is_draft: false, due_date: null, balance: 0, recurring: null, tds_amount: 0, tds_challan_id: null, ...o,
+  expense_date: "2026-10-10",
+  category: "Props & sets",
+  category_kind: "pass_through",
+  project_id: null,
+  taxable: 100,
+  total: 118,
+  itc_status: "eligible",
+  rcm: false,
+  fx_rate: 1,
+  kind: "receipt",
+  approval: null,
+  is_draft: false,
+  due_date: null,
+  balance: 0,
+  recurring: null,
+  tds_amount: 0,
+  tds_challan_id: null,
+  ...o,
 });
 
 describe("periods", () => {
@@ -115,7 +146,10 @@ describe("clients", () => {
 });
 
 describe("cash and collections", () => {
-  const docs = [doc({ id: "a", issue_date: "2026-08-01", total: 1000, taxable: 1000, due_date: "2026-08-15", balance: 400 }), doc({ id: "b", issue_date: "2026-09-10", total: 2000, taxable: 2000, due_date: "2026-11-20", balance: 2000 })];
+  const docs = [
+    doc({ id: "a", issue_date: "2026-08-01", total: 1000, taxable: 1000, due_date: "2026-08-15", balance: 400 }),
+    doc({ id: "b", issue_date: "2026-09-10", total: 2000, taxable: 2000, due_date: "2026-11-20", balance: 2000 }),
+  ];
   const pays = [{ document_id: "a", paid_on: "2026-09-05", amount: 500, tds_amount: 100 }];
   it("receivables at a date", () => {
     expect(receivablesAt(docs, pays, "2026-08-31")).toBe(1000);
@@ -129,7 +163,16 @@ describe("cash and collections", () => {
     expect(cei(docs, pays, "2026-09-01", "2026-09-30", "2026-10-30")).toBe(60);
   });
   it("cash and runway", () => {
-    const c = cashPosition(100000, "2026-08-01", [{ date: "2026-09-01", amount: 50000 }], [{ date: "2026-09-10", amount: 30000 }, { date: "2026-07-01", amount: 999 }], "2026-10-15");
+    const c = cashPosition(
+      100000,
+      "2026-08-01",
+      [{ date: "2026-09-01", amount: 50000 }],
+      [
+        { date: "2026-09-10", amount: 30000 },
+        { date: "2026-07-01", amount: 999 },
+      ],
+      "2026-10-15",
+    );
     expect(c).toEqual({ cash: 120000, monthlyBurn: 10000, runwayMonths: 12 });
   });
   it("13-week forecast puts overdue invoices in week 1 and bills on their due dates", () => {
@@ -171,9 +214,24 @@ describe("projects and team", () => {
     expect(u[0].weeks[0]).toEqual({ week: "2026-11-02", logged: 30, capacity: 32, pct: 94 });
   });
   it("on-time and the quote funnel", () => {
-    expect(onTime([{ due_date: "2026-10-10", completed_at: "2026-10-09T10:00:00Z" }, { due_date: "2026-10-10", completed_at: "2026-10-12T10:00:00Z" }, { due_date: null, completed_at: "2026-10-12T10:00:00Z" }], "2026-10-01", "2026-10-31")).toEqual({ done: 2, late: 1, pct: 50 });
+    expect(
+      onTime(
+        [
+          { due_date: "2026-10-10", completed_at: "2026-10-09T10:00:00Z" },
+          { due_date: "2026-10-10", completed_at: "2026-10-12T10:00:00Z" },
+          { due_date: null, completed_at: "2026-10-12T10:00:00Z" },
+        ],
+        "2026-10-01",
+        "2026-10-31",
+      ),
+    ).toEqual({ done: 2, late: 1, pct: 50 });
     const f = quoteFunnel(
-      [doc({ id: "q1", doc_type: "quote", status: "accepted" }), doc({ id: "q2", doc_type: "quote", status: "declined" }), doc({ id: "q3", doc_type: "quote", status: "issued" }), doc({ id: "i1", source_id: "q1", source_relation: "converted_from" })],
+      [
+        doc({ id: "q1", doc_type: "quote", status: "accepted" }),
+        doc({ id: "q2", doc_type: "quote", status: "declined" }),
+        doc({ id: "q3", doc_type: "quote", status: "issued" }),
+        doc({ id: "i1", source_id: "q1", source_relation: "converted_from" }),
+      ],
       "2026-10-01",
       "2026-10-31",
     );

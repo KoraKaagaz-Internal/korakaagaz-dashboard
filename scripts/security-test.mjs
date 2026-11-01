@@ -58,7 +58,21 @@ try {
   }
 
   // 2. Anonymous visitors see nothing.
-  for (const t of ["documents", "clients", "payments", "settings", "bank_accounts", "audit_events", "members", "projects", "project_finance", "tasks", "task_comments", "files", "notifications"]) {
+  for (const t of [
+    "documents",
+    "clients",
+    "payments",
+    "settings",
+    "bank_accounts",
+    "audit_events",
+    "members",
+    "projects",
+    "project_finance",
+    "tasks",
+    "task_comments",
+    "files",
+    "notifications",
+  ]) {
     const { data } = await anon.from(t).select("*").limit(1);
     check(`anon cannot read ${t}`, !data || data.length === 0);
   }
@@ -71,9 +85,16 @@ try {
   if (client) created.clients.push(client.id);
   const { error: vErr } = await viewer.from("clients").insert({ name: "Viewer Co", state_code: "21" });
   check("viewer cannot create a client", !!vErr);
-  const { data: vRead } = await viewer.from("clients").select("id").eq("id", client?.id ?? "");
+  const { data: vRead } = await viewer
+    .from("clients")
+    .select("id")
+    .eq("id", client?.id ?? "");
   check("viewer can read clients", (vRead ?? []).length === 1);
-  const { data: vUpd } = await viewer.from("clients").update({ name: "hacked" }).eq("id", client?.id ?? "").select("id");
+  const { data: vUpd } = await viewer
+    .from("clients")
+    .update({ name: "hacked" })
+    .eq("id", client?.id ?? "")
+    .select("id");
   check("viewer cannot edit a client", !vUpd || vUpd.length === 0);
 
   // 4. Only the admin manages the team and settings.
@@ -103,7 +124,10 @@ try {
   check("member gets an FY number", !numErr && /^[A-Z0-9]+\/26-27\/\d{3}$/.test(number), number ?? numErr?.message);
   const { error: viewerNum } = await viewer.rpc("next_doc_number", { p_type: "invoice", p_date: "2026-10-27" });
   check("viewer cannot take a number", !!viewerNum);
-  await member.from("documents").update({ status: "issued", number: `SEC/26-27/${String(stamp).slice(-3)}`, fy: "26-27" }).eq("id", doc.id);
+  await member
+    .from("documents")
+    .update({ status: "issued", number: `SEC/26-27/${String(stamp).slice(-3)}`, fy: "26-27" })
+    .eq("id", doc.id);
 
   const { error: lockErr } = await member.from("documents").update({ total: 1 }).eq("id", doc.id);
   check("issued document's amounts are locked", !!lockErr && /locked/.test(lockErr.message));
@@ -132,7 +156,10 @@ try {
   check("member can create a project", !pAErr && /^KK-\d{4}$/.test(pA?.code ?? ""), pAErr?.message ?? pA?.code);
   const { data: pB } = await member.from("projects").insert({ name: "Sec project B", client_id: client.id }).select("id").single();
   created.projects.push(pA.id, pB.id);
-  await member.from("project_finance").insert([{ project_id: pA.id, budget: 50000 }, { project_id: pB.id, budget: 90000 }]);
+  await member.from("project_finance").insert([
+    { project_id: pA.id, budget: 50000 },
+    { project_id: pB.id, budget: 90000 },
+  ]);
   const { error: addErr } = await member.from("project_members").insert({ project_id: pA.id, member_email: FREELANCER });
   check("member can add a freelancer to a project", !addErr, addErr?.message);
 
@@ -204,7 +231,10 @@ try {
   const { error: anonDir } = await anon.rpc("team_directory");
   check("anon cannot list the team", !!anonDir);
   const { data: fAudit } = await freelancer.from("audit_events").select("entity");
-  check("freelancer's activity feed only shows their project's work", (fAudit ?? []).length > 0 && fAudit.every((a) => ["tasks", "task_comments", "files", "deliverables"].includes(a.entity)));
+  check(
+    "freelancer's activity feed only shows their project's work",
+    (fAudit ?? []).length > 0 && fAudit.every((a) => ["tasks", "task_comments", "files", "deliverables"].includes(a.entity)),
+  );
 
   // 9. Time: people log their own time on their projects; only the admin approves; rates stay private.
   const today = new Date().toISOString().slice(0, 10);
@@ -247,10 +277,22 @@ try {
 
   // 10. Calendar: freelancers see events on their projects or that they're booked on.
   const at = (h) => new Date(Date.now() + h * 3600000).toISOString();
-  const { data: evA, error: evErr } = await member.from("events").insert({ type: "shoot", title: "Sec shoot A", project_id: pA.id, starts_at: at(24), ends_at: at(32) }).select("id").single();
+  const { data: evA, error: evErr } = await member
+    .from("events")
+    .insert({ type: "shoot", title: "Sec shoot A", project_id: pA.id, starts_at: at(24), ends_at: at(32) })
+    .select("id")
+    .single();
   check("member can create an event", !evErr && !!evA, evErr?.message);
-  const { data: evB } = await member.from("events").insert({ type: "shoot", title: "Sec shoot B", project_id: pB.id, starts_at: at(24), ends_at: at(32) }).select("id").single();
-  const { data: evC } = await member.from("events").insert({ type: "meeting", title: "Sec meeting C", starts_at: at(48), ends_at: at(49) }).select("id").single();
+  const { data: evB } = await member
+    .from("events")
+    .insert({ type: "shoot", title: "Sec shoot B", project_id: pB.id, starts_at: at(24), ends_at: at(32) })
+    .select("id")
+    .single();
+  const { data: evC } = await member
+    .from("events")
+    .insert({ type: "meeting", title: "Sec meeting C", starts_at: at(48), ends_at: at(49) })
+    .select("id")
+    .single();
   await member.from("event_people").insert({ event_id: evC.id, member_email: FREELANCER, role: "assistant" });
   const { data: fEvents } = await freelancer.from("events").select("id");
   const seen = (fEvents ?? []).map((e) => e.id);
@@ -286,17 +328,49 @@ try {
   check("member can add a vendor", !vErr2 && !!vendor, vErr2?.message);
   const { data: fVendors } = await freelancer.from("vendors").select("id");
   check("freelancer cannot see vendors", (fVendors ?? []).length === 0);
-  const { data: bill, error: billErr } = await member.from("expenses").insert({ kind: "bill", vendor_id: vendor.id, category_id: cat.id, expense_date: today, taxable: 1000, total: 1180, cgst: 90, sgst: 90 }).select("id").single();
+  const { data: bill, error: billErr } = await member
+    .from("expenses")
+    .insert({ kind: "bill", vendor_id: vendor.id, category_id: cat.id, expense_date: today, taxable: 1000, total: 1180, cgst: 90, sgst: 90 })
+    .select("id")
+    .single();
   check("member can add a bill", !billErr && !!bill, billErr?.message);
   const { data: fBills } = await freelancer.from("expenses").select("id").eq("id", bill.id);
   check("freelancer cannot see studio bills", (fBills ?? []).length === 0);
   const { error: fBill } = await freelancer.from("expenses").insert({ kind: "bill", vendor_name: "x", category_id: cat.id, expense_date: today, taxable: 1, total: 1 });
   check("freelancer cannot add a bill", !!fBill);
-  const { data: claim, error: claimErr } = await freelancer.from("expenses").insert({ kind: "claim", category_id: cat.id, expense_date: today, taxable: 500, total: 500, paid_from: "member", paid_by_email: FREELANCER, approval: "submitted", project_id: pA.id }).select("id").single();
+  const { data: claim, error: claimErr } = await freelancer
+    .from("expenses")
+    .insert({
+      kind: "claim",
+      category_id: cat.id,
+      expense_date: today,
+      taxable: 500,
+      total: 500,
+      paid_from: "member",
+      paid_by_email: FREELANCER,
+      approval: "submitted",
+      project_id: pA.id,
+    })
+    .select("id")
+    .single();
   check("freelancer can file a claim", !claimErr && !!claim, claimErr?.message);
-  const { error: claimOther } = await freelancer.from("expenses").insert({ kind: "claim", category_id: cat.id, expense_date: today, taxable: 5, total: 5, paid_from: "member", paid_by_email: FREELANCER, approval: "submitted", project_id: pB.id });
+  const { error: claimOther } = await freelancer
+    .from("expenses")
+    .insert({
+      kind: "claim",
+      category_id: cat.id,
+      expense_date: today,
+      taxable: 5,
+      total: 5,
+      paid_from: "member",
+      paid_by_email: FREELANCER,
+      approval: "submitted",
+      project_id: pB.id,
+    });
   check("freelancer cannot claim against another project", !!claimOther);
-  const { error: preApprovedClaim } = await freelancer.from("expenses").insert({ kind: "claim", category_id: cat.id, expense_date: today, taxable: 5, total: 5, paid_from: "member", paid_by_email: FREELANCER, approval: "approved" });
+  const { error: preApprovedClaim } = await freelancer
+    .from("expenses")
+    .insert({ kind: "claim", category_id: cat.id, expense_date: today, taxable: 5, total: 5, paid_from: "member", paid_by_email: FREELANCER, approval: "approved" });
   check("claims can't be filed already approved", !!preApprovedClaim);
   const { error: selfApproveClaim } = await freelancer.from("expenses").update({ approval: "approved" }).eq("id", claim.id);
   const { data: stillSubmitted } = await admin.from("expenses").select("approval").eq("id", claim.id).single();
@@ -353,7 +427,50 @@ try {
   check("lead notes can't be posted as someone else", !!spoofAct);
   await admin.from("leads").delete().eq("id", lead.id);
 
-  // 14. Removing a member ends their access.
+  // 14. Agreements: staff only; signer tokens hidden; sent text locked; the signing log can't change.
+  const { data: ag, error: agErr } = await member.from("agreements").insert({ title: "Sec Agreement", kind: "contract", body: "Hello" }).select("id, status").single();
+  check("member can draft an agreement", !agErr && ag?.status === "draft", agErr?.message);
+  const { error: sgErr } = await member.from("agreement_signers").insert({ agreement_id: ag.id, name: "Sec Signer", email: "sec-signer@example.com" });
+  check("member can add a signer to a draft", !sgErr, sgErr?.message);
+  const { error: tokErr } = await member.from("agreement_signers").select("token").eq("agreement_id", ag.id);
+  check("signer tokens can't be read through the API", !!tokErr);
+  const { error: otpErr } = await member.from("agreement_signers").select("otp_hash").eq("agreement_id", ag.id);
+  check("signer codes can't be read through the API", !!otpErr);
+  const { data: vAg } = await viewer.from("agreements").select("id").eq("id", ag.id);
+  check("viewer can read agreements", (vAg ?? []).length === 1);
+  const { error: vAgIns } = await viewer.from("agreements").insert({ title: "x" });
+  check("viewer cannot create agreements", !!vAgIns);
+  const { data: fAg } = await freelancer.from("agreements").select("id");
+  const { data: fTpl } = await freelancer.from("agreement_templates").select("id");
+  check("freelancer cannot see agreements or templates", (fAg ?? []).length === 0 && (fTpl ?? []).length === 0);
+  const { data: aAg } = await anon.from("agreements").select("id");
+  check("anon cannot read agreements", (aAg ?? []).length === 0);
+  const { error: fakeSign } = await member.from("agreements").update({ status: "signed" }).eq("id", ag.id);
+  check("members can't mark an agreement signed", !!fakeSign);
+  const { error: fakeHash } = await member
+    .from("agreements")
+    .update({ final_hash: "0".repeat(64) })
+    .eq("id", ag.id);
+  check("members can't set the signed-PDF fingerprint", !!fakeHash);
+  const { error: fakeEvent } = await member.from("agreement_events").insert({ agreement_id: ag.id, action: "signed", actor: "client@example.com" });
+  check("signing events can't be forged", !!fakeEvent);
+  await member.from("agreement_events").insert({ agreement_id: ag.id, action: "note", actor: MEMBER });
+  const { data: evs } = await admin.from("agreement_events").select("id, hash, prev_hash").eq("agreement_id", ag.id).order("id");
+  check("events are hash-chained", evs?.length >= 1 && /^[0-9a-f]{64}$/.test(evs[0].hash ?? ""), JSON.stringify(evs));
+  const { error: evEdit } = await admin.from("agreement_events").update({ actor: "x" }).eq("id", evs[0].id);
+  check("the signing log can't be edited (even by the service role)", !!evEdit);
+  await member.from("agreements").update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", ag.id);
+  const { error: agLock } = await member.from("agreements").update({ body: "Changed after sending" }).eq("id", ag.id);
+  check("a sent agreement's text is locked", !!agLock);
+  const { error: sgLock } = await member.from("agreement_signers").update({ email: "other@example.com" }).eq("agreement_id", ag.id).select("id").single();
+  check("signers can't be changed after sending", !!sgLock);
+  const { error: delSent } = await member.from("agreements").delete().eq("id", ag.id).select("id").single();
+  check("a sent agreement can't be deleted", !!delSent);
+  const { data: noMatch } = await anon.rpc("verify_agreement_hash", { p_hash: "a".repeat(64) });
+  check("verify returns nothing for an unknown fingerprint", noMatch === null);
+  await admin.from("agreements").delete().eq("id", ag.id);
+
+  // 15. Removing a member ends their access.
   await admin.from("members").delete().eq("email", VIEWER);
   const { data: afterRemoval } = await viewer.from("clients").select("id");
   check("removed member loses access immediately", (afterRemoval ?? []).length === 0);
@@ -365,6 +482,7 @@ try {
   await admin.from("expenses").delete().in("created_by", [MEMBER, VIEWER, FREELANCER]);
   await admin.from("vendors").delete().eq("name", "Sec Vendor");
   await admin.from("leads").delete().eq("name", "Sec Lead");
+  await admin.from("agreements").delete().eq("title", "Sec Agreement");
   await admin.from("leave_requests").delete().in("member_email", [MEMBER, VIEWER, FREELANCER]);
   if (created.projects.length) await admin.from("projects").delete().in("id", created.projects);
   if (created.documents.length) await admin.from("documents").delete().in("id", created.documents);

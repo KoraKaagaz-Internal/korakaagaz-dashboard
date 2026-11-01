@@ -127,7 +127,11 @@ function fold(line: string): string {
   return parts.join("\r\n ");
 }
 
-const utcStamp = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+const utcStamp = (iso: string) =>
+  new Date(iso)
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
 const dateStamp = (d: string) => d.replace(/-/g, "");
 
 export interface IcsItem {
@@ -144,7 +148,15 @@ export interface IcsItem {
 }
 
 export function toIcs(name: string, items: IcsItem[], now = new Date().toISOString()): string {
-  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Kora Kaagaz//Studio//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", `X-WR-CALNAME:${icsEscape(name)}`, "X-WR-TIMEZONE:Asia/Kolkata"];
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Kora Kaagaz//Studio//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    `X-WR-CALNAME:${icsEscape(name)}`,
+    "X-WR-TIMEZONE:Asia/Kolkata",
+  ];
   for (const it of items) {
     lines.push("BEGIN:VEVENT", `UID:${it.uid}@korakaagaz.studio`, `DTSTAMP:${utcStamp(it.updated ?? now)}`);
     if (it.allDay) {

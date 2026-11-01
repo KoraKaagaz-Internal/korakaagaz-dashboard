@@ -15,7 +15,15 @@ describe("IST conversions", () => {
 
 describe("findConflicts", () => {
   const ev = (id: string, from: string, to: string, people: string[], kit: string[] = [], extra = {}) => ({
-    id, title: id, starts_at: istLocalToIso(from), ends_at: istLocalToIso(to), status: "confirmed" as const, type: "shoot" as const, people, kit, ...extra,
+    id,
+    title: id,
+    starts_at: istLocalToIso(from),
+    ends_at: istLocalToIso(to),
+    status: "confirmed" as const,
+    type: "shoot" as const,
+    people,
+    kit,
+    ...extra,
   });
   it("flags shared people or kit in overlapping time", () => {
     const draft = ev("new", "2026-11-04T09:00", "2026-11-04T17:00", ["a", "b"], ["cam1"]);
@@ -53,7 +61,16 @@ describe("toIcs", () => {
     const ics = toIcs(
       "Kora Kaagaz",
       [
-        { uid: "e1", title: "Shoot; Acme, day 1", start: "2026-11-04T03:30:00.000Z", end: "2026-11-04T11:30:00.000Z", allDay: false, location: "Studio 2", tentative: true, description: "Call 9:00\nBring: 85mm" },
+        {
+          uid: "e1",
+          title: "Shoot; Acme, day 1",
+          start: "2026-11-04T03:30:00.000Z",
+          end: "2026-11-04T11:30:00.000Z",
+          allDay: false,
+          location: "Studio 2",
+          tentative: true,
+          description: "Call 9:00\nBring: 85mm",
+        },
         { uid: "t1", title: "Due: Retouching", start: "2026-11-06", end: "2026-11-06", allDay: true, description: "x".repeat(120) },
       ],
       "2026-10-30T00:00:00.000Z",

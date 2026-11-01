@@ -56,7 +56,14 @@ export interface Kpis {
 
 export function kpis(docs: DocumentRecord[], payments: (Payment & { currency: string; fx_rate: number })[], fy: string, today: string): Kpis {
   const inFy = (d: DocumentRecord) => d.fy === fy || (!d.fy && fyOf(d.issue_date) === fy);
-  let outstanding = 0, overdue = 0, overdueCount = 0, revenueFy = 0, quotesOpen = 0, quotesOpenCount = 0, won = 0, lost = 0;
+  let outstanding = 0,
+    overdue = 0,
+    overdueCount = 0,
+    revenueFy = 0,
+    quotesOpen = 0,
+    quotesOpenCount = 0,
+    won = 0,
+    lost = 0;
   for (const d of docs) {
     if (d.doc_type === "invoice" && d.status === "issued" && d.balance) {
       outstanding += inr(d, d.balance.balance);
@@ -76,7 +83,8 @@ export function kpis(docs: DocumentRecord[], payments: (Payment & { currency: st
       if (d.status === "declined" || d.status === "expired") lost++;
     }
   }
-  let collectedFy = 0, tdsFy = 0;
+  let collectedFy = 0,
+    tdsFy = 0;
   for (const p of payments) {
     if (fyOf(p.paid_on) !== fy || p.mode === "advance") continue;
     collectedFy += inr(p, p.amount);

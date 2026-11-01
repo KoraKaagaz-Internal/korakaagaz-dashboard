@@ -223,7 +223,11 @@ export function readPortal2b(csv: string): PortalBill[] {
   return out;
 }
 
-export const normaliseBillNo = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "").replace(/^0+/, "");
+export const normaliseBillNo = (s: string) =>
+  s
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .replace(/^0+/, "");
 
 /** Matches our bills (with a GSTIN) to the portal's 2B lines on GSTIN + bill number, then tax (±₹1). */
 export function match2b(ours: { id: string; gstin: string; bill_no: string; tax: number }[], portal: PortalBill[]) {

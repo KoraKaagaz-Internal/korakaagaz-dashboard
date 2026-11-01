@@ -27,7 +27,11 @@ describe("suggestTds", () => {
   });
   it("rent is tested per month; no PAN means 20%", () => {
     expect(suggestTds({ nature: "rent_building", taxable: 45000, isCompany: false, hasPan: true, paidThisYear: 500000, paidThisMonth: 0 }).apply).toBe(false);
-    expect(suggestTds({ nature: "rent_building", taxable: 60000, isCompany: false, hasPan: false, paidThisYear: 0, paidThisMonth: 0 })).toMatchObject({ apply: true, rate: 20, amount: 12000 });
+    expect(suggestTds({ nature: "rent_building", taxable: 60000, isCompany: false, hasPan: false, paidThisYear: 0, paidThisMonth: 0 })).toMatchObject({
+      apply: true,
+      rate: 20,
+      amount: 12000,
+    });
   });
   it("no TDS nature means no TDS", () => {
     expect(suggestTds({ nature: "none", taxable: 9e6, isCompany: false, hasPan: true, paidThisYear: 0 }).apply).toBe(false);
@@ -36,7 +40,23 @@ describe("suggestTds", () => {
 
 describe("itcSummary (GSTR-3B Table 4)", () => {
   const e = (o: Partial<Parameters<typeof itcSummary>[0][number]>) =>
-    ({ id: "x", kind: "bill", expense_date: "2026-10-05", taxable: 1000, cgst: 90, sgst: 90, igst: 0, total: 1180, rcm: false, itc_status: "eligible", gstr2b: "matched", itc_month: null, fx_rate: 1, currency: "INR", ...o }) as never;
+    ({
+      id: "x",
+      kind: "bill",
+      expense_date: "2026-10-05",
+      taxable: 1000,
+      cgst: 90,
+      sgst: 90,
+      igst: 0,
+      total: 1180,
+      rcm: false,
+      itc_status: "eligible",
+      gstr2b: "matched",
+      itc_month: null,
+      fx_rate: 1,
+      currency: "INR",
+      ...o,
+    }) as never;
   it("buckets eligible, blocked and held-back credit for the month", () => {
     const s = itcSummary(
       [

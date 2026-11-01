@@ -12,7 +12,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   // PostgREST or-filter: strip characters that have meaning there
   const term = q.replace(/[%,()*:"\\]/g, " ").trim();
   const like = `%${term}%`;
-  const [projects, clients, leads, docs] = term
+  const [projects, clients, leads, docs, agreements] = term
     ? await Promise.all([
         supabase.from("projects").select("id, code, name, status").or(`name.ilike.${like},code.ilike.${like}`).limit(8),
         supabase.from("clients").select("id, name, city").ilike("name", like).limit(8),
@@ -23,8 +23,9 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           .or(`number.ilike.${like},client_snapshot->>name.ilike.${like}`)
           .order("issue_date", { ascending: false })
           .limit(10),
+        supabase.from("agreements").select("id, number, title, status").or(`title.ilike.${like},number.ilike.${like}`).limit(8),
       ])
-    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
+    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
   type R = Record<string, unknown>;
   const groups: { title: string; rows: { href: string; title: string; sub: string }[] }[] = [
     {
@@ -41,6 +42,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         sub: [String(d.doc_type).replace(/_/g, " "), formatShortDate(d.issue_date as string), formatMoney(Number(d.total), d.currency as string)].join(" · "),
       })),
     },
+    { title: "Agreements", rows: ((agreements.data ?? []) as R[]).map((a) => ({ href: `/agreements/${a.id}`, title: `${a.number} · ${a.title}`, sub: String(a.status) })) },
   ].filter((g) => g.rows.length);
 
   return (
