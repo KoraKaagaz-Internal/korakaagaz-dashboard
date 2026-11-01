@@ -309,12 +309,13 @@
   <pre>npm install
 npm run dev                                   # http://localhost:3000 (needs .env.local)
 npm test                                      # unit tests: GST, money, words, numbering, pagination, reports, GSTR-1
-node scripts/security-test.mjs                # 125 database permission checks, as anon/viewer/member/freelancer
+node scripts/security-test.mjs                # 127 database permission checks, as anon/viewer/member/freelancer
 node scripts/e2e.mjs http://localhost:3000    # 32 billing checks; WIPES the workspace, so it refuses to run once real data or team members exist
 node scripts/e2e-projects.mjs http://localhost:3000   # 44 project/time/calendar checks; safe on real data
 node scripts/e2e-money.mjs http://localhost:3000      # 25 expenses/claims/GST/Reports checks; safe on real data
 node scripts/e2e-crm.mjs http://localhost:3000        # 21 CRM checks incl. public enquiry + booking; safe on real data
 node scripts/perf-check.mjs https://app.korakaagaz.co  # page timings (median of 3)
+node scripts/ui-audit.mjs https://app.korakaagaz.co    # every page at 1440px + 390px: overflow, console errors, speed, no window.confirm, no brand hex
 # Local test build that won't clash with a running `next dev`:
 NEXT_DIST_DIR=.next-e2e npm run build && NEXT_DIST_DIR=.next-e2e npx next start -p 3457
 node scripts/visual-diff.mjs public/dev-reference.png http://localhost:3000
@@ -330,6 +331,14 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-02</td><td><b>Page restyle (calm redesign, part D)</b>.
+      <ul>
+        <li>Every page uses the same header (back link, title, one-line subtitle, actions, tabs). Invoices, Expenses and Leads lists use one filter bar (folds into "Filters" on phones) and become stacked cards on phones. Empty states tell "nothing yet" from "nothing matches".</li>
+        <li>Plain language: GST page rows read "GST to claim this month" with the GSTR-3B code as a small tag; Reports explain days-to-get-paid, collected-on-time and TDS with ⓘ tips. Leave shows "Casual leave", "Waiting approval" instead of raw values. One short date format everywhere ("26 Sep").</li>
+        <li>Invoice editor line items have labels (Item, SAC, Qty, Rate) and show the line amount.</li>
+        <li>Fix: tab links no longer prefetch sibling URLs; with prefetching on, a click that only changed the URL query (opening a task, finishing "Create project") was sometimes dropped by the Next.js router.</li>
+        <li>Verified on production: ui-audit 52/52, e2e projects 44/44, money 25/25, CRM 21/21, security 127/127, pages 0.16–0.25 s.</li>
+      </ul></td></tr>
     <tr><td>2026-11-02</td><td><b>Navigation and flows (calm redesign, part C)</b>.
       <ul>
         <li>Sidebar: Home · My work; Work (Projects, Calendar, Time); Sales (Leads, Clients); Money (Invoices, Expenses, Reports); Studio (Team, Settings), with icons. Freelancers: My work, Projects, Calendar, Time, Leave, My claims.</li>
@@ -653,8 +662,12 @@ vercel deploy --prod
     ["src/app/api/cron/daily", "Daily job: reminders, quote expiry, recurring drafts"],
     ["src/app/api/fx", "Free FX rate fetch"],
     ["src/app/login · auth/callback", "Google sign-in and callback (handles \"not invited\")"],
-    ["src/components/BarChart.tsx · NumberInput.tsx · ClientForm.tsx · ui.tsx", "Shared UI"],
-    ["scripts/security-test.mjs", "125 database permission checks as anon, viewer, member and freelancer (incl. storage, time, calendar, leave, expenses, leads)"],
+    ["src/components/BarChart.tsx · NumberInput.tsx · ClientForm.tsx · ui.tsx", "Shared UI; ui.tsx re-exports the design-system components"],
+    ["src/components/ui/*", "Design system: PageHeader/Section, Tabs/Segmented (no prefetch), FilterBar, Button/ButtonLink, ConfirmButton, Toaster + useAction, EmptyState/Badge/Stat/InfoTip, DataList (table → phone cards)"],
+    ["src/app/(app)/Nav.tsx · HeaderMenus.tsx · search/page.tsx", "Sidebar with icons, phone bottom bar + More sheet; + New and profile menus; global search"],
+    ["src/app/(app)/team/TeamTabs.tsx · settings/SettingsTabs.tsx", "Shared tab headers for Team (People/Workload/Leave) and Settings (General/Items/Categories/Enquiry & booking)"],
+    ["scripts/ui-audit.mjs", "Visits every page at desktop and phone width; fails on overflow, console errors, slow loads, window.confirm or brand hex in pages (safe on real data)"],
+    ["scripts/security-test.mjs", "127 database permission checks as anon, viewer, member and freelancer (incl. storage, time, calendar, leave, expenses, leads)"],
     ["scripts/e2e.mjs", "32 end-to-end checks (refuses to run over real data)"],
     ["scripts/visual-diff.mjs", "Template vs reference image"],
     ["vercel.json", "Cron schedule (03:30 UTC = 09:00 IST)"],

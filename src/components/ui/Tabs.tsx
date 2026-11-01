@@ -39,6 +39,8 @@ export function Segmented({ items, label }: { items: TabItem[]; label: string })
         <Link
           key={t.href}
           href={t.href}
+          prefetch={false}
+          scroll={false}
           aria-current={t.active ? "page" : undefined}
           className={`rounded-md px-3 py-1 text-sm whitespace-nowrap ${t.active ? "bg-white font-medium text-ink shadow-sm" : "text-neutral-600 hover:text-ink"}`}
         >
