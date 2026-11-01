@@ -20,7 +20,7 @@ import {
 import { adjustAdvance, deletePayment, recordPayment } from "@/app/actions/payments";
 import { markSent, sendDocumentEmail } from "@/app/actions/send";
 import { NumberInput } from "@/components/NumberInput";
-import { Card, Field, Input, Select, Textarea, btn } from "@/components/ui";
+import { Card, ConfirmButton, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { addMonths, formatInvoiceDate, formatMoney, round2 } from "@/lib/money";
 import type { DocStatus, DocType, Payment, PaymentMode } from "@/lib/types";
 
@@ -39,7 +39,11 @@ interface DocSummary {
   client_id: string | null;
   /** taxable value ÷ total, so TDS can be worked out on the pre-GST part of the balance */
   taxable_ratio: number;
+  total: number;
+  client_name: string;
 }
+
+const DOC_WORD: Record<DocType, string> = { invoice: "invoice", quote: "quote", proforma: "proforma invoice", credit_note: "credit note", receipt: "receipt" };
 
 type Outcome = { ok: boolean; message?: string } | void | undefined;
 
@@ -97,17 +101,33 @@ export function DocumentActions({
               <Link href={`/documents/${doc.id}/edit`} className={btn.secondary}>
                 Edit
               </Link>
-              <button className={btn.primary} disabled={pending} onClick={() => run(() => issueDocument(doc.id))}>
+              <ConfirmButton
+                variant="primary"
+                size="md"
+                align="left"
+                disabled={pending}
+                confirm={`Issue this ${DOC_WORD[doc.doc_type]} for ${money(doc.total)}${doc.client_name ? ` to ${doc.client_name}` : ""}? It gets the next number and can't be edited after.`}
+                confirmLabel="Issue"
+                onConfirm={() => run(() => issueDocument(doc.id))}
+              >
                 Issue
-              </button>
+              </ConfirmButton>
             </>
           )}
           {doc.status === "awaiting_approval" &&
             (isAdmin ? (
               <>
-                <button className={btn.primary} disabled={pending} onClick={() => run(() => issueDocument(doc.id))}>
+                <ConfirmButton
+                  variant="primary"
+                  size="md"
+                  align="left"
+                  disabled={pending}
+                  confirm={`Approve and issue this ${DOC_WORD[doc.doc_type]} for ${money(doc.total)}? It gets the next number and can't be edited after.`}
+                  confirmLabel="Approve and issue"
+                  onConfirm={() => run(() => issueDocument(doc.id))}
+                >
                   Approve and issue
-                </button>
+                </ConfirmButton>
                 <button className={btn.secondary} disabled={pending} onClick={() => run(() => sendBackToDraft(doc.id), "Sent back to draft")}>
                   Send back
                 </button>
@@ -178,26 +198,26 @@ export function DocumentActions({
             </button>
           )}
           {canEdit && doc.status === "issued" && (
-            <button
-              className={btn.danger}
+            <ConfirmButton
+              size="md"
               disabled={pending}
-              onClick={() => {
-                if (window.confirm(`Cancel ${doc.number}? It stays in your records, marked cancelled.`)) run(() => cancelDocument(doc.id), "Cancelled");
-              }}
+              confirm={`Cancel ${doc.number}? It stays in your records, marked cancelled.`}
+              confirmLabel={`Cancel ${doc.number}`}
+              onConfirm={() => run(() => cancelDocument(doc.id), "Cancelled")}
             >
               Cancel
-            </button>
+            </ConfirmButton>
           )}
           {canEdit && (doc.status === "draft" || doc.status === "awaiting_approval") && (
-            <button
-              className={btn.danger}
+            <ConfirmButton
+              size="md"
               disabled={pending}
-              onClick={() => {
-                if (window.confirm("Delete this draft?")) run(() => deleteDraft(doc.id));
-              }}
+              confirm="Delete this draft? This can't be undone."
+              confirmLabel="Delete draft"
+              onConfirm={() => run(() => deleteDraft(doc.id))}
             >
               Delete draft
-            </button>
+            </ConfirmButton>
           )}
         </div>
         {msg && <p className={`mt-3 text-sm ${msg.ok ? "text-green-700" : "text-red-600"}`}>{msg.text}</p>}
@@ -232,7 +252,13 @@ export function DocumentActions({
                 <span className="w-24 text-neutral-600">{formatInvoiceDate(p.paid_on)}</span>
                 <span className="flex-1">
                   {money(p.amount)}
-                  {p.tds_amount > 0 && <span className="text-neutral-500"> + TDS {money(p.tds_amount)}{p.tds_section ? ` (${p.tds_section})` : ""}</span>}
+                  {p.tds_amount > 0 && (
+                    <span className="text-neutral-500">
+                      {" "}
+                      + TDS {money(p.tds_amount)}
+                      {p.tds_section ? ` (${p.tds_section})` : ""}
+                    </span>
+                  )}
                   <span className="block text-xs text-neutral-500">
                     {p.mode.toUpperCase()}
                     {p.reference && ` · ${p.reference}`}
@@ -240,15 +266,14 @@ export function DocumentActions({
                   </span>
                 </span>
                 {canEdit && (
-                  <button
-                    className={btn.danger}
+                  <ConfirmButton
                     disabled={pending}
-                    onClick={() => {
-                      if (window.confirm("Delete this payment?")) run(() => deletePayment(p.id, doc.id), "Payment deleted");
-                    }}
+                    confirm={`Delete this payment of ${money(p.amount)}? The balance goes back up.`}
+                    confirmLabel="Delete payment"
+                    onConfirm={() => run(() => deletePayment(p.id, doc.id), "Payment deleted")}
                   >
                     Delete
-                  </button>
+                  </ConfirmButton>
                 )}
               </li>
             ))}
@@ -267,7 +292,9 @@ export function DocumentActions({
                     Copy
                   </button>
                 </div>
-                <p className="text-xs text-neutral-500">Anyone with this link can view and download this {doc.doc_type === "quote" ? "quote and accept it" : "document and pay by UPI"}. Nothing else is visible.</p>
+                <p className="text-xs text-neutral-500">
+                  Anyone with this link can view and download this {doc.doc_type === "quote" ? "quote and accept it" : "document and pay by UPI"}. Nothing else is visible.
+                </p>
               </>
             ) : (
               <p className="text-neutral-500">The client link is turned off.</p>
@@ -311,7 +338,15 @@ export function DocumentActions({
   );
 }
 
-function EmailPanel({ defaults, onSend, pending }: { defaults: { to: string; subject: string; body: string }; onSend: (v: { to: string; cc: string; subject: string; body: string }) => void; pending: boolean }) {
+function EmailPanel({
+  defaults,
+  onSend,
+  pending,
+}: {
+  defaults: { to: string; subject: string; body: string };
+  onSend: (v: { to: string; cc: string; subject: string; body: string }) => void;
+  pending: boolean;
+}) {
   const [v, setV] = useState({ ...defaults, cc: "" });
   return (
     <Card title="Send by email (from team@korakaagaz.co)">

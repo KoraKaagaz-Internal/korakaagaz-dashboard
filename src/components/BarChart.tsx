@@ -22,6 +22,13 @@ export function BarChart({ bars, title, height = 180 }: { bars: Bar[]; title: st
   const [hover, setHover] = useState<number | null>(null);
   const max = Math.max(1, ...bars.map((b) => Math.abs(b.value)));
   const ticks = [0, 0.5, 1].map((t) => t * max);
+  if (!bars.some((b) => b.value)) {
+    return (
+      <figure className="m-0 flex items-center justify-center rounded-lg border border-dashed border-line text-sm text-neutral-500" style={{ height }}>
+        No {title.toLowerCase()} yet
+      </figure>
+    );
+  }
   return (
     <figure className="m-0">
       <div className="relative" style={{ height }} onMouseLeave={() => setHover(null)}>
@@ -45,7 +52,8 @@ export function BarChart({ bars, title, height = 180 }: { bars: Bar[]; title: st
                 style={{
                   height: `${(Math.max(b.value, 0) / max) * 100}%`,
                   minHeight: b.value > 0 ? 2 : 0,
-                  background: hover === null || hover === i ? "#3846b4" : "#3846b4aa",
+                  background: "var(--color-accent)",
+                  opacity: hover === null || hover === i ? 1 : 0.65,
                 }}
               />
               {hover === i && (

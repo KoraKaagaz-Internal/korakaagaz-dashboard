@@ -81,7 +81,11 @@ export function SettingsForm({ settings, mailReady }: { settings: Settings; mail
           </Field>
           <Field label={`LUT number (for export invoices, FY ${fy})`}>
             <Input value={s.lut_number} onChange={(e) => setS({ ...s, lut_number: e.target.value, lut_fy: fy })} />
-            {s.lut_number && s.lut_fy && s.lut_fy !== fy && <span className="mt-1 block text-xs text-amber-700">This LUT is for FY {s.lut_fy}. File a new one for {fy}.</span>}
+            {s.lut_number && s.lut_fy && s.lut_fy !== fy && (
+              <span className="mt-1 block text-xs text-amber-700">
+                This LUT is for FY {s.lut_fy}. File a new one for {fy}.
+              </span>
+            )}
           </Field>
           <Field label="Queries email">
             <Input value={s.query_email} onChange={(e) => set("query_email", e.target.value)} />
@@ -104,7 +108,16 @@ export function SettingsForm({ settings, mailReady }: { settings: Settings; mail
             <div className="flex items-center gap-3 sm:col-span-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={s.signature_path} alt="Signature" className="h-10 rounded border border-neutral-200 bg-white p-1" />
-              <button className={btn.danger} onClick={() => start(async () => { await saveSignature(null); set("signature_path", null); router.refresh(); })}>
+              <button
+                className={btn.danger}
+                onClick={() =>
+                  start(async () => {
+                    await saveSignature(null);
+                    set("signature_path", null);
+                    router.refresh();
+                  })
+                }
+              >
                 Remove
               </button>
             </div>
@@ -114,7 +127,11 @@ export function SettingsForm({ settings, mailReady }: { settings: Settings; mail
 
       <Card title="Numbering and defaults">
         <p className="mb-3 text-sm text-neutral-500">
-          Numbers look like <code>{s.prefixes.invoice}/{fy}/001</code>: max 16 characters, a new series every 1 April, as GST Rule 46 requires.
+          Numbers look like{" "}
+          <code>
+            {s.prefixes.invoice}/{fy}/001
+          </code>
+          : max 16 characters, a new series every 1 April, as GST Rule 46 requires.
         </p>
         <div className="grid gap-3 sm:grid-cols-5">
           {DOC_TYPES.map((t) => (
@@ -162,7 +179,13 @@ export function SettingsForm({ settings, mailReady }: { settings: Settings; mail
             <Field key={t} label={DOC_LABELS[t].title}>
               <Textarea
                 value={s.terms[t] ?? ""}
-                placeholder={t === "quote" ? "Valid for 15 days. Two rounds of revisions included. IP transfers on full payment." : t === "invoice" ? "Payment by UPI or bank transfer. Late payments may attract interest." : ""}
+                placeholder={
+                  t === "quote"
+                    ? "Valid for 15 days. Two rounds of revisions included. IP transfers on full payment."
+                    : t === "invoice"
+                      ? "Payment by UPI or bank transfer. Late payments may attract interest."
+                      : ""
+                }
                 onChange={(e) => set("terms", { ...s.terms, [t]: e.target.value })}
               />
             </Field>
@@ -179,16 +202,25 @@ export function SettingsForm({ settings, mailReady }: { settings: Settings; mail
           {(Object.keys(MESSAGE_LABELS) as MessageKind[]).map((k) => (
             <Field key={k} label={MESSAGE_LABELS[k]}>
               {k.endsWith("subject") ? (
-                <Input value={s.message_templates[k] ?? ""} placeholder={DEFAULT_MESSAGES[k]} onChange={(e) => set("message_templates", { ...s.message_templates, [k]: e.target.value })} />
+                <Input
+                  value={s.message_templates[k] ?? ""}
+                  placeholder={DEFAULT_MESSAGES[k]}
+                  onChange={(e) => set("message_templates", { ...s.message_templates, [k]: e.target.value })}
+                />
               ) : (
-                <Textarea rows={4} value={s.message_templates[k] ?? ""} placeholder={DEFAULT_MESSAGES[k]} onChange={(e) => set("message_templates", { ...s.message_templates, [k]: e.target.value })} />
+                <Textarea
+                  rows={4}
+                  value={s.message_templates[k] ?? ""}
+                  placeholder={DEFAULT_MESSAGES[k]}
+                  onChange={(e) => set("message_templates", { ...s.message_templates, [k]: e.target.value })}
+                />
               )}
             </Field>
           ))}
         </div>
       </Card>
 
-      <div className="sticky bottom-0 z-20 flex items-center gap-3 border-t border-black/5 bg-[#f4f4f6]/95 py-3 backdrop-blur">
+      <div className="sticky bottom-0 z-20 flex items-center gap-3 border-t border-black/5 bg-subtle/95 py-3 backdrop-blur">
         <button className={btn.primary} disabled={pending} onClick={save}>
           {pending ? "Saving…" : "Save settings"}
         </button>

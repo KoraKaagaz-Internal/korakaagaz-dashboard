@@ -29,13 +29,16 @@ export default async function MyWorkPage() {
       </div>
 
       {open.length === 0 && (
-        <div className="rounded-2xl bg-white p-10 text-center text-neutral-600 shadow-sm ring-1 ring-black/5">
-          Nothing assigned to you. <Link href="/projects" className="text-navy underline">Browse projects</Link>
+        <div className="rounded-xl bg-white p-10 text-center text-neutral-600 border border-line">
+          Nothing assigned to you.{" "}
+          <Link href="/projects" className="text-navy underline">
+            Browse projects
+          </Link>
         </div>
       )}
 
       {groups.map((g) => (
-        <section key={g.bucket} className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+        <section key={g.bucket} className="rounded-xl bg-white border border-line">
           <h2 className={`border-b border-neutral-100 px-4 py-2.5 text-sm font-semibold ${g.bucket === "overdue" ? "text-red-700" : ""}`}>
             {BUCKET_LABEL[g.bucket]} <span className="font-normal text-neutral-500">· {g.tasks.length}</span>
           </h2>
@@ -63,7 +66,7 @@ export default async function MyWorkPage() {
       ))}
 
       {done.length > 0 && (
-        <section className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+        <section className="rounded-xl bg-white border border-line">
           <h2 className="border-b border-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-600">Done in the last 7 days · {done.length}</h2>
           <ul className="divide-y divide-neutral-100">
             {done.map((t) => (

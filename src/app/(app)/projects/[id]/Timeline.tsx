@@ -8,7 +8,7 @@ const DAY = 22; // px per day
 export function Timeline({ tasks, phases, today, projectId }: { tasks: Task[]; phases: Phase[]; today: string; projectId: string }) {
   const top = tasks.filter((t) => !t.parent_id && (t.due_date || t.start_date));
   const undated = tasks.filter((t) => !t.parent_id && !t.due_date && !t.start_date).length;
-  if (!top.length) return <p className="rounded-2xl bg-white p-6 text-sm text-neutral-500 shadow-sm ring-1 ring-black/5">Give tasks a due date to see them here.</p>;
+  if (!top.length) return <p className="rounded-xl bg-white p-6 text-sm text-neutral-500 border border-line">Give tasks a due date to see them here.</p>;
 
   const range = timelineRange(
     top.flatMap((t) => [t.start_date, t.due_date]),
@@ -25,7 +25,7 @@ export function Timeline({ tasks, phases, today, projectId }: { tasks: Task[]; p
   ].filter((r) => r.tasks.length);
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+    <div className="rounded-xl bg-white border border-line">
       <div className="overflow-x-auto">
         <div className="relative" style={{ width: width + 220 }}>
           <div className="sticky top-0 flex h-8 border-b border-neutral-100 text-xs text-neutral-500">
@@ -59,7 +59,7 @@ export function Timeline({ tasks, phases, today, projectId }: { tasks: Task[]; p
                     <div className="relative h-full" style={{ width }}>
                       <div
                         title={`${t.title}: ${formatInvoiceDate(s)} → ${formatInvoiceDate(e)} · ${TASK_STATUS_LABEL[t.status]}`}
-                        className={`absolute top-2 h-4 rounded ${t.status === "done" ? "bg-neutral-300" : late ? "bg-red-600" : "bg-[#3846b4]"}`}
+                        className={`absolute top-2 h-4 rounded ${t.status === "done" ? "bg-neutral-300" : late ? "bg-red-600" : "bg-accent"}`}
                         style={{ left: x(s) + 1, width: Math.max(DAY - 2, (daysBetween(s, e) + 1) * DAY - 2) }}
                       />
                     </div>

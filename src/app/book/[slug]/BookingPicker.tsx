@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { bookCall } from "@/app/actions/crm";
 
-const input = "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#081788]";
+const input = "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-navy";
 const dayLabel = (d: string) => new Date(`${d}T00:00:00Z`).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const timeLabel = (iso: string) => new Date(iso).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Kolkata" });
 
@@ -16,15 +16,15 @@ export function BookingPicker({ slug, days, minutes }: { slug: string; days: { d
   const [pending, start] = useTransition();
   if (done)
     return (
-      <div className="rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-black/5" role="status">
-        <h2 className="font-serif text-2xl text-[#081788]">You&apos;re booked.</h2>
+      <div className="rounded-xl bg-white p-8 text-center border border-line" role="status">
+        <h2 className="font-serif text-2xl text-navy">You&apos;re booked.</h2>
         <p className="mt-2 text-neutral-600">{done} (India time). A calendar invite is on its way to {f.email}.</p>
       </div>
     );
-  if (!days.length) return <p className="rounded-2xl bg-white p-6 text-neutral-600 shadow-sm ring-1 ring-black/5">No free times in the next few weeks. Please email team@korakaagaz.co.</p>;
+  if (!days.length) return <p className="rounded-xl bg-white p-6 text-neutral-600 border border-line">No free times in the next few weeks. Please email team@korakaagaz.co.</p>;
   const today = days.find((d) => d.date === day) ?? days[0];
   return (
-    <div className="space-y-5 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5">
+    <div className="space-y-5 rounded-xl bg-white p-6 border border-line">
       <div>
         <h2 className="mb-2 text-sm font-semibold">1. Pick a day</h2>
         <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Day">
@@ -37,7 +37,7 @@ export function BookingPicker({ slug, days, minutes }: { slug: string; days: { d
                 setDay(d.date);
                 setSlot("");
               }}
-              className={`shrink-0 rounded-lg px-3 py-2 text-sm ring-1 ${d.date === today.date ? "bg-[#081788] text-white ring-[#081788]" : "ring-black/10 hover:bg-neutral-50"}`}
+              className={`shrink-0 rounded-lg px-3 py-2 text-sm ring-1 ${d.date === today.date ? "bg-navy text-white ring-navy" : "ring-black/10 hover:bg-neutral-50"}`}
             >
               {dayLabel(d.date)}
             </button>
@@ -48,7 +48,7 @@ export function BookingPicker({ slug, days, minutes }: { slug: string; days: { d
         <h2 className="mb-2 text-sm font-semibold">2. Pick a time ({minutes} min, India time)</h2>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-5" role="group" aria-label="Time">
           {today.slots.map((s) => (
-            <button key={s} type="button" aria-pressed={slot === s} onClick={() => setSlot(s)} className={`rounded-lg px-2 py-2 text-sm ring-1 ${slot === s ? "bg-[#081788] text-white ring-[#081788]" : "ring-black/10 hover:bg-neutral-50"}`}>
+            <button key={s} type="button" aria-pressed={slot === s} onClick={() => setSlot(s)} className={`rounded-lg px-2 py-2 text-sm ring-1 ${slot === s ? "bg-navy text-white ring-navy" : "ring-black/10 hover:bg-neutral-50"}`}>
               {timeLabel(s)}
             </button>
           ))}
@@ -79,7 +79,7 @@ export function BookingPicker({ slug, days, minutes }: { slug: string; days: { d
             <input tabIndex={-1} autoComplete="off" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} />
           </label>
           {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
-          <button disabled={pending} className="rounded-lg bg-[#081788] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">
+          <button disabled={pending} className="rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">
             {pending ? "Booking…" : `Book ${dayLabel(today.date)}, ${timeLabel(slot)}`}
           </button>
         </form>

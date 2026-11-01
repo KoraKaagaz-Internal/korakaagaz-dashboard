@@ -32,11 +32,16 @@ export function Reconcile({ from, to }: { from: string; to: string }) {
         }}
       />
       {pending && <p className="text-neutral-500">Matching…</p>}
-      {res && !res.ok && <p className="text-red-700" role="alert">{res.message}</p>}
+      {res && !res.ok && (
+        <p className="text-red-700" role="alert">
+          {res.message}
+        </p>
+      )}
       {res && res.ok && (
         <div role="status">
           <p>
-            <b>{res.matched}</b> matched · <b className={res.mismatch ? "text-amber-800" : ""}>{res.mismatch}</b> tax differs · <b className={res.missing ? "text-red-700" : ""}>{res.missing}</b> not filed by the supplier yet
+            <b>{res.matched}</b> matched · <b className={res.mismatch ? "text-amber-800" : ""}>{res.mismatch}</b> tax differs ·{" "}
+            <b className={res.missing ? "text-red-700" : ""}>{res.missing}</b> not filed by the supplier yet
           </p>
           {res.notInBooks.length > 0 && (
             <details className="mt-2">

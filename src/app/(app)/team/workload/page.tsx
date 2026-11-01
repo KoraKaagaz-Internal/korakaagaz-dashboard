@@ -23,8 +23,19 @@ export default async function WorkloadPage({ searchParams }: { searchParams: Pro
     listEvents(first, last),
     supabase.from("tasks").select("due_date, estimate_hours, status, task_assignees(member_email)").neq("status", "done").gte("due_date", first).lte("due_date", last),
   ]);
-  const loadTasks = (tasks ?? []).map((t) => ({ due_date: t.due_date as string, estimate_hours: Number(t.estimate_hours), status: t.status as string, assignees: ((t.task_assignees as { member_email: string }[]) ?? []).map((a) => a.member_email) }));
-  const loadEvents = events.map((e) => ({ starts_at: e.starts_at, ends_at: e.ends_at, status: e.status, type: e.type, people: e.people.map((p) => p.member_email).filter(Boolean) as string[] }));
+  const loadTasks = (tasks ?? []).map((t) => ({
+    due_date: t.due_date as string,
+    estimate_hours: Number(t.estimate_hours),
+    status: t.status as string,
+    assignees: ((t.task_assignees as { member_email: string }[]) ?? []).map((a) => a.member_email),
+  }));
+  const loadEvents = events.map((e) => ({
+    starts_at: e.starts_at,
+    ends_at: e.ends_at,
+    status: e.status,
+    type: e.type,
+    people: e.people.map((p) => p.member_email).filter(Boolean) as string[],
+  }));
   const holidayDays = holidays.map((h) => h.day);
   const workers = people.filter((p) => p.role !== "viewer");
 
@@ -36,7 +47,10 @@ export default async function WorkloadPage({ searchParams }: { searchParams: Pro
             Leave &amp; holidays →
           </Link>
           <h1 className="text-2xl font-semibold">Workload</h1>
-          <p className="text-sm text-neutral-500">Hours booked per week (estimates of open tasks due that week, split between assignees, plus shoots and meetings) against each person&apos;s capacity after leave and holidays.</p>
+          <p className="text-sm text-neutral-500">
+            Hours booked per week (estimates of open tasks due that week, split between assignees, plus shoots and meetings) against each person&apos;s capacity after leave and
+            holidays.
+          </p>
         </div>
         <div className="flex items-center gap-1 text-sm">
           <Link href={`/team/workload?from=${addDays(first, -7 * WEEKS)}`} className="rounded-md px-2 py-1 hover:bg-neutral-100" aria-label="Earlier">
@@ -94,7 +108,9 @@ export default async function WorkloadPage({ searchParams }: { searchParams: Pro
             </tbody>
           </table>
         </div>
-        <p className="mt-3 text-xs text-neutral-500">Green under 80% · amber 80–100% · red over capacity. Hover a cell for the breakdown. Capacity is set per person on the Team page.</p>
+        <p className="mt-3 text-xs text-neutral-500">
+          Green under 80% · amber 80–100% · red over capacity. Hover a cell for the breakdown. Capacity is set per person on the Team page.
+        </p>
       </Card>
     </div>
   );

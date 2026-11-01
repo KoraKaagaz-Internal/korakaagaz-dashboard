@@ -16,7 +16,10 @@ export default async function CrmPage({ searchParams }: { searchParams: Promise<
   const [all, people] = await Promise.all([listLeads(), teamDirectory()]);
   const today = todayIso();
   const q = (sp.q ?? "").toLowerCase();
-  const leads = all.filter((l) => (!sp.source || l.source === sp.source) && (!sp.owner || l.owner_email === sp.owner) && (!q || `${l.name} ${l.company} ${l.email} ${l.service}`.toLowerCase().includes(q)));
+  const leads = all.filter(
+    (l) =>
+      (!sp.source || l.source === sp.source) && (!sp.owner || l.owner_email === sp.owner) && (!q || `${l.name} ${l.company} ${l.email} ${l.service}`.toLowerCase().includes(q)),
+  );
   const p = pipeline(leads);
   const due = leads.filter((l) => OPEN_STAGES.includes(l.stage) && l.follow_up_on && l.follow_up_on <= today);
   const view = sp.view === "list" ? "list" : "board";
@@ -74,7 +77,12 @@ export default async function CrmPage({ searchParams }: { searchParams: Promise<
         <button className="rounded-lg bg-neutral-900 px-3 py-1.5 text-white">Filter</button>
         <div className="ml-auto flex rounded-lg bg-white p-0.5 ring-1 ring-black/10" role="group" aria-label="View">
           {(["board", "list"] as const).map((v) => (
-            <Link key={v} href={`/crm?view=${v}${keep ? `&${keep}` : ""}`} aria-current={view === v ? "true" : undefined} className={`rounded-md px-3 py-1 capitalize ${view === v ? "bg-navy text-white" : "text-neutral-700"}`}>
+            <Link
+              key={v}
+              href={`/crm?view=${v}${keep ? `&${keep}` : ""}`}
+              aria-current={view === v ? "true" : undefined}
+              className={`rounded-md px-3 py-1 capitalize ${view === v ? "bg-navy text-white" : "text-neutral-700"}`}
+            >
               {v}
             </Link>
           ))}
@@ -110,7 +118,9 @@ export default async function CrmPage({ searchParams }: { searchParams: Promise<
                       <td>{STAGE_LABEL[l.stage]}</td>
                       <td className="text-neutral-600">{SOURCE_LABEL[l.source]}</td>
                       <td className="text-neutral-600">{l.owner_email ? displayName(l.owner_email, people) : "—"}</td>
-                      <td className={l.follow_up_on && l.follow_up_on <= today && OPEN_STAGES.includes(l.stage) ? "font-medium text-red-700" : "text-neutral-600"}>{l.follow_up_on ? formatInvoiceDate(l.follow_up_on).replace(/, \d{4}$/, "") : ""}</td>
+                      <td className={l.follow_up_on && l.follow_up_on <= today && OPEN_STAGES.includes(l.stage) ? "font-medium text-red-700" : "text-neutral-600"}>
+                        {l.follow_up_on ? formatInvoiceDate(l.follow_up_on).replace(/, \d{4}$/, "") : ""}
+                      </td>
                       <td className="text-right tabular-nums">{l.value ? compactInr(l.value) : ""}</td>
                     </tr>
                   ))}

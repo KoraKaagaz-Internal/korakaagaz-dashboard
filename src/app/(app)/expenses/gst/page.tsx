@@ -20,7 +20,11 @@ export default async function GstPage({ searchParams }: { searchParams: Promise<
   const prev = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 2, 1)).toISOString().slice(0, 10);
   const month = /^\d{4}-\d{2}$/.test(sp.month ?? "") ? `${sp.month}-01` : prev;
   const { from, to } = monthRange(month);
-  const [settings, expenses, challans] = await Promise.all([getSettings(), listExpenses({ from: monthRange(`${Number(month.slice(0, 4)) - 1}${month.slice(4)}`).from }, 3000), listChallans()]);
+  const [settings, expenses, challans] = await Promise.all([
+    getSettings(),
+    listExpenses({ from: monthRange(`${Number(month.slice(0, 4)) - 1}${month.slice(4)}`).from }, 3000),
+    listChallans(),
+  ]);
   const withAge = expenses.map((e) => ({ ...e, unpaid_days: e.balance > 0.005 ? daysBetween(e.expense_date, today) : 0 }));
   const itc = itcSummary(withAge, month);
   const inMonth = expenses.filter((e) => e.expense_date >= from && e.expense_date <= to);
@@ -38,7 +42,9 @@ export default async function GstPage({ searchParams }: { searchParams: Promise<
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">GST &amp; TDS on purchases</h1>
-          <p className="text-sm text-neutral-500">Input credit for GSTR-3B, matching with GSTR-2B, and TDS you deducted from vendors. Rules are FY 2025-26; check with your CA before filing.</p>
+          <p className="text-sm text-neutral-500">
+            Input credit for GSTR-3B, matching with GSTR-2B, and TDS you deducted from vendors. Rules are FY 2025-26; check with your CA before filing.
+          </p>
         </div>
         <form className="flex items-center gap-2 text-sm">
           <select name="month" defaultValue={month.slice(0, 7)} aria-label="Month" className="rounded-lg border border-neutral-300 bg-white px-2 py-1.5">
@@ -134,7 +140,11 @@ export default async function GstPage({ searchParams }: { searchParams: Promise<
               </tbody>
             </table>
             <p className="mt-3 text-sm">
-              To deposit: <b>{formatMoney(tdsDueAmount)}</b> by {formatInvoiceDate(month.slice(5, 7) === "03" ? `${month.slice(0, 4)}-04-30` : new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 7)).toISOString().slice(0, 10))} (challan ITNS-281 on the income-tax portal).
+              To deposit: <b>{formatMoney(tdsDueAmount)}</b> by{" "}
+              {formatInvoiceDate(
+                month.slice(5, 7) === "03" ? `${month.slice(0, 4)}-04-30` : new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 7)).toISOString().slice(0, 10),
+              )}{" "}
+              (challan ITNS-281 on the income-tax portal).
             </p>
             {isAdmin && <Challan month={month} amount={Math.round(tdsDueAmount * 100) / 100} ids={tdsDue.map((e) => e.id)} today={today} />}
             <a className={`${btn.ghost} mt-3 inline-block`} href={`/api/export/tds-payable?${qs}`}>
@@ -163,13 +173,18 @@ export default async function GstPage({ searchParams }: { searchParams: Promise<
         <ul className="divide-y divide-neutral-100 text-sm">
           {dues.map((d) => (
             <li key={`${d.date}-${d.title}`} className="flex items-center gap-3 py-1.5">
-              <span className={`w-28 ${daysBetween(today, d.date) <= 7 ? "font-semibold text-red-700" : "text-neutral-600"}`}>{formatInvoiceDate(d.date).replace(/, \d{4}$/, "")}</span>
+              <span className={`w-28 ${daysBetween(today, d.date) <= 7 ? "font-semibold text-red-700" : "text-neutral-600"}`}>
+                {formatInvoiceDate(d.date).replace(/, \d{4}$/, "")}
+              </span>
               <span className="flex-1">{d.title}</span>
               <span className="text-xs text-neutral-500">{d.detail}</span>
             </li>
           ))}
         </ul>
-        <p className="mt-2 text-xs text-neutral-500">Filing as a {settings.gst_filing === "qrmp" ? "quarterly (QRMP)" : settings.gst_filing === "none" ? "non-GST" : "monthly"} GST filer. Change it in Settings. Dates move when the government extends them.</p>
+        <p className="mt-2 text-xs text-neutral-500">
+          Filing as a {settings.gst_filing === "qrmp" ? "quarterly (QRMP)" : settings.gst_filing === "none" ? "non-GST" : "monthly"} GST filer. Change it in Settings. Dates move
+          when the government extends them.
+        </p>
       </Card>
     </div>
   );

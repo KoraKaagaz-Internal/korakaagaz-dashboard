@@ -21,10 +21,17 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const found = await getLead(id);
   if (!found) notFound();
   const { lead: l, activities, client, project } = found;
-  const [people, templates, settings, quotes] = await Promise.all([teamDirectory(), listTemplates(), getSettings(), client ? listDocuments({ client: client.id, type: "quote" }) : Promise.resolve([])]);
+  const [people, templates, settings, quotes] = await Promise.all([
+    teamDirectory(),
+    listTemplates(),
+    getSettings(),
+    client ? listDocuments({ client: client.id, type: "quote" }) : Promise.resolve([]),
+  ]);
   const today = todayIso();
   const digits = l.phone.replace(/\D/g, "");
-  const wa = digits ? `https://wa.me/${digits.length === 10 ? `91${digits}` : digits}?text=${encodeURIComponent(`Hi ${l.name.split(" ")[0]}, this is ${settings.business_name} following up on your enquiry.`)}` : "";
+  const wa = digits
+    ? `https://wa.me/${digits.length === 10 ? `91${digits}` : digits}?text=${encodeURIComponent(`Hi ${l.name.split(" ")[0]}, this is ${settings.business_name} following up on your enquiry.`)}`
+    : "";
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
@@ -111,7 +118,8 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
                     <div className="min-w-0 flex-1">
                       <p className="whitespace-pre-wrap text-neutral-800">{a.body}</p>
                       <p className="text-xs text-neutral-500">
-                        <span className="capitalize">{a.kind === "stage" ? "Stage" : a.kind}</span> · {a.author_email.includes("@") ? displayName(a.author_email, people) : a.author_email} ·{" "}
+                        <span className="capitalize">{a.kind === "stage" ? "Stage" : a.kind}</span> ·{" "}
+                        {a.author_email.includes("@") ? displayName(a.author_email, people) : a.author_email} ·{" "}
                         {new Date(a.at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}
                       </p>
                     </div>

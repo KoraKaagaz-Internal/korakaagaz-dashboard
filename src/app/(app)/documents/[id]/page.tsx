@@ -44,10 +44,7 @@ export default async function DocumentPage({ params, searchParams }: { params: P
     referenceFor(doc),
     siteUrl(),
   ]);
-  const receipts =
-    doc.doc_type === "invoice" && doc.client_id
-      ? (await listDocuments({ type: "receipt", client: doc.client_id })).filter((r) => r.status === "issued")
-      : [];
+  const receipts = doc.doc_type === "invoice" && doc.client_id ? (await listDocuments({ type: "receipt", client: doc.client_id })).filter((r) => r.status === "issued") : [];
 
   const label = DOC_LABELS[doc.doc_type];
   const shareUrl = `${site}/d/${doc.share_token}`;
@@ -79,7 +76,15 @@ export default async function DocumentPage({ params, searchParams }: { params: P
         <Card>
           <dl className="grid grid-cols-2 gap-y-1.5 text-sm">
             <dt className="text-neutral-500">Client</dt>
-            <dd className="text-right">{doc.client_id ? <Link className="hover:text-navy" href={`/clients/${doc.client_id}`}>{doc.client.name}</Link> : doc.client.name}</dd>
+            <dd className="text-right">
+              {doc.client_id ? (
+                <Link className="hover:text-navy" href={`/clients/${doc.client_id}`}>
+                  {doc.client.name}
+                </Link>
+              ) : (
+                doc.client.name
+              )}
+            </dd>
             <dt className="text-neutral-500">Total</dt>
             <dd className="text-right font-semibold tabular-nums">{formatMoney(doc.total, doc.currency)}</dd>
             {doc.balance?.payment_status && (
@@ -138,6 +143,8 @@ export default async function DocumentPage({ params, searchParams }: { params: P
             client_email: doc.client.email,
             client_id: doc.client_id,
             taxable_ratio: doc.total > 0 ? doc.taxable / doc.total : 1,
+            total: doc.total,
+            client_name: doc.client.name,
           }}
           canEdit={canEdit}
           isAdmin={isAdmin}

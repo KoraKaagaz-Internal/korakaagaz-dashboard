@@ -12,9 +12,25 @@ export default async function ClaimsPage() {
   const [claims, people, accounts] = await Promise.all([listExpenses({ kind: "claim" }, 500), teamDirectory(), isAdmin ? cashAccounts() : Promise.resolve([])]);
   const names = Object.fromEntries(people.map((p) => [p.email, p.name]));
   const mine = claims.filter((c) => c.created_by === email);
-  const row = (c: (typeof claims)[number]) => ({ id: c.id, created_by: c.created_by, expense_date: c.expense_date, description: c.description, vendor: c.vendor, category: c.category, total: c.total, balance: c.balance, receipt: !!c.receipt_path });
+  const row = (c: (typeof claims)[number]) => ({
+    id: c.id,
+    created_by: c.created_by,
+    expense_date: c.expense_date,
+    description: c.description,
+    vendor: c.vendor,
+    category: c.category,
+    total: c.total,
+    balance: c.balance,
+    receipt: !!c.receipt_path,
+  });
   const status = (c: (typeof claims)[number]) =>
-    c.approval === "submitted" ? "Waiting approval" : c.approval === "rejected" ? `Sent back${c.approval_note ? `: ${c.approval_note}` : ""}` : c.balance <= 0.005 ? `Reimbursed${c.last_paid_on ? ` ${formatInvoiceDate(c.last_paid_on)}` : ""}` : "Approved, to be paid";
+    c.approval === "submitted"
+      ? "Waiting approval"
+      : c.approval === "rejected"
+        ? `Sent back${c.approval_note ? `: ${c.approval_note}` : ""}`
+        : c.balance <= 0.005
+          ? `Reimbursed${c.last_paid_on ? ` ${formatInvoiceDate(c.last_paid_on)}` : ""}`
+          : "Approved, to be paid";
 
   return (
     <div className="space-y-5">

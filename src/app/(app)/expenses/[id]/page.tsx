@@ -22,14 +22,29 @@ export default async function ExpensePage({ params, searchParams }: { params: Pr
   const today = todayIso();
 
   if (edit && editable) {
-    const [categories, vendors, projects, accounts, settings] = await Promise.all([listCategories(), listVendors(), loggableProjects(), isStaff ? cashAccounts() : Promise.resolve([]), isStaff ? getSettings() : Promise.resolve(null)]);
+    const [categories, vendors, projects, accounts, settings] = await Promise.all([
+      listCategories(),
+      listVendors(),
+      loggableProjects(),
+      isStaff ? cashAccounts() : Promise.resolve([]),
+      isStaff ? getSettings() : Promise.resolve(null),
+    ]);
     return (
       <div className="mx-auto max-w-3xl space-y-5">
         <Link href={`/expenses/${id}`} className="text-sm text-neutral-500 hover:text-navy">
           ← Back
         </Link>
         <h1 className="text-2xl font-semibold">Edit expense</h1>
-        <ExpenseForm expense={e} categories={categories} vendors={vendors} projects={projects.map((p) => ({ id: p.id, code: p.code, name: p.name }))} accounts={accounts} ourState={settings?.state_code ?? "21"} today={today} canEdit={canEdit} />
+        <ExpenseForm
+          expense={e}
+          categories={categories}
+          vendors={vendors}
+          projects={projects.map((p) => ({ id: p.id, code: p.code, name: p.name }))}
+          accounts={accounts}
+          ourState={settings?.state_code ?? "21"}
+          today={today}
+          canEdit={canEdit}
+        />
       </div>
     );
   }
@@ -39,18 +54,57 @@ export default async function ExpensePage({ params, searchParams }: { params: Pr
   const canPay = e.kind === "claim" ? isAdmin && e.approval === "approved" : canEdit;
   const rows: [string, React.ReactNode][] = [
     ["Type", e.kind === "claim" ? `Team claim by ${e.created_by}` : e.kind === "bill" ? "Bill to pay" : "Paid expense"],
-    ["Paid to", e.vendor_id && isStaff ? <Link href={`/vendors/${e.vendor_id}`} className="text-navy hover:underline">{e.vendor}</Link> : e.vendor || "—"],
+    [
+      "Paid to",
+      e.vendor_id && isStaff ? (
+        <Link href={`/vendors/${e.vendor_id}`} className="text-navy hover:underline">
+          {e.vendor}
+        </Link>
+      ) : (
+        e.vendor || "—"
+      ),
+    ],
     ["Category", e.category],
     ["Date", formatInvoiceDate(e.expense_date)],
     ["Bill no.", e.bill_no || "—"],
-    ["Project", e.project_id ? <Link href={`/projects/${e.project_id}`} className="text-navy hover:underline">{e.project_code}</Link> : "Studio overhead"],
+    [
+      "Project",
+      e.project_id ? (
+        <Link href={`/projects/${e.project_id}`} className="text-navy hover:underline">
+          {e.project_code}
+        </Link>
+      ) : (
+        "Studio overhead"
+      ),
+    ],
     ["Taxable value", formatMoney(e.taxable, e.currency)],
     ["GST", gst ? `${formatMoney(gst)} (${e.igst ? "IGST" : "CGST + SGST"} @ ${e.gst_rate}%)${e.rcm ? " · reverse charge" : ""}` : "None"],
-    ["Input credit", gst ? (e.itc_status === "eligible" ? `Claimable · GSTR-2B: ${e.gstr2b.replace("_", " ")}` : e.itc_status === "blocked" ? "Blocked (s.17(5))" : "Not claimable") : "—"],
-    ...(e.tds_amount ? ([["TDS deducted", `${formatMoney(e.tds_amount)} · ${tdsNature(e.tds_nature).label}${e.tds_challan_id ? " · deposited" : " · not yet deposited"}`]] as [string, React.ReactNode][]) : []),
+    [
+      "Input credit",
+      gst ? (e.itc_status === "eligible" ? `Claimable · GSTR-2B: ${e.gstr2b.replace("_", " ")}` : e.itc_status === "blocked" ? "Blocked (s.17(5))" : "Not claimable") : "—",
+    ],
+    ...(e.tds_amount
+      ? ([["TDS deducted", `${formatMoney(e.tds_amount)} · ${tdsNature(e.tds_nature).label}${e.tds_challan_id ? " · deposited" : " · not yet deposited"}`]] as [
+          string,
+          React.ReactNode,
+        ][])
+      : []),
     ["Total", <b key="t">{formatMoney(e.total, e.currency)}</b>],
     ...(e.kind === "bill" ? ([["Due", e.due_date ? formatInvoiceDate(e.due_date) : "—"]] as [string, React.ReactNode][]) : []),
-    ...(e.billable ? ([["Re-bill", e.invoiced_document_id ? <Link key="i" href={`/documents/${e.invoiced_document_id}`} className="text-navy hover:underline">On an invoice</Link> : `Waiting to bill${e.markup_pct ? ` (+${e.markup_pct}% markup)` : ""}`]] as [string, React.ReactNode][]) : []),
+    ...(e.billable
+      ? ([
+          [
+            "Re-bill",
+            e.invoiced_document_id ? (
+              <Link key="i" href={`/documents/${e.invoiced_document_id}`} className="text-navy hover:underline">
+                On an invoice
+              </Link>
+            ) : (
+              `Waiting to bill${e.markup_pct ? ` (+${e.markup_pct}% markup)` : ""}`
+            ),
+          ],
+        ] as [string, React.ReactNode][])
+      : []),
     ...(e.recurring ? ([["Repeats", `Every ${e.recurring.every}, next ${formatInvoiceDate(e.recurring.next)}`]] as [string, React.ReactNode][]) : []),
   ];
 

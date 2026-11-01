@@ -20,11 +20,23 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     getSettings(),
     listEvents(today, addDays(today, 7)),
     supabase.from("expenses").select("id", { count: "exact", head: true }).gt("tds_amount", 0),
-    supabase.from("leads").select("id, name, company, stage, follow_up_on, service").in("stage", ["enquiry", "discovery", "proposal", "negotiation"]).lte("follow_up_on", today).order("follow_up_on").limit(8),
+    supabase
+      .from("leads")
+      .select("id, name, company, stage, follow_up_on, service")
+      .in("stage", ["enquiry", "discovery", "proposal", "negotiation"])
+      .lte("follow_up_on", today)
+      .order("follow_up_on")
+      .limit(8),
   ]);
   const dues = upcoming(today, 30, { gstFiling: settings.gst_filing ?? "monthly", stateCode: settings.state_code, tds: !!tdsLines });
   const shoots = events.filter((e) => e.status !== "cancelled" && e.type !== "deadline");
-  const payments = (pays ?? []).map((p) => ({ ...p, amount: Number(p.amount), tds_amount: Number(p.tds_amount), currency: p.documents?.currency ?? "INR", fx_rate: Number(p.documents?.fx_rate ?? 1) }));
+  const payments = (pays ?? []).map((p) => ({
+    ...p,
+    amount: Number(p.amount),
+    tds_amount: Number(p.tds_amount),
+    currency: p.documents?.currency ?? "INR",
+    fx_rate: Number(p.documents?.fx_rate ?? 1),
+  }));
   const k = kpis(docs, payments, fy, today);
   const revenue = revenueByMonth(docs, today);
   const aged = ageing(docs, today);
@@ -91,7 +103,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <li key={a.bucket} className="grid grid-cols-[96px_1fr_auto] items-center gap-3 text-sm" title={`${a.count} invoice(s)`}>
                   <span className="text-neutral-600">{a.bucket}</span>
                   <span className="h-2 rounded-full bg-neutral-100">
-                    <span className="block h-2 rounded-full" style={{ width: `${(a.value / max) * 100}%`, background: "#3846b4", minWidth: a.value ? 4 : 0 }} />
+                    <span className="block h-2 rounded-full" style={{ width: `${(a.value / max) * 100}%`, background: "var(--color-accent)", minWidth: a.value ? 4 : 0 }} />
                   </span>
                   <span className="text-right tabular-nums">
                     {formatMoney(a.value)} <span className="text-xs text-neutral-400">· {a.count}</span>
@@ -104,12 +116,21 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       </div>
 
       {(followUps ?? []).length > 0 && (
-        <Card title={`Leads to follow up · ${followUps!.length}`} actions={<Link href="/crm" className="text-sm text-navy hover:underline">Leads</Link>}>
+        <Card
+          title={`Leads to follow up · ${followUps!.length}`}
+          actions={
+            <Link href="/crm" className="text-sm text-navy hover:underline">
+              Leads
+            </Link>
+          }
+        >
           <ul className="divide-y divide-neutral-100 text-sm">
             {followUps!.map((l) => (
               <li key={l.id}>
                 <Link href={`/crm/${l.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
-                  <span className={`w-24 text-xs ${l.follow_up_on < today ? "font-semibold text-red-700" : "text-neutral-500"}`}>{l.follow_up_on < today ? `${daysBetween(l.follow_up_on, today)}d overdue` : "Today"}</span>
+                  <span className={`w-24 text-xs ${l.follow_up_on < today ? "font-semibold text-red-700" : "text-neutral-500"}`}>
+                    {l.follow_up_on < today ? `${daysBetween(l.follow_up_on, today)}d overdue` : "Today"}
+                  </span>
                   <span className="min-w-0 flex-1 truncate">{l.company || l.name}</span>
                   <span className="text-xs text-neutral-500">{l.service}</span>
                 </Link>
@@ -120,13 +141,28 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="This week's shoots and meetings" actions={<Link href="/calendar?view=week" className="text-sm text-navy hover:underline">Calendar</Link>}>
+        <Card
+          title="This week's shoots and meetings"
+          actions={
+            <Link href="/calendar?view=week" className="text-sm text-navy hover:underline">
+              Calendar
+            </Link>
+          }
+        >
           {shoots.length ? (
             <ul className="divide-y divide-neutral-100 text-sm">
               {shoots.map((e) => (
                 <li key={e.id}>
                   <Link href={`/calendar/${e.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
-                    <span className="w-24 text-xs text-neutral-500">{new Date(e.starts_at).toLocaleString("en-IN", { weekday: "short", day: "numeric", hour: e.all_day ? undefined : "numeric", minute: e.all_day ? undefined : "2-digit", timeZone: "Asia/Kolkata" })}</span>
+                    <span className="w-24 text-xs text-neutral-500">
+                      {new Date(e.starts_at).toLocaleString("en-IN", {
+                        weekday: "short",
+                        day: "numeric",
+                        hour: e.all_day ? undefined : "numeric",
+                        minute: e.all_day ? undefined : "2-digit",
+                        timeZone: "Asia/Kolkata",
+                      })}
+                    </span>
                     <span className="min-w-0 flex-1 truncate">{e.title}</span>
                     <span className="text-xs text-neutral-500">{e.project_code}</span>
                   </Link>
@@ -137,11 +173,20 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             <Empty text="Nothing booked in the next 7 days." />
           )}
         </Card>
-        <Card title="Filing due in the next 30 days" actions={<Link href="/expenses/gst" className="text-sm text-navy hover:underline">GST &amp; TDS</Link>}>
+        <Card
+          title="Filing due in the next 30 days"
+          actions={
+            <Link href="/expenses/gst" className="text-sm text-navy hover:underline">
+              GST &amp; TDS
+            </Link>
+          }
+        >
           <ul className="divide-y divide-neutral-100 text-sm">
             {dues.map((d) => (
               <li key={`${d.date}${d.title}`} className="flex items-center gap-3 py-2">
-                <span className={`w-24 text-xs ${daysBetween(today, d.date) <= 5 ? "font-semibold text-red-700" : "text-neutral-500"}`}>{formatInvoiceDate(d.date).replace(/, \d{4}$/, "")}</span>
+                <span className={`w-24 text-xs ${daysBetween(today, d.date) <= 5 ? "font-semibold text-red-700" : "text-neutral-500"}`}>
+                  {formatInvoiceDate(d.date).replace(/, \d{4}$/, "")}
+                </span>
                 <span className="flex-1">{d.title}</span>
                 <span className="text-xs text-neutral-500">{d.detail}</span>
               </li>
@@ -166,7 +211,7 @@ function Tile({ label, value, sub, tone = "", href }: { label: string; value: st
       {sub && <div className="mt-0.5 text-xs text-neutral-500">{sub}</div>}
     </>
   );
-  const cls = "block rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5";
+  const cls = "block rounded-xl bg-white px-4 py-3 border border-line";
   return href ? (
     <Link href={href} className={`${cls} hover:ring-navy/30`}>
       {body}

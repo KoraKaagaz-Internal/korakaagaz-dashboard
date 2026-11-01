@@ -51,7 +51,10 @@ export function DocumentTemplate({ doc, supplier, status = "draft", reference }:
   }
   if (totals.roundOff !== 0) totalsRows.push({ label: "Round off", value: `${totals.roundOff > 0 ? "+" : "−"} ${money(Math.abs(totals.roundOff))}` });
 
-  const customLine = doc.custom_fields.filter((f) => f.label && f.value).map((f) => `${f.label}: ${f.value}`).join("   ·   ");
+  const customLine = doc.custom_fields
+    .filter((f) => f.label && f.value)
+    .map((f) => `${f.label}: ${f.value}`)
+    .join("   ·   ");
   const notes = [
     doc.doc_type === "credit_note" && reference ? `Against invoice ${reference.number} dated ${formatInvoiceDate(reference.date)}.` : "",
     customLine,

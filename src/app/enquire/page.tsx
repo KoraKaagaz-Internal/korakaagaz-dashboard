@@ -17,7 +17,7 @@ export default async function EnquirePage({ searchParams }: { searchParams: Prom
   return (
     <main className="min-h-screen bg-[#f6f6f8] px-4 py-10">
       <div className="mx-auto max-w-2xl">
-        <p className="font-serif text-2xl text-[#081788] uppercase">Kora Kaagaz</p>
+        <p className="font-serif text-2xl text-navy uppercase">Kora Kaagaz</p>
         <h1 className="mt-6 text-3xl font-semibold text-neutral-900">Let&apos;s make something.</h1>
         <p className="mt-2 mb-6 text-neutral-600">Tell us a little about your brand and the project. We reply within a working day.</p>
         {form}

@@ -24,7 +24,13 @@ export function FeedLink({ site }: { site: string }) {
         </button>
       ) : (
         <div className="space-y-2">
-          <input readOnly value={url} onFocus={(e) => e.target.select()} aria-label="Calendar link" className="w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-1.5 font-mono text-xs" />
+          <input
+            readOnly
+            value={url}
+            onFocus={(e) => e.target.select()}
+            aria-label="Calendar link"
+            className="w-full rounded-lg border border-neutral-300 bg-neutral-50 px-3 py-1.5 font-mono text-xs"
+          />
           <div className="flex flex-wrap gap-2">
             <button className={btn.secondary} onClick={() => navigator.clipboard.writeText(url).then(() => setMsg("Copied."))}>
               Copy
@@ -34,11 +40,16 @@ export function FeedLink({ site }: { site: string }) {
             </button>
           </div>
           <p className="text-xs text-neutral-500">
-            Google Calendar → Other calendars → + → From URL → paste. It shows your shoots, task due dates, approved leave and holidays, and refreshes every few hours. Anyone with the link can read it, so keep it private.
+            Google Calendar → Other calendars → + → From URL → paste. It shows your shoots, task due dates, approved leave and holidays, and refreshes every few hours. Anyone with
+            the link can read it, so keep it private.
           </p>
         </div>
       )}
-      {msg && <p className="mt-1 text-xs text-neutral-600" role="status">{msg}</p>}
+      {msg && (
+        <p className="mt-1 text-xs text-neutral-600" role="status">
+          {msg}
+        </p>
+      )}
     </div>
   );
 }

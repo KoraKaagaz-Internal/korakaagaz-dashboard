@@ -70,7 +70,7 @@ export function Frame({
 }) {
   const [asTable, setAsTable] = useState(false);
   return (
-    <figure className="m-0 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-black/5">
+    <figure className="m-0 min-w-0 rounded-xl border border-line bg-white p-5">
       <figcaption className="mb-3 flex flex-wrap items-start justify-between gap-2">
         <div>
           <div className="text-sm font-semibold text-neutral-900">{title}</div>
@@ -681,7 +681,7 @@ export function Kpi({
 }) {
   const good = delta === null || delta === undefined || delta === 0 ? null : delta > 0 === upIsGood;
   return (
-    <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+    <div className="rounded-xl bg-white px-4 py-3 border border-line">
       <div className="text-xs text-neutral-500">{label}</div>
       <div className="mt-0.5 flex items-end justify-between gap-2">
         <span className="text-xl font-semibold text-neutral-900">{value}</span>

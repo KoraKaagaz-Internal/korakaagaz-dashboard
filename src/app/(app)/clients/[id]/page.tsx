@@ -31,7 +31,9 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
           </Link>
           <h1 className="text-2xl font-semibold">{client.name}</h1>
           <p className="text-sm text-neutral-500">
-            {[client.address, client.city, client.country !== "India" ? client.country : stateLabel(client.state_code), client.gstin && `GSTIN ${client.gstin}`].filter(Boolean).join(" · ")}
+            {[client.address, client.city, client.country !== "India" ? client.country : stateLabel(client.state_code), client.gstin && `GSTIN ${client.gstin}`]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -143,7 +145,7 @@ export default async function ClientPage({ params, searchParams }: { params: Pro
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+    <div className="rounded-xl bg-white px-4 py-3 border border-line">
       <div className="text-xs text-neutral-500">{label}</div>
       <div className="text-lg font-semibold tabular-nums">{value}</div>
     </div>

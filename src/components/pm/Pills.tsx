@@ -27,9 +27,7 @@ export function TaskStatusPill({ status }: { status: TaskStatus }) {
 export function PriorityFlag({ priority }: { priority: Priority }) {
   if (priority === "normal" || priority === "low") return null;
   return (
-    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase ${priority === "urgent" ? "bg-red-600 text-white" : "bg-red-50 text-red-700"}`}>
-      {priority}
-    </span>
+    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase ${priority === "urgent" ? "bg-red-600 text-white" : "bg-red-50 text-red-700"}`}>{priority}</span>
   );
 }
 
@@ -37,7 +35,7 @@ export function ProgressBar({ pct, label }: { pct: number; label?: string }) {
   return (
     <div className="flex items-center gap-2" title={label}>
       <div className="h-1.5 flex-1 rounded-full bg-neutral-100" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={label ?? "Progress"}>
-        <div className="h-1.5 rounded-full bg-[#3846b4]" style={{ width: `${Math.min(100, pct)}%`, minWidth: pct ? 4 : 0 }} />
+        <div className="h-1.5 rounded-full bg-accent" style={{ width: `${Math.min(100, pct)}%`, minWidth: pct ? 4 : 0 }} />
       </div>
       <span className="w-9 text-right text-xs text-neutral-500 tabular-nums">{pct}%</span>
     </div>

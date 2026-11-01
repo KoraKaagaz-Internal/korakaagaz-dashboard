@@ -1,26 +1,20 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { updateProject } from "@/app/actions/projects";
+import { inputCls } from "@/components/ui";
+import { useAction } from "@/components/ui/Toaster";
 import { PROJECT_STATUSES } from "@/lib/pm";
 import type { ProjectStatus } from "@/lib/types";
 
 export function StatusSelect({ id, status, disabled }: { id: string; status: ProjectStatus; disabled: boolean }) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
+  const [run, pending] = useAction(updateProject, { success: "Status updated" });
   return (
     <select
       value={status}
       disabled={disabled || pending}
       aria-label="Project status"
-      onChange={(e) =>
-        start(async () => {
-          await updateProject(id, { status: e.target.value as ProjectStatus });
-          router.refresh();
-        })
-      }
-      className="rounded-lg border border-neutral-300 bg-white px-2 py-1 text-sm"
+      onChange={(e) => run(id, { status: e.target.value as ProjectStatus })}
+      className={`${inputCls} !w-auto !py-1`}
     >
       {PROJECT_STATUSES.map((s) => (
         <option key={s.key} value={s.key}>

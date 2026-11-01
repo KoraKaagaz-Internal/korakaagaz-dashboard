@@ -3,18 +3,33 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteVendor, saveVendor } from "@/app/actions/expenses";
-import { Card, Field, Input, Select, Textarea, btn } from "@/components/ui";
+import { Card, ConfirmButton, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import type { Category, Vendor } from "@/lib/expense-data";
 import { TDS_NATURES } from "@/lib/expenses";
 import { GST_PORTAL_SEARCH, STATES, checkGstin } from "@/lib/gst";
 
-const EMPTY = { name: "", kind: "vendor", gstin: "", pan: "", state_code: "", email: "", phone: "", address: "", bank_details: "", upi_id: "", default_category_id: "", tds_nature: "none", is_company: false, msme: false, notes: "" };
+const EMPTY = {
+  name: "",
+  kind: "vendor",
+  gstin: "",
+  pan: "",
+  state_code: "",
+  email: "",
+  phone: "",
+  address: "",
+  bank_details: "",
+  upi_id: "",
+  default_category_id: "",
+  tds_nature: "none",
+  is_company: false,
+  msme: false,
+  notes: "",
+};
 
 export function VendorForm({ vendor, categories, onDone }: { vendor?: Vendor; categories: Category[]; onDone?: () => void }) {
   const router = useRouter();
   const [v, setV] = useState({ ...EMPTY, ...(vendor ?? {}), default_category_id: vendor?.default_category_id ?? "" });
   const [msg, setMsg] = useState("");
-  const [confirm, setConfirm] = useState(false);
   const [pending, start] = useTransition();
   const g = v.gstin ? checkGstin(v.gstin) : null;
 
@@ -45,7 +60,16 @@ export function VendorForm({ vendor, categories, onDone }: { vendor?: Vendor; ca
           </Select>
         </Field>
         <Field label="Usual category">
-          <Select value={v.default_category_id} onChange={(e) => setV({ ...v, default_category_id: e.target.value, tds_nature: v.tds_nature === "none" ? (categories.find((c) => c.id === e.target.value)?.tds_nature ?? "none") : v.tds_nature })}>
+          <Select
+            value={v.default_category_id}
+            onChange={(e) =>
+              setV({
+                ...v,
+                default_category_id: e.target.value,
+                tds_nature: v.tds_nature === "none" ? (categories.find((c) => c.id === e.target.value)?.tds_nature ?? "none") : v.tds_nature,
+              })
+            }
+          >
             <option value="">—</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
@@ -55,7 +79,11 @@ export function VendorForm({ vendor, categories, onDone }: { vendor?: Vendor; ca
           </Select>
         </Field>
         <Field label="GSTIN (if registered)">
-          <Input value={v.gstin} onChange={(e) => setV({ ...v, gstin: e.target.value.toUpperCase(), state_code: e.target.value.length >= 2 ? e.target.value.slice(0, 2) : v.state_code })} placeholder="21ABCDE1234F1Z5" />
+          <Input
+            value={v.gstin}
+            onChange={(e) => setV({ ...v, gstin: e.target.value.toUpperCase(), state_code: e.target.value.length >= 2 ? e.target.value.slice(0, 2) : v.state_code })}
+            placeholder="21ABCDE1234F1Z5"
+          />
           {g && !g.ok && <span className="mt-1 block text-xs text-red-700">{g.reason}</span>}
           {g?.ok && (
             <a className="mt-1 block text-xs text-navy underline" href={GST_PORTAL_SEARCH} target="_blank" rel="noopener noreferrer">
@@ -114,22 +142,27 @@ export function VendorForm({ vendor, categories, onDone }: { vendor?: Vendor; ca
           {vendor ? "Save" : "Add vendor"}
         </button>
         {vendor && (
-          <button
-            className={btn.danger}
-            onClick={() => {
-              if (!confirm) return setConfirm(true);
+          <ConfirmButton
+            size="md"
+            confirm={`Delete ${vendor.name}? Their bills keep the vendor's name.`}
+            confirmLabel="Delete vendor"
+            onConfirm={() =>
               start(async () => {
                 const r = await deleteVendor(vendor.id);
                 if (!r.ok) return setMsg(r.message);
                 router.push("/vendors");
                 router.refresh();
-              });
-            }}
+              })
+            }
           >
-            {confirm ? "Click again to delete" : "Delete vendor"}
-          </button>
+            Delete vendor
+          </ConfirmButton>
         )}
-        {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+        {msg && (
+          <p className="text-sm text-red-700" role="alert">
+            {msg}
+          </p>
+        )}
       </div>
     </Card>
   );

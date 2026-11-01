@@ -51,7 +51,19 @@ function Selectable({ list, sel, setSel, names }: { list: Claim[]; sel: Set<stri
   );
 }
 
-export function ClaimsAdmin({ pending, approved, names, accounts, today }: { pending: Claim[]; approved: Claim[]; names: Record<string, string>; accounts: { id: string; label: string }[]; today: string }) {
+export function ClaimsAdmin({
+  pending,
+  approved,
+  names,
+  accounts,
+  today,
+}: {
+  pending: Claim[];
+  approved: Claim[];
+  names: Record<string, string>;
+  accounts: { id: string; label: string }[];
+  today: string;
+}) {
   const router = useRouter();
   const [selA, setSelA] = useState<Set<string>>(new Set(pending.map((c) => c.id)));
   const [selP, setSelP] = useState<Set<string>>(new Set(approved.map((c) => c.id)));
@@ -149,7 +161,11 @@ export function ClaimsAdmin({ pending, approved, names, accounts, today }: { pen
           <p className="text-sm text-neutral-500">Nothing to reimburse.</p>
         )}
       </Card>
-      {msg && <p className="text-sm text-neutral-700" role="status">{msg}</p>}
+      {msg && (
+        <p className="text-sm text-neutral-700" role="status">
+          {msg}
+        </p>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { deleteClient } from "@/app/actions/catalog";
 import { ClientForm } from "@/components/ClientForm";
-import { Card, Input, btn } from "@/components/ui";
+import { Card, ConfirmButton, Input, btn } from "@/components/ui";
 import { stateLabel } from "@/lib/gst";
 import type { Client } from "@/lib/types";
 
@@ -62,20 +62,20 @@ export function ClientsManager({ initial, canEdit }: { initial: Client[]; canEdi
                       <button className={btn.ghost} onClick={() => setEditing(c.id)}>
                         Edit
                       </button>
-                      <button
-                        className={btn.danger}
+                      <ConfirmButton
                         disabled={pending}
-                        onClick={() => {
-                          if (!window.confirm(`Delete ${c.name}? Their documents keep a copy of the client details.`)) return;
+                        confirm={`Delete ${c.name}? Their documents keep a copy of the client details.`}
+                        confirmLabel="Delete client"
+                        onConfirm={() =>
                           start(async () => {
                             const r = await deleteClient(c.id);
                             if (r.ok) setClients((l) => l.filter((x) => x.id !== c.id));
                             else setError(r.message);
-                          });
-                        }}
+                          })
+                        }
                       >
                         Delete
-                      </button>
+                      </ConfirmButton>
                     </>
                   )}
                 </div>

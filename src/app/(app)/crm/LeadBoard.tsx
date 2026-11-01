@@ -1,6 +1,20 @@
 "use client";
 
-import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, pointerWithin, rectIntersection, useDroppable, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragOverEvent, type DragStartEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  pointerWithin,
+  rectIntersection,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type CollisionDetection,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import Link from "next/link";
@@ -90,7 +104,11 @@ export function LeadBoard({ leads, today, canEdit }: { leads: Lead[]; today: str
 
   return (
     <div>
-      {msg && <p className="mb-2 text-sm text-red-700" role="alert">{msg}</p>}
+      {msg && (
+        <p className="mb-2 text-sm text-red-700" role="alert">
+          {msg}
+        </p>
+      )}
       {lost && (
         <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl bg-amber-50 p-3 text-sm ring-1 ring-amber-200" role="dialog" aria-label="Why was it lost?">
           <span>Why was it lost?</span>
@@ -99,10 +117,22 @@ export function LeadBoard({ leads, today, canEdit }: { leads: Lead[]; today: str
               <option key={r}>{r}</option>
             ))}
           </Select>
-          <button className={btn.primary} onClick={() => { save(lost.id, "lost", lost.sort, reason); setLost(null); }}>
+          <button
+            className={btn.primary}
+            onClick={() => {
+              save(lost.id, "lost", lost.sort, reason);
+              setLost(null);
+            }}
+          >
             Mark lost
           </button>
-          <button className={btn.ghost} onClick={() => { setLost(null); setCols(group(leads)); }}>
+          <button
+            className={btn.ghost}
+            onClick={() => {
+              setLost(null);
+              setCols(group(leads));
+            }}
+          >
             Cancel
           </button>
         </div>
@@ -133,7 +163,7 @@ export function LeadBoard({ leads, today, canEdit }: { leads: Lead[]; today: str
 function Column({ id, label, sub, children }: { id: string; label: string; sub: string; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id });
   return (
-    <section ref={setNodeRef} aria-label={label} className={`flex w-64 shrink-0 flex-col rounded-2xl p-2 ${isOver ? "bg-navy/10" : "bg-neutral-100/80"}`}>
+    <section ref={setNodeRef} aria-label={label} className={`flex w-64 shrink-0 flex-col rounded-xl p-2 ${isOver ? "bg-navy/10" : "bg-neutral-100/80"}`}>
       <h3 className="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-neutral-700">
         {label}
         <span className="text-xs font-normal text-neutral-500">{sub}</span>
@@ -155,7 +185,7 @@ function Sortable({ id, disabled, children }: { id: string; disabled: boolean; c
 function Card({ lead: l, today, lifted }: { lead: Lead; today: string; lifted?: boolean }) {
   const due = l.follow_up_on && l.stage !== "won" && l.stage !== "lost" && l.follow_up_on <= today;
   return (
-    <div className={`rounded-xl bg-white p-3 text-sm shadow-sm ring-1 ring-black/5 ${lifted ? "rotate-1 shadow-lg" : ""}`}>
+    <div className={`rounded-xl bg-white p-3 text-sm border border-line ${lifted ? "rotate-1 shadow-lg" : ""}`}>
       <Link href={`/crm/${l.id}`} className="block font-medium text-neutral-900 hover:text-navy" onPointerDown={(e) => e.stopPropagation()}>
         {l.company || l.name}
       </Link>

@@ -24,7 +24,7 @@ export async function ProjectTime({ project, people }: { project: Project; peopl
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+        <div className="rounded-xl bg-white px-4 py-3 border border-line">
           <div className="text-xs text-neutral-500">Logged</div>
           <div className="text-lg font-semibold tabular-nums">{hhmm(total)} h</div>
           {project.budget_hours > 0 && (
@@ -35,7 +35,7 @@ export async function ProjectTime({ project, people }: { project: Project; peopl
           )}
         </div>
         {burn && (
-          <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+          <div className="rounded-xl bg-white px-4 py-3 border border-line">
             <div className="text-xs text-neutral-500">Retainer this month</div>
             <div className="text-lg font-semibold tabular-nums">
               {burn.usedHours} / {burn.includedHours} h
@@ -49,7 +49,7 @@ export async function ProjectTime({ project, people }: { project: Project; peopl
           </div>
         )}
         {!burn && (
-          <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+          <div className="rounded-xl bg-white px-4 py-3 border border-line">
             <div className="text-xs text-neutral-500">This month</div>
             <div className="text-lg font-semibold tabular-nums">{hhmm(thisMonth)} h</div>
           </div>

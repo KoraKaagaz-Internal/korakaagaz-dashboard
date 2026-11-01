@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { addLink, deleteFile, fileUrl, registerUpload } from "@/app/actions/projects";
-import { btn } from "@/components/ui";
+import { ConfirmButton, btn } from "@/components/ui";
 import { formatInvoiceDate } from "@/lib/money";
 import { formatBytes, type FileRow } from "@/lib/pm";
 import { createClient } from "@/lib/supabase/client";
@@ -30,7 +30,13 @@ export async function shrinkImage(file: File): Promise<File> {
 }
 
 export function safeName(name: string) {
-  return name.normalize("NFKD").replace(/[^\w.-]+/g, "-").replace(/-+/g, "-").slice(-80) || "file";
+  return (
+    name
+      .normalize("NFKD")
+      .replace(/[^\w.-]+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(-80) || "file"
+  );
 }
 
 export function Files({ projectId, taskId = null, files, canWork, compact }: { projectId: string; taskId?: string | null; files: FileRow[]; canWork: boolean; compact?: boolean }) {
@@ -40,7 +46,6 @@ export function Files({ projectId, taskId = null, files, canWork, compact }: { p
   const [msg, setMsg] = useState("");
   const [link, setLink] = useState({ name: "", url: "" });
   const [showLink, setShowLink] = useState(false);
-  const [confirm, setConfirm] = useState("");
   const [, start] = useTransition();
 
   const upload = async (list: FileList | null) => {
@@ -121,33 +126,50 @@ export function Files({ projectId, taskId = null, files, canWork, compact }: { p
       )}
       {showLink && (
         <div className="flex flex-wrap gap-2">
-          <input value={link.url} onChange={(e) => setLink({ ...link, url: e.target.value })} placeholder="https://drive.google.com/…" aria-label="Link" className="min-w-56 flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm" />
-          <input value={link.name} onChange={(e) => setLink({ ...link, name: e.target.value })} placeholder="Name (optional)" aria-label="Link name" className="w-48 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm" />
+          <input
+            value={link.url}
+            onChange={(e) => setLink({ ...link, url: e.target.value })}
+            placeholder="https://drive.google.com/…"
+            aria-label="Link"
+            className="min-w-56 flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm"
+          />
+          <input
+            value={link.name}
+            onChange={(e) => setLink({ ...link, name: e.target.value })}
+            placeholder="Name (optional)"
+            aria-label="Link name"
+            className="w-48 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm"
+          />
           <button className={btn.primary} onClick={saveLink} disabled={!link.url}>
             Add link
           </button>
         </div>
       )}
-      {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+      {msg && (
+        <p className="text-sm text-red-700" role="alert">
+          {msg}
+        </p>
+      )}
       {files.length > 0 ? (
         <ul className="divide-y divide-neutral-100 rounded-xl ring-1 ring-black/5">
           {files.map((f) => (
             <li key={f.id} className="flex items-center gap-3 px-3 py-2 text-sm">
-              <span className="w-12 shrink-0 rounded bg-neutral-100 py-0.5 text-center text-[10px] font-semibold text-neutral-600 uppercase">{f.kind === "link" ? "link" : (f.name.split(".").pop() ?? "file").slice(0, 4)}</span>
+              <span className="w-12 shrink-0 rounded bg-neutral-100 py-0.5 text-center text-[10px] font-semibold text-neutral-600 uppercase">
+                {f.kind === "link" ? "link" : (f.name.split(".").pop() ?? "file").slice(0, 4)}
+              </span>
               <button onClick={() => open(f.id)} className="min-w-0 flex-1 truncate text-left hover:text-navy">
                 {f.name}
               </button>
-              {!compact && <span className="hidden text-xs text-neutral-500 sm:inline">{f.uploaded_by.split("@")[0]} · {formatInvoiceDate(f.created_at.slice(0, 10))}</span>}
+              {!compact && (
+                <span className="hidden text-xs text-neutral-500 sm:inline">
+                  {f.uploaded_by.split("@")[0]} · {formatInvoiceDate(f.created_at.slice(0, 10))}
+                </span>
+              )}
               <span className="w-16 text-right text-xs text-neutral-500">{f.kind === "upload" ? formatBytes(f.size) : ""}</span>
               {canWork && (
-                <button
-                  onClick={() => (confirm === f.id ? remove(f.id) : setConfirm(f.id))}
-                  onBlur={() => setConfirm("")}
-                  className={btn.danger}
-                  aria-label={confirm === f.id ? `Confirm delete ${f.name}` : `Delete ${f.name}`}
-                >
-                  {confirm === f.id ? "Sure?" : "Delete"}
-                </button>
+                <ConfirmButton confirm={`Delete ${f.name}? This can't be undone.`} confirmLabel="Delete file" onConfirm={() => remove(f.id)}>
+                  Delete
+                </ConfirmButton>
               )}
             </li>
           ))}

@@ -3,10 +3,24 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteBankAccount, saveBankAccount } from "@/app/actions/settings";
-import { Card, Field, Input, Textarea, btn } from "@/components/ui";
+import { Card, ConfirmButton, Field, Input, Textarea, btn } from "@/components/ui";
 import type { BankAccount } from "@/lib/types";
 
-const EMPTY = { label: "", account_name: "", account_no: "", ifsc: "", bank_name: "", branch_address: "", swift: "", iban: "", upi_id: "", is_default: false, opening_balance: 0, opening_date: "" as string | null, kind: "bank" as "bank" | "cash" };
+const EMPTY = {
+  label: "",
+  account_name: "",
+  account_no: "",
+  ifsc: "",
+  bank_name: "",
+  branch_address: "",
+  swift: "",
+  iban: "",
+  upi_id: "",
+  is_default: false,
+  opening_balance: 0,
+  opening_date: "" as string | null,
+  kind: "bank" as "bank" | "cash",
+};
 
 export function BankAccounts({ banks }: { banks: BankAccount[] }) {
   const router = useRouter();
@@ -17,7 +31,22 @@ export function BankAccounts({ banks }: { banks: BankAccount[] }) {
   const set = (k: keyof typeof EMPTY, v: string | boolean | number) => setForm((f) => ({ ...f, [k]: v }));
 
   return (
-    <Card title="Bank accounts and UPI" actions={!open && <button className={btn.ghost} onClick={() => { setForm({ ...EMPTY, label: `Account ${banks.length + 1}` }); setOpen(true); }}>+ Add account</button>}>
+    <Card
+      title="Bank accounts and UPI"
+      actions={
+        !open && (
+          <button
+            className={btn.ghost}
+            onClick={() => {
+              setForm({ ...EMPTY, label: `Account ${banks.length + 1}` });
+              setOpen(true);
+            }}
+          >
+            + Add account
+          </button>
+        )
+      }
+    >
       <ul className="divide-y divide-neutral-100 text-sm">
         {banks.map((b) => (
           <li key={b.id} className="flex items-start gap-3 py-2.5">
@@ -25,14 +54,58 @@ export function BankAccounts({ banks }: { banks: BankAccount[] }) {
               <div className="font-medium">
                 {b.label} {b.is_default && <span className="ml-1 rounded-full bg-navy/10 px-2 py-0.5 text-xs text-navy">default</span>}
               </div>
-              <div className="text-neutral-500">{[b.kind === "cash" ? "Cash" : "", b.bank_name, b.account_no && `A/c ${b.account_no}`, b.ifsc, b.upi_id && `UPI ${b.upi_id}`, b.swift && `SWIFT ${b.swift}`, b.opening_date && `opening ₹${b.opening_balance.toLocaleString("en-IN")} on ${b.opening_date}`].filter(Boolean).join(" · ")}</div>
+              <div className="text-neutral-500">
+                {[
+                  b.kind === "cash" ? "Cash" : "",
+                  b.bank_name,
+                  b.account_no && `A/c ${b.account_no}`,
+                  b.ifsc,
+                  b.upi_id && `UPI ${b.upi_id}`,
+                  b.swift && `SWIFT ${b.swift}`,
+                  b.opening_date && `opening ₹${b.opening_balance.toLocaleString("en-IN")} on ${b.opening_date}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </div>
             </div>
-            <button className={btn.ghost} onClick={() => { const { id, label, account_name, account_no, ifsc, bank_name, branch_address, swift, iban, upi_id, is_default, opening_balance, opening_date, kind } = b; setForm({ id, label, account_name, account_no, ifsc, bank_name, branch_address, swift, iban, upi_id, is_default, opening_balance, opening_date: opening_date ?? "", kind }); setOpen(true); }}>
+            <button
+              className={btn.ghost}
+              onClick={() => {
+                const { id, label, account_name, account_no, ifsc, bank_name, branch_address, swift, iban, upi_id, is_default, opening_balance, opening_date, kind } = b;
+                setForm({
+                  id,
+                  label,
+                  account_name,
+                  account_no,
+                  ifsc,
+                  bank_name,
+                  branch_address,
+                  swift,
+                  iban,
+                  upi_id,
+                  is_default,
+                  opening_balance,
+                  opening_date: opening_date ?? "",
+                  kind,
+                });
+                setOpen(true);
+              }}
+            >
               Edit
             </button>
-            <button className={btn.danger} disabled={pending} onClick={() => { if (window.confirm(`Delete ${b.label}?`)) start(async () => { await deleteBankAccount(b.id); router.refresh(); }); }}>
+            <ConfirmButton
+              disabled={pending}
+              confirm={`Delete ${b.label}? Documents that used it keep their copy of the details.`}
+              confirmLabel="Delete account"
+              onConfirm={() =>
+                start(async () => {
+                  await deleteBankAccount(b.id);
+                  router.refresh();
+                })
+              }
+            >
               Delete
-            </button>
+            </ConfirmButton>
           </li>
         ))}
       </ul>
@@ -49,37 +122,39 @@ export function BankAccounts({ banks }: { banks: BankAccount[] }) {
           </Field>
           {form.kind !== "cash" && (
             <>
-          <Field label="UPI ID (prints a scan-to-pay QR)">
-            <Input value={form.upi_id} onChange={(e) => set("upi_id", e.target.value.trim())} placeholder="name@okhdfcbank" />
-          </Field>
-          <Field label="Account holder name">
-            <Input value={form.account_name} onChange={(e) => set("account_name", e.target.value)} />
-          </Field>
-          <Field label="Account number">
-            <Input value={form.account_no} onChange={(e) => set("account_no", e.target.value.replace(/\s/g, ""))} />
-          </Field>
-          <Field label="IFSC">
-            <Input value={form.ifsc} onChange={(e) => set("ifsc", e.target.value.toUpperCase())} />
-          </Field>
-          <Field label="Bank name">
-            <Input value={form.bank_name} onChange={(e) => set("bank_name", e.target.value)} />
-          </Field>
-          <Field label="Branch address" className="sm:col-span-2">
-            <Textarea value={form.branch_address} onChange={(e) => set("branch_address", e.target.value)} />
-          </Field>
-          <Field label="SWIFT (for foreign clients)">
-            <Input value={form.swift} onChange={(e) => set("swift", e.target.value.toUpperCase())} />
-          </Field>
-          <Field label="IBAN (optional)">
-            <Input value={form.iban} onChange={(e) => set("iban", e.target.value.toUpperCase())} />
-          </Field>
-          <label className="flex items-center gap-2 text-sm sm:col-span-2">
-            <input type="checkbox" checked={form.is_default} onChange={(e) => set("is_default", e.target.checked)} />
-            Use by default on new documents
-          </label>
+              <Field label="UPI ID (prints a scan-to-pay QR)">
+                <Input value={form.upi_id} onChange={(e) => set("upi_id", e.target.value.trim())} placeholder="name@okhdfcbank" />
+              </Field>
+              <Field label="Account holder name">
+                <Input value={form.account_name} onChange={(e) => set("account_name", e.target.value)} />
+              </Field>
+              <Field label="Account number">
+                <Input value={form.account_no} onChange={(e) => set("account_no", e.target.value.replace(/\s/g, ""))} />
+              </Field>
+              <Field label="IFSC">
+                <Input value={form.ifsc} onChange={(e) => set("ifsc", e.target.value.toUpperCase())} />
+              </Field>
+              <Field label="Bank name">
+                <Input value={form.bank_name} onChange={(e) => set("bank_name", e.target.value)} />
+              </Field>
+              <Field label="Branch address" className="sm:col-span-2">
+                <Textarea value={form.branch_address} onChange={(e) => set("branch_address", e.target.value)} />
+              </Field>
+              <Field label="SWIFT (for foreign clients)">
+                <Input value={form.swift} onChange={(e) => set("swift", e.target.value.toUpperCase())} />
+              </Field>
+              <Field label="IBAN (optional)">
+                <Input value={form.iban} onChange={(e) => set("iban", e.target.value.toUpperCase())} />
+              </Field>
+              <label className="flex items-center gap-2 text-sm sm:col-span-2">
+                <input type="checkbox" checked={form.is_default} onChange={(e) => set("is_default", e.target.checked)} />
+                Use by default on new documents
+              </label>
             </>
           )}
-          <p className="text-xs text-neutral-500 sm:col-span-2">The opening balance is what the account held on that date. Reports add money received and subtract expenses paid since then to show cash in hand and runway.</p>
+          <p className="text-xs text-neutral-500 sm:col-span-2">
+            The opening balance is what the account held on that date. Reports add money received and subtract expenses paid since then to show cash in hand and runway.
+          </p>
           <div className="flex items-center gap-2 sm:col-span-2">
             <button
               className={btn.primary}

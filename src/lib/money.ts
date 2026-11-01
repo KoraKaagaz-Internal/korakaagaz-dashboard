@@ -193,3 +193,33 @@ function westernWords(n: number): string {
   }
   return parts.join(" ");
 }
+
+/** "2026-09-26" -> "26 Sep" (this year) or "26 Sep 2025". */
+export function formatShortDate(iso: string | null | undefined, today = todayIso()): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return iso;
+  return y === Number(today.slice(0, 4)) ? `${d} ${MONTHS[m - 1]}` : `${d} ${MONTHS[m - 1]} ${y}`;
+}
+
+/** An instant shown in India time: "26 Sep, 3:05 pm". */
+export function formatDateTime(instant: string | Date | null | undefined): string {
+  if (!instant) return "";
+  const t = new Date(instant);
+  if (Number.isNaN(t.getTime())) return "";
+  const date = t.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const time = t.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit", hour12: true }).toLowerCase();
+  return `${formatShortDate(date)}, ${time}`;
+}
+
+/** "today", "tomorrow", "in 3 days", "2 days ago" for a date relative to today (India). */
+export function formatRelative(iso: string | null | undefined, today = todayIso()): string {
+  if (!iso) return "";
+  const n = daysBetween(today, iso.slice(0, 10));
+  if (n === 0) return "today";
+  if (n === 1) return "tomorrow";
+  if (n === -1) return "yesterday";
+  if (n > 1 && n < 14) return `in ${n} days`;
+  if (n < -1 && n > -14) return `${-n} days ago`;
+  return formatShortDate(iso, today);
+}

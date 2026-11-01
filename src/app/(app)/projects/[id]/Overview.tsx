@@ -6,7 +6,7 @@ import { deleteDeliverable, deletePhase, deleteProject, saveDeliverable, savePha
 import { NumberInput } from "@/components/NumberInput";
 import { AvatarStack } from "@/components/pm/Avatar";
 import { PeoplePicker } from "@/components/pm/PeoplePicker";
-import { Card, Field, Input, Select, Textarea, btn } from "@/components/ui";
+import { Card, ConfirmButton, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { formatInvoiceDate, formatMoney } from "@/lib/money";
 import { PROJECT_TYPES, displayName, type Person } from "@/lib/pm";
 import type { ProjectBundle } from "@/lib/pm-data";
@@ -41,7 +41,6 @@ export function Overview({
   });
   const [fin, setFin] = useState<ProjectFinance>(finance ?? { budget: 0, billing: "fixed", retainer_amount_month: 0 });
   const [msg, setMsg] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, start] = useTransition();
 
   const run = (fn: () => Promise<{ ok: boolean; message?: string }>, after?: () => void) =>
@@ -220,19 +219,20 @@ export function Overview({
 
         {isAdmin && (
           <div>
-            <button
-              className={btn.danger}
-              onClick={() => {
-                if (!confirmDelete) return setConfirmDelete(true);
+            <ConfirmButton
+              align="left"
+              confirm="Delete this project with all its tasks and files? Invoices and expenses stay but lose the link. This can't be undone."
+              confirmLabel="Delete project"
+              onConfirm={() =>
                 start(async () => {
                   const r = await deleteProject(p.id);
                   if (!r.ok) return setMsg(r.message);
                   router.push("/projects");
-                });
-              }}
+                })
+              }
             >
-              {confirmDelete ? "Click again to delete the project, its tasks and files" : "Delete project"}
-            </button>
+              Delete project
+            </ConfirmButton>
           </div>
         )}
       </div>

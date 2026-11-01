@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { confirmDraft, deleteExpense, deleteExpensePayment, receiptUrl, recordExpensePayment } from "@/app/actions/expenses";
 import { NumberInput } from "@/components/NumberInput";
-import { Field, Input, Select, btn } from "@/components/ui";
+import { ConfirmButton, Field, Input, Select, btn } from "@/components/ui";
 import { formatInvoiceDate, formatMoney } from "@/lib/money";
 
 export function ReceiptButton({ id, name }: { id: string; name: string }) {
@@ -63,7 +63,17 @@ export function Payments({
               </span>
               <span className="tabular-nums">{formatMoney(x.amount)}</span>
               {canPay && (
-                <button className="text-xs text-neutral-400 hover:text-red-600" onClick={() => start(async () => { const r = await deleteExpensePayment(x.id, expenseId); if (!r.ok) setMsg(r.message); router.refresh(); })} aria-label="Remove payment">
+                <button
+                  className="text-xs text-neutral-400 hover:text-red-600"
+                  onClick={() =>
+                    start(async () => {
+                      const r = await deleteExpensePayment(x.id, expenseId);
+                      if (!r.ok) setMsg(r.message);
+                      router.refresh();
+                    })
+                  }
+                  aria-label="Remove payment"
+                >
                   Remove
                 </button>
               )}
@@ -118,41 +128,59 @@ export function Payments({
           </button>
         </div>
       )}
-      {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+      {msg && (
+        <p className="text-sm text-red-700" role="alert">
+          {msg}
+        </p>
+      )}
     </div>
   );
 }
 
 export function Danger({ id, isDraft, canDelete, back }: { id: string; isDraft: boolean; canDelete: boolean; back: string }) {
   const router = useRouter();
-  const [confirm, setConfirm] = useState(false);
   const [msg, setMsg] = useState("");
   const [pending, start] = useTransition();
   return (
     <div className="flex flex-wrap items-center gap-3">
       {isDraft && (
-        <button className={btn.primary} disabled={pending} onClick={() => start(async () => { const r = await confirmDraft(id); if (!r.ok) setMsg(r.message); router.refresh(); })}>
+        <button
+          className={btn.primary}
+          disabled={pending}
+          onClick={() =>
+            start(async () => {
+              const r = await confirmDraft(id);
+              if (!r.ok) setMsg(r.message);
+              router.refresh();
+            })
+          }
+        >
           Confirm this recurring expense
         </button>
       )}
       {canDelete && (
-        <button
-          className={btn.danger}
+        <ConfirmButton
+          size="md"
           disabled={pending}
-          onClick={() => {
-            if (!confirm) return setConfirm(true);
+          confirm="Delete this expense and its receipt? This can't be undone."
+          confirmLabel="Delete"
+          onConfirm={() =>
             start(async () => {
               const r = await deleteExpense(id);
               if (!r.ok) return setMsg(r.message);
               router.push(back);
               router.refresh();
-            });
-          }}
+            })
+          }
         >
-          {confirm ? "Click again to delete" : "Delete"}
-        </button>
+          Delete
+        </ConfirmButton>
       )}
-      {msg && <span className="text-sm text-red-700" role="alert">{msg}</span>}
+      {msg && (
+        <span className="text-sm text-red-700" role="alert">
+          {msg}
+        </span>
+      )}
     </div>
   );
 }

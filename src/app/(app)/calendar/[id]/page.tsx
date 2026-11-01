@@ -66,10 +66,8 @@ export default async function EventPage({ params, searchParams }: { params: Prom
         </p>
       )}
 
-      <article className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5 print:p-0 print:shadow-none print:ring-0">
-        <div className="text-xs font-medium tracking-[0.2em] text-neutral-500 uppercase">
-          {event.type === "shoot" ? "Call sheet" : TYPE_LABEL[event.type]} · Kora Kaagaz
-        </div>
+      <article className="rounded-xl bg-white p-6 border border-line print:p-0 print:shadow-none print:ring-0">
+        <div className="text-xs font-medium tracking-[0.2em] text-neutral-500 uppercase">{event.type === "shoot" ? "Call sheet" : TYPE_LABEL[event.type]} · Kora Kaagaz</div>
         <h1 className="mt-1 text-2xl font-semibold">
           {event.title}
           {event.status !== "confirmed" && <span className="ml-2 align-middle text-sm font-medium text-amber-700 uppercase">{event.status}</span>}

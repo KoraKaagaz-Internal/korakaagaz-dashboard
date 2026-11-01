@@ -143,7 +143,7 @@ export function Board({ projectId, tasks, phases, people, canWork }: { projectId
 function Column({ id, label, count, children }: { id: string; label: string; count: number; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id });
   return (
-    <section ref={setNodeRef} aria-label={label} className={`flex w-72 shrink-0 flex-col rounded-2xl p-2 ${isOver ? "bg-navy/10" : "bg-neutral-100/80"}`}>
+    <section ref={setNodeRef} aria-label={label} className={`flex w-72 shrink-0 flex-col rounded-xl p-2 ${isOver ? "bg-navy/10" : "bg-neutral-100/80"}`}>
       <h3 className="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-neutral-700">
         {label}
         <span className="text-xs font-normal text-neutral-500">{count}</span>
@@ -170,7 +170,7 @@ function Card({ task: t, phase, people, today, onOpen, lifted }: { task: Task; p
       tabIndex={-1}
       onClick={onOpen}
       onKeyDown={(e) => e.key === "Enter" && onOpen?.()}
-      className={`cursor-pointer rounded-xl bg-white p-3 text-sm shadow-sm ring-1 ring-black/5 hover:ring-navy/30 ${lifted ? "rotate-1 shadow-lg" : ""}`}
+      className={`cursor-pointer rounded-xl bg-white p-3 text-sm border border-line hover:ring-navy/30 ${lifted ? "rotate-1 shadow-lg" : ""}`}
     >
       <div className="flex items-start gap-2">
         <span className={`min-w-0 flex-1 font-medium ${t.status === "done" ? "text-neutral-400 line-through" : "text-neutral-900"}`}>{t.title}</span>

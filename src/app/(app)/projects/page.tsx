@@ -64,7 +64,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
       </form>
 
       {shown.length === 0 ? (
-        <div className="rounded-2xl bg-white p-10 text-center shadow-sm ring-1 ring-black/5">
+        <div className="rounded-xl bg-white p-10 text-center border border-line">
           <p className="text-neutral-600">{cards.length ? "No projects match." : "No projects yet."}</p>
           {canEdit && !cards.length && (
             <Link href="/projects/new" className="mt-3 inline-block rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white">
@@ -80,7 +80,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
             const open = p.tasks.filter((t) => t.status !== "done" && !t.parent_id).length;
             return (
               <li key={p.id}>
-                <Link href={`/projects/${p.id}`} className="block h-full rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 transition hover:ring-navy/30">
+                <Link href={`/projects/${p.id}`} className="block h-full rounded-xl bg-white p-4 border border-line transition hover:ring-navy/30">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-mono text-xs text-neutral-400">{p.code}</div>

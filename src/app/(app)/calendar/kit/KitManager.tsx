@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { deleteKit, saveKit } from "@/app/actions/calendar";
-import { Card, Input, btn } from "@/components/ui";
+import { Card, ConfirmButton, Input, btn } from "@/components/ui";
 import type { KitItem } from "@/lib/time-data";
 
 const SUGGESTED = ["Camera", "Lens", "Lighting", "Grip", "Audio", "Backdrop", "Props", "Computer"];
@@ -12,7 +12,6 @@ export function KitManager({ kit }: { kit: KitItem[] }) {
   const router = useRouter();
   const [k, setK] = useState({ name: "", category: "Camera", serial: "", notes: "" });
   const [msg, setMsg] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [pending, start] = useTransition();
   const run = (fn: () => Promise<{ ok: boolean; message?: string }>, after?: () => void) =>
     start(async () => {
@@ -30,7 +29,16 @@ export function KitManager({ kit }: { kit: KitItem[] }) {
           <Input value={k.name} onChange={(e) => setK({ ...k, name: e.target.value })} placeholder="Sony A7 IV" aria-label="Name" />
           <Input value={k.category} onChange={(e) => setK({ ...k, category: e.target.value })} list="kit-cats" placeholder="Category" aria-label="Category" />
           <Input value={k.serial} onChange={(e) => setK({ ...k, serial: e.target.value })} placeholder="Serial (optional)" aria-label="Serial" />
-          <button className={btn.primary} disabled={!k.name.trim() || pending} onClick={() => run(() => saveKit(k), () => setK({ ...k, name: "", serial: "" }))}>
+          <button
+            className={btn.primary}
+            disabled={!k.name.trim() || pending}
+            onClick={() =>
+              run(
+                () => saveKit(k),
+                () => setK({ ...k, name: "", serial: "" }),
+              )
+            }
+          >
             Add
           </button>
           <datalist id="kit-cats">
@@ -39,7 +47,11 @@ export function KitManager({ kit }: { kit: KitItem[] }) {
             ))}
           </datalist>
         </div>
-        {msg && <p className="mt-2 text-sm text-red-700" role="alert">{msg}</p>}
+        {msg && (
+          <p className="mt-2 text-sm text-red-700" role="alert">
+            {msg}
+          </p>
+        )}
       </Card>
       {categories.map((c) => (
         <Card key={c} title={c}>
@@ -55,9 +67,13 @@ export function KitManager({ kit }: { kit: KitItem[] }) {
                   <button className={btn.ghost} onClick={() => run(() => saveKit({ ...x, active: !x.active }))}>
                     {x.active ? "Retire" : "Bring back"}
                   </button>
-                  <button className={btn.danger} onBlur={() => setConfirm("")} onClick={() => (confirm === x.id ? run(() => deleteKit(x.id)) : setConfirm(x.id))}>
-                    {confirm === x.id ? "Sure?" : "Delete"}
-                  </button>
+                  <ConfirmButton
+                    confirm={`Delete ${x.name}? Past bookings lose it. Use Retire to keep history.`}
+                    confirmLabel="Delete"
+                    onConfirm={() => run(() => deleteKit(x.id))}
+                  >
+                    Delete
+                  </ConfirmButton>
                 </li>
               ))}
           </ul>

@@ -90,13 +90,22 @@ export function CategoryEditor({ categories }: { categories: Category[] }) {
       </div>
       <div className="mt-4 flex gap-2">
         <Input className="!w-64" value={add} onChange={(e) => setAdd(e.target.value)} placeholder="New category" aria-label="New category" />
-        <button className={btn.secondary} disabled={!add.trim() || pending} onClick={() => save({ name: add, itc_rule: "eligible", kind: "overhead", tds_nature: "none", rcm: false, budget_month: 0, active: true })}>
+        <button
+          className={btn.secondary}
+          disabled={!add.trim() || pending}
+          onClick={() => save({ name: add, itc_rule: "eligible", kind: "overhead", tds_nature: "none", rcm: false, budget_month: 0, active: true })}
+        >
           Add
         </button>
       </div>
-      {msg && <p className="mt-2 text-sm text-red-700" role="alert">{msg}</p>}
+      {msg && (
+        <p className="mt-2 text-sm text-red-700" role="alert">
+          {msg}
+        </p>
+      )}
       <p className="mt-3 text-xs text-neutral-500">
-        Project costs (freelancers, props, studio hire) are what you pass through to clients; they come off revenue to give your agency gross income in Reports. Budgets show as budget-vs-actual bars.
+        Project costs (freelancers, props, studio hire) are what you pass through to clients; they come off revenue to give your agency gross income in Reports. Budgets show as
+        budget-vs-actual bars.
       </p>
     </Card>
   );

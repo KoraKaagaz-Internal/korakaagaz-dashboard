@@ -41,7 +41,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
             ["Still owed", expenses.reduce((s, e) => s + e.balance, 0)],
           ] as const
         ).map(([l, v]) => (
-          <div key={l} className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+          <div key={l} className="rounded-xl bg-white px-4 py-3 border border-line">
             <div className="text-xs text-neutral-500">{l}</div>
             <div className="text-xl font-semibold tabular-nums">{formatMoney(v)}</div>
           </div>
@@ -60,7 +60,9 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
                   </span>
                   {e.tds_amount > 0 && <span className="text-xs text-neutral-500">TDS {formatMoney(e.tds_amount)}</span>}
                   <span className="w-24 text-right tabular-nums">{formatMoney(e.total)}</span>
-                  <span className={`w-24 text-right text-xs ${e.balance > 0.005 ? "font-medium text-amber-800" : "text-neutral-400"}`}>{e.balance > 0.005 ? `owe ${formatMoney(e.balance)}` : "paid"}</span>
+                  <span className={`w-24 text-right text-xs ${e.balance > 0.005 ? "font-medium text-amber-800" : "text-neutral-400"}`}>
+                    {e.balance > 0.005 ? `owe ${formatMoney(e.balance)}` : "paid"}
+                  </span>
                 </Link>
               </li>
             ))}

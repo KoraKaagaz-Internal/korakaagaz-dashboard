@@ -3,12 +3,46 @@
 @theme inline {
   --font-sans: var(--font-sans), Inter, system-ui, sans-serif;
   --font-serif: var(--font-serif), Georgia, serif;
+  /* brand */
   --color-navy: #081788;
+  --color-accent: #3846b4;
   --color-ink: #1a1a2d;
+  /* surfaces */
+  --color-canvas: #ffffff;
+  --color-sidebar: #f7f7f9;
+  --color-subtle: #f4f4f6;
+  --color-line: #e7e7ec;
+  /* status (always paired with a label or icon) */
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-danger: #c62828;
 }
 
 body {
-  background: #f4f4f6;
-  color: #1a1a2d;
+  background: var(--color-canvas);
+  color: var(--color-ink);
   font-family: var(--font-sans), Inter, system-ui, sans-serif;
+}
+
+/* One visible focus ring for keyboard users, everywhere. */
+:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: 0;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }

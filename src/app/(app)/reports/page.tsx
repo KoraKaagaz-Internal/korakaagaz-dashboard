@@ -182,7 +182,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         </div>
       </div>
 
-      <form className="flex flex-wrap items-end gap-2 rounded-2xl bg-white p-3 text-sm shadow-sm ring-1 ring-black/5">
+      <form className="flex flex-wrap items-end gap-2 rounded-xl bg-white p-3 text-sm border border-line">
         <label className="flex flex-col gap-1 text-xs text-neutral-500">
           Period
           <select name="p" defaultValue={preset} className="rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
@@ -637,7 +637,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                                   className="block h-2 rounded-full"
                                   style={{
                                     width: `${Math.max(0, Math.min(100, x.margin))}%`,
-                                    background: x.margin < 20 ? "#d03b3b" : SERIES[2],
+                                    background: x.margin < 20 ? "var(--color-danger)" : SERIES[2],
                                   }}
                                 />
                               </span>

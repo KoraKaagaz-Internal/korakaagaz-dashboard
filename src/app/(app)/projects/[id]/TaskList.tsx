@@ -33,7 +33,7 @@ export function TaskList({ projectId, tasks, phases, people, canWork }: { projec
       {groups.map((g) => {
         const done = g.tasks.filter((t) => t.status === "done").length;
         return (
-          <section key={g.phase?.id ?? "none"} className="rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+          <section key={g.phase?.id ?? "none"} className="rounded-xl bg-white border border-line">
             <h3 className="flex items-center justify-between border-b border-neutral-100 px-4 py-2.5 text-sm font-semibold">
               <span>{g.phase?.name ?? (phases.length ? "No phase" : "Tasks")}</span>
               <span className="text-xs font-normal text-neutral-500">

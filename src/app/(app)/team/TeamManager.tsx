@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { changeRole, inviteMember, removeMember } from "@/app/actions/team";
-import { Card, Input, Select, btn } from "@/components/ui";
+import { Card, ConfirmButton, Input, Select, btn } from "@/components/ui";
 import { formatInvoiceDate } from "@/lib/money";
 import type { Member } from "@/lib/types";
 
@@ -85,30 +85,32 @@ export function TeamManager({ members, me, mailReady }: { members: Member[]; me:
                     className="!w-auto"
                     value={m.role}
                     disabled={pending}
-                    onChange={(e) => start(async () => {
-                      const r = await changeRole(m.email, e.target.value as Assignable);
-                      if (!r.ok) setMsg({ ok: false, text: r.message });
-                      router.refresh();
-                    })}
+                    onChange={(e) =>
+                      start(async () => {
+                        const r = await changeRole(m.email, e.target.value as Assignable);
+                        if (!r.ok) setMsg({ ok: false, text: r.message });
+                        router.refresh();
+                      })
+                    }
                   >
                     <option value="member">Member</option>
                     <option value="viewer">Viewer</option>
                     <option value="freelancer">Freelancer</option>
                   </Select>
-                  <button
-                    className={btn.danger}
+                  <ConfirmButton
                     disabled={pending}
-                    onClick={() => {
-                      if (!window.confirm(`Remove ${m.email}? They're signed out immediately.`)) return;
+                    confirm={m.joined_at ? `Remove ${m.email}? They're signed out immediately.` : `Cancel the invite for ${m.email}?`}
+                    confirmLabel={m.joined_at ? "Remove" : "Cancel invite"}
+                    onConfirm={() =>
                       start(async () => {
                         const r = await removeMember(m.email);
                         if (!r.ok) setMsg({ ok: false, text: r.message });
                         router.refresh();
-                      });
-                    }}
+                      })
+                    }
                   >
                     {m.joined_at ? "Remove" : "Cancel invite"}
-                  </button>
+                  </ConfirmButton>
                 </>
               )}
             </li>

@@ -11,16 +11,7 @@ import { ScaledPreview } from "@/components/invoice/ScaledPreview";
 import { Card, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { OUTSIDE_INDIA, STATES, autoGstMode, stateLabel } from "@/lib/gst";
 import { addDays, computeTotals, formatMoney } from "@/lib/money";
-import {
-  DOC_LABELS,
-  type BankAccount,
-  type CatalogItem,
-  type Client,
-  type DocumentDraft,
-  type LineItem,
-  type Project,
-  type SupplierSnapshot,
-} from "@/lib/types";
+import { DOC_LABELS, type BankAccount, type CatalogItem, type Client, type DocumentDraft, type LineItem, type Project, type SupplierSnapshot } from "@/lib/types";
 
 const TERMS = [
   { label: "Due on receipt", days: 0 },
@@ -170,7 +161,7 @@ export function DocumentEditor({
   });
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
       <div className="space-y-5">
         <div>
           <h1 className="text-2xl font-semibold">{id ? `Edit ${label.short.toLowerCase()}` : `New ${label.short.toLowerCase()}`}</h1>
@@ -181,7 +172,13 @@ export function DocumentEditor({
 
         <Card
           title={doc.doc_type === "receipt" ? "Received from" : "Billed to"}
-          actions={!addingClient && <button type="button" className={btn.ghost} onClick={() => setAddingClient(true)}>+ New client</button>}
+          actions={
+            !addingClient && (
+              <button type="button" className={btn.ghost} onClick={() => setAddingClient(true)}>
+                + New client
+              </button>
+            )
+          }
         >
           {addingClient ? (
             <ClientForm
@@ -207,7 +204,12 @@ export function DocumentEditor({
               </Field>
               {doc.client.name && (
                 <p className="text-xs text-neutral-500 sm:col-span-2">
-                  {[doc.client.address, doc.client.city, doc.client.country !== "India" ? doc.client.country : stateLabel(doc.client.state_code), doc.client.gstin && `GSTIN ${doc.client.gstin}`]
+                  {[
+                    doc.client.address,
+                    doc.client.city,
+                    doc.client.country !== "India" ? doc.client.country : stateLabel(doc.client.state_code),
+                    doc.client.gstin && `GSTIN ${doc.client.gstin}`,
+                  ]
                     .filter(Boolean)
                     .join(" · ")}
                 </p>
@@ -345,7 +347,17 @@ export function DocumentEditor({
                   <button type="button" className={btn.ghost} onClick={() => moveItem(i, 1)} disabled={i === doc.items.length - 1} aria-label="Move down">
                     ↓
                   </button>
-                  <button type="button" className={btn.danger} disabled={doc.items.length === 1} onClick={() => set("items", doc.items.filter((_, j) => j !== i))}>
+                  <button
+                    type="button"
+                    className={btn.danger}
+                    disabled={doc.items.length === 1}
+                    onClick={() =>
+                      set(
+                        "items",
+                        doc.items.filter((_, j) => j !== i),
+                      )
+                    }
+                  >
                     Remove
                   </button>
                 </div>
@@ -354,7 +366,12 @@ export function DocumentEditor({
                   <Input placeholder="SAC" aria-label="SAC code" value={item.sac} onChange={(e) => setItem(i, { sac: e.target.value.replace(/\D/g, "").slice(0, 8) })} />
                   <NumberInput min={0} aria-label="Quantity" value={item.qty} onValue={(n) => setItem(i, { qty: n })} />
                   <NumberInput min={0} aria-label="Unit price" value={item.unit_price} onValue={(n) => setItem(i, { unit_price: n })} />
-                  <Textarea className="sm:col-span-4" placeholder="Description (deliverables, revisions included…)" value={item.description} onChange={(e) => setItem(i, { description: e.target.value })} />
+                  <Textarea
+                    className="sm:col-span-4"
+                    placeholder="Description (deliverables, revisions included…)"
+                    value={item.description}
+                    onChange={(e) => setItem(i, { description: e.target.value })}
+                  />
                 </div>
               </div>
             ))}
@@ -436,9 +453,36 @@ export function DocumentEditor({
           <div className="space-y-3">
             {doc.custom_fields.map((f, i) => (
               <div key={i} className="grid grid-cols-[1fr_1.5fr_auto] gap-2">
-                <Input placeholder="Label (e.g. PO No.)" value={f.label} onChange={(e) => set("custom_fields", doc.custom_fields.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} />
-                <Input placeholder="Value" value={f.value} onChange={(e) => set("custom_fields", doc.custom_fields.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)))} />
-                <button type="button" className={btn.danger} onClick={() => set("custom_fields", doc.custom_fields.filter((_, j) => j !== i))}>
+                <Input
+                  placeholder="Label (e.g. PO No.)"
+                  value={f.label}
+                  onChange={(e) =>
+                    set(
+                      "custom_fields",
+                      doc.custom_fields.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)),
+                    )
+                  }
+                />
+                <Input
+                  placeholder="Value"
+                  value={f.value}
+                  onChange={(e) =>
+                    set(
+                      "custom_fields",
+                      doc.custom_fields.map((x, j) => (j === i ? { ...x, value: e.target.value } : x)),
+                    )
+                  }
+                />
+                <button
+                  type="button"
+                  className={btn.danger}
+                  onClick={() =>
+                    set(
+                      "custom_fields",
+                      doc.custom_fields.filter((_, j) => j !== i),
+                    )
+                  }
+                >
                   Remove
                 </button>
               </div>
@@ -489,7 +533,7 @@ export function DocumentEditor({
           </Card>
         )}
 
-        <div className="sticky bottom-0 z-20 flex flex-wrap items-center gap-3 border-t border-black/5 bg-[#f4f4f6]/95 py-3 backdrop-blur">
+        <div className="sticky bottom-0 z-20 flex flex-wrap items-center gap-3 border-t border-black/5 bg-subtle/95 py-3 backdrop-blur">
           <button type="button" className={btn.secondary} disabled={pending} onClick={() => save(false)} title="Ctrl/Cmd + Enter">
             {pending ? "Saving…" : "Save draft"}
           </button>
@@ -500,7 +544,7 @@ export function DocumentEditor({
         </div>
       </div>
 
-      <div className="xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:self-start xl:overflow-auto">
+      <div className="min-w-0 overflow-x-auto xl:sticky xl:top-20 xl:max-h-[calc(100vh-6rem)] xl:self-start xl:overflow-auto">
         <ScaledPreview>
           <DocumentTemplate doc={{ ...doc, number: doc.number || numberPreview }} supplier={supplier} status="draft" />
         </ScaledPreview>

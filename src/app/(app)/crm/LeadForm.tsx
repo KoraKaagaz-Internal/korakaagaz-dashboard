@@ -116,7 +116,11 @@ export function LeadForm({ lead, people, services, me, onDone }: { lead?: Lead; 
             Cancel
           </button>
         )}
-        {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+        {msg && (
+          <p className="text-sm text-red-700" role="alert">
+            {msg}
+          </p>
+        )}
       </div>
     </Card>
   );

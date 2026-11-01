@@ -29,11 +29,7 @@ export function ScaledPreview({ children }: { children: ReactNode }) {
 
   return (
     <div ref={outer} className="w-full" style={{ height }}>
-      <div
-        ref={inner}
-        style={{ width: PAGE_W, transform: `scale(${scale})`, transformOrigin: "top left" }}
-        className="[&_.kk-page]:shadow-lg"
-      >
+      <div ref={inner} style={{ width: PAGE_W, transform: `scale(${scale})`, transformOrigin: "top left" }} className="[&_.kk-page]:shadow-lg">
         {children}
       </div>
     </div>

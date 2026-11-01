@@ -72,7 +72,7 @@ export default async function SharedDocumentPage({ params }: { params: Promise<{
         </p>
       )}
 
-      <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-black/5">
+      <div className="overflow-hidden rounded-xl bg-white border border-line">
         <ScaledPreview>
           <DocumentTemplate doc={doc} supplier={doc.supplier} status={doc.status} reference={shared.reference} />
         </ScaledPreview>
@@ -86,7 +86,7 @@ export default async function SharedDocumentPage({ params }: { params: Promise<{
 
 function Info({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+    <div className="rounded-xl bg-white px-4 py-3 border border-line">
       <div className="text-xs text-neutral-500">{label}</div>
       <div className={`text-lg font-semibold tabular-nums ${strong ? "text-navy" : ""}`}>{value}</div>
     </div>

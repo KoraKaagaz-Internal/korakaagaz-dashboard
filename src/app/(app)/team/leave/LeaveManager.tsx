@@ -10,7 +10,21 @@ import type { LeaveRow } from "@/lib/time-data";
 
 const STATUS: Record<string, string> = { pending: "bg-amber-100 text-amber-800", approved: "bg-green-100 text-green-800", declined: "bg-neutral-200 text-neutral-600" };
 
-export function LeaveManager({ leave, holidays, people, me, isAdmin, today }: { leave: LeaveRow[]; holidays: { day: string; name: string }[]; people: Person[]; me: string; isAdmin: boolean; today: string }) {
+export function LeaveManager({
+  leave,
+  holidays,
+  people,
+  me,
+  isAdmin,
+  today,
+}: {
+  leave: LeaveRow[];
+  holidays: { day: string; name: string }[];
+  people: Person[];
+  me: string;
+  isAdmin: boolean;
+  today: string;
+}) {
   const router = useRouter();
   const [f, setF] = useState({ from_date: today, to_date: today, half_day: false, kind: "casual" as "casual" | "sick" | "unpaid" | "other", note: "" });
   const [h, setH] = useState({ day: "", name: "" });
@@ -23,7 +37,8 @@ export function LeaveManager({ leave, holidays, people, me, isAdmin, today }: { 
       if (r.ok) after?.();
       router.refresh();
     });
-  const range = (l: LeaveRow) => (l.from_date === l.to_date ? `${formatInvoiceDate(l.from_date)}${l.half_day ? " (half day)" : ""}` : `${formatInvoiceDate(l.from_date)} – ${formatInvoiceDate(l.to_date)}`);
+  const range = (l: LeaveRow) =>
+    l.from_date === l.to_date ? `${formatInvoiceDate(l.from_date)}${l.half_day ? " (half day)" : ""}` : `${formatInvoiceDate(l.from_date)} – ${formatInvoiceDate(l.to_date)}`;
   const pendingList = leave.filter((l) => l.status === "pending");
 
   return (
@@ -34,7 +49,12 @@ export function LeaveManager({ leave, holidays, people, me, isAdmin, today }: { 
             <Input type="date" value={f.from_date} onChange={(e) => setF({ ...f, from_date: e.target.value, to_date: f.to_date < e.target.value ? e.target.value : f.to_date })} />
           </Field>
           <Field label="To">
-            <Input type="date" value={f.to_date} min={f.from_date} onChange={(e) => setF({ ...f, to_date: e.target.value, half_day: f.half_day && e.target.value === f.from_date })} />
+            <Input
+              type="date"
+              value={f.to_date}
+              min={f.from_date}
+              onChange={(e) => setF({ ...f, to_date: e.target.value, half_day: f.half_day && e.target.value === f.from_date })}
+            />
           </Field>
           <Field label="Type">
             <Select value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value as typeof f.kind })}>
@@ -57,7 +77,11 @@ export function LeaveManager({ leave, holidays, people, me, isAdmin, today }: { 
             </button>
           </div>
         </div>
-        {msg && <p className={`mt-2 text-sm ${msg.ok ? "text-green-700" : "text-red-700"}`} role="status">{msg.text}</p>}
+        {msg && (
+          <p className={`mt-2 text-sm ${msg.ok ? "text-green-700" : "text-red-700"}`} role="status">
+            {msg.text}
+          </p>
+        )}
       </Card>
 
       {isAdmin && pendingList.length > 0 && (
@@ -123,7 +147,17 @@ export function LeaveManager({ leave, holidays, people, me, isAdmin, today }: { 
           <div className="mt-3 flex flex-wrap gap-2">
             <Input className="!w-44" type="date" value={h.day} onChange={(e) => setH({ ...h, day: e.target.value })} aria-label="Holiday date" />
             <Input className="!w-64" value={h.name} onChange={(e) => setH({ ...h, name: e.target.value })} placeholder="Diwali" aria-label="Holiday name" />
-            <button className={btn.secondary} disabled={!h.day || !h.name.trim() || pending} onClick={() => run(() => saveHoliday(h.day, h.name), undefined, () => setH({ day: "", name: "" }))}>
+            <button
+              className={btn.secondary}
+              disabled={!h.day || !h.name.trim() || pending}
+              onClick={() =>
+                run(
+                  () => saveHoliday(h.day, h.name),
+                  undefined,
+                  () => setH({ day: "", name: "" }),
+                )
+              }
+            >
               Add holiday
             </button>
           </div>

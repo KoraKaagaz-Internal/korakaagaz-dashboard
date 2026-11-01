@@ -132,12 +132,7 @@ export function Nav({ role }: { role: Role }) {
       </aside>
 
       <div className="fixed top-3 left-4 z-40 md:hidden print:hidden">
-        <button
-          className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-sm"
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-        >
+        <button className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-sm" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="mobile-menu">
           Menu
         </button>
       </div>
@@ -149,11 +144,7 @@ export function Nav({ role }: { role: Role }) {
 
       <nav aria-label="Quick" className="fixed inset-x-0 bottom-0 z-30 flex border-t border-black/5 bg-white/95 backdrop-blur md:hidden print:hidden">
         {bottom.map((n) => (
-          <Link
-            key={n.href}
-            href={n.href}
-            className={`flex-1 py-3 text-center text-xs ${isActive(path, n.href) ? "font-semibold text-navy" : "text-neutral-600"}`}
-          >
+          <Link key={n.href} href={n.href} className={`flex-1 py-3 text-center text-xs ${isActive(path, n.href) ? "font-semibold text-navy" : "text-neutral-600"}`}>
             {n.label}
           </Link>
         ))}

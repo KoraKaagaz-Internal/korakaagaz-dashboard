@@ -69,12 +69,13 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
           </Link>
         </div>
         <div className="flex rounded-lg bg-white p-0.5 ring-1 ring-black/10" role="group" aria-label="View">
-          {[
-            ["month", "Month"],
-            ["week", "Week"],
-            ...(isStaff ? [["crew", "Crew & kit"]] : []),
-          ].map(([v, l]) => (
-            <Link key={v} href={href(v, date)} aria-current={view === v ? "true" : undefined} className={`rounded-md px-3 py-1 text-sm ${view === v ? "bg-navy text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>
+          {[["month", "Month"], ["week", "Week"], ...(isStaff ? [["crew", "Crew & kit"]] : [])].map(([v, l]) => (
+            <Link
+              key={v}
+              href={href(v, date)}
+              aria-current={view === v ? "true" : undefined}
+              className={`rounded-md px-3 py-1 text-sm ${view === v ? "bg-navy text-white" : "text-neutral-700 hover:bg-neutral-100"}`}
+            >
               {l}
             </Link>
           ))}
@@ -82,7 +83,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       </div>
 
       {view === "month" && (
-        <div className="overflow-x-auto rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+        <div className="overflow-x-auto rounded-xl bg-white border border-line">
           <div className="grid min-w-[720px] grid-cols-7 border-b border-neutral-100 text-xs font-medium text-neutral-500">
             {DAY.map((d) => (
               <div key={d} className="px-2 py-2">
@@ -99,7 +100,9 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
               return (
                 <div key={d} className={`min-h-28 border-r border-b border-neutral-100 p-1.5 ${inMonth ? "" : "bg-neutral-50/70"} ${h ? "bg-amber-50/60" : ""}`}>
                   <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className={`${d === today ? "rounded-full bg-navy px-1.5 font-semibold text-white" : inMonth ? "text-neutral-700" : "text-neutral-400"}`}>{Number(d.slice(8))}</span>
+                    <span className={`${d === today ? "rounded-full bg-navy px-1.5 font-semibold text-white" : inMonth ? "text-neutral-700" : "text-neutral-400"}`}>
+                      {Number(d.slice(8))}
+                    </span>
                     {canEdit && (
                       <Link href={`/calendar/new?date=${d}`} className="text-neutral-300 hover:text-navy" aria-label={`New event on ${d}`}>
                         +
@@ -117,7 +120,11 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                       </Link>
                     )}
                   </div>
-                  {off.length > 0 && <div className="mt-1 truncate text-[11px] text-neutral-500" title="On leave">Off: {off.map((l) => displayName(l.member_email, people)).join(", ")}</div>}
+                  {off.length > 0 && (
+                    <div className="mt-1 truncate text-[11px] text-neutral-500" title="On leave">
+                      Off: {off.map((l) => displayName(l.member_email, people)).join(", ")}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -132,7 +139,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
             const h = holiday(d);
             const off = away(d);
             return (
-              <section key={d} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+              <section key={d} className="rounded-xl bg-white p-4 border border-line">
                 <h2 className={`mb-2 text-sm font-semibold ${d === today ? "text-navy" : ""}`}>
                   {formatInvoiceDate(d)} · {DAY[week.indexOf(d)]}
                   {h && <span className="ml-2 font-normal text-amber-800">{h.name}</span>}
@@ -145,14 +152,18 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
                           <EventChip e={e} />
                         </span>
                         <span className="text-neutral-600">
-                          {e.all_day ? "All day" : `${new Date(e.starts_at).toLocaleTimeString("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" })} – ${new Date(e.ends_at).toLocaleTimeString("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" })}`}
+                          {e.all_day
+                            ? "All day"
+                            : `${new Date(e.starts_at).toLocaleTimeString("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" })} – ${new Date(e.ends_at).toLocaleTimeString("en-IN", { timeStyle: "short", timeZone: "Asia/Kolkata" })}`}
                           {e.location ? ` · ${e.location}` : ""}
                           {e.project_code ? ` · ${e.project_code}` : ""}
                         </span>
                         <span className="flex -space-x-1.5">
-                          {e.people.filter((p) => p.member_email).map((p) => (
-                            <Avatar key={p.member_email} email={p.member_email!} people={people} size={22} />
-                          ))}
+                          {e.people
+                            .filter((p) => p.member_email)
+                            .map((p) => (
+                              <Avatar key={p.member_email} email={p.member_email!} people={people} size={22} />
+                            ))}
                         </span>
                       </li>
                     ))}
@@ -176,7 +187,19 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   );
 }
 
-async function CrewView({ week, events, people, leave, today }: { week: string[]; events: Awaited<ReturnType<typeof listEvents>>; people: { email: string; name: string; role: string }[]; leave: Awaited<ReturnType<typeof listLeave>>; today: string }) {
+async function CrewView({
+  week,
+  events,
+  people,
+  leave,
+  today,
+}: {
+  week: string[];
+  events: Awaited<ReturnType<typeof listEvents>>;
+  people: { email: string; name: string; role: string }[];
+  leave: Awaited<ReturnType<typeof listLeave>>;
+  today: string;
+}) {
   const { listKit } = await import("@/lib/time-data");
   const kit = (await listKit()).filter((k) => k.active);
   const live = events.filter((e) => e.status !== "cancelled" && e.type !== "deadline");
@@ -207,16 +230,21 @@ async function CrewView({ week, events, people, leave, today }: { week: string[]
           <table className="w-full min-w-[760px] table-fixed text-sm">
             <thead>{head}</thead>
             <tbody className="divide-y divide-neutral-100 align-top">
-              {people.filter((p) => p.role !== "viewer").map((p) => (
-                <tr key={p.email}>
-                  <td className="truncate py-1.5 pr-2">{p.name || p.email.split("@")[0]}</td>
-                  {week.map((d) => (
-                    <td key={d} className="px-0.5 py-1.5">
-                      {cell(booked((e) => e.people.some((x) => x.member_email === p.email), d), leave.some((l) => l.member_email === p.email && l.status === "approved" && l.from_date <= d && d <= l.to_date))}
-                    </td>
-                  ))}
-                </tr>
-              ))}
+              {people
+                .filter((p) => p.role !== "viewer")
+                .map((p) => (
+                  <tr key={p.email}>
+                    <td className="truncate py-1.5 pr-2">{p.name || p.email.split("@")[0]}</td>
+                    {week.map((d) => (
+                      <td key={d} className="px-0.5 py-1.5">
+                        {cell(
+                          booked((e) => e.people.some((x) => x.member_email === p.email), d),
+                          leave.some((l) => l.member_email === p.email && l.status === "approved" && l.from_date <= d && d <= l.to_date),
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
@@ -245,7 +273,11 @@ async function CrewView({ week, events, people, leave, today }: { week: string[]
           </div>
         ) : (
           <p className="text-sm text-neutral-500">
-            No kit yet. <Link href="/calendar/kit" className="text-navy underline">Add cameras, lenses and lights</Link> to book them on shoots.
+            No kit yet.{" "}
+            <Link href="/calendar/kit" className="text-navy underline">
+              Add cameras, lenses and lights
+            </Link>{" "}
+            to book them on shoots.
           </p>
         )}
       </Card>

@@ -19,7 +19,7 @@ export function QuoteResponse({ token }: { token: string }) {
   const respond = (accept: boolean) => start(async () => setDone(await respondToQuote(token, accept, reason)));
 
   return (
-    <div className="mb-5 rounded-xl bg-white p-4 shadow-sm ring-1 ring-black/5">
+    <div className="mb-5 rounded-xl bg-white p-4 border border-line">
       <p className="text-sm font-medium">Happy with this quote?</p>
       {declining ? (
         <div className="mt-3 space-y-2">

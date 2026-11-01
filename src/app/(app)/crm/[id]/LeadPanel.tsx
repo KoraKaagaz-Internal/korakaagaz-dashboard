@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { addActivity, convertLead, deleteLead, moveLead } from "@/app/actions/crm";
-import { Card, Field, Input, Select, Textarea, btn } from "@/components/ui";
+import { Card, ConfirmButton, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { LOST_REASONS, STAGES, type Lead, type Stage } from "@/lib/crm";
 import { addDays } from "@/lib/money";
 
@@ -53,7 +53,11 @@ export function StagePicker({ lead }: { lead: Lead }) {
         </>
       )}
       {stage === "won" && lead.stage !== "won" && <span className="text-sm text-neutral-600">Use “Won: set up the client” below.</span>}
-      {msg && <span className="text-sm text-red-700" role="alert">{msg}</span>}
+      {msg && (
+        <span className="text-sm text-red-700" role="alert">
+          {msg}
+        </span>
+      )}
     </div>
   );
 }
@@ -77,7 +81,13 @@ export function LogActivity({ leadId, followUp, today }: { leadId: string; follo
     <div className="space-y-2">
       <div className="flex flex-wrap gap-1" role="group" aria-label="What happened">
         {KINDS.map((k) => (
-          <button key={k.key} type="button" aria-pressed={kind === k.key} onClick={() => setKind(k.key)} className={`rounded-full px-3 py-1 text-xs ring-1 ${kind === k.key ? "bg-navy text-white ring-navy" : "bg-white text-neutral-700 ring-black/10"}`}>
+          <button
+            key={k.key}
+            type="button"
+            aria-pressed={kind === k.key}
+            onClick={() => setKind(k.key)}
+            className={`rounded-full px-3 py-1 text-xs ring-1 ${kind === k.key ? "bg-navy text-white ring-navy" : "bg-white text-neutral-700 ring-black/10"}`}
+          >
             {k.label}
           </button>
         ))}
@@ -108,7 +118,11 @@ export function LogActivity({ leadId, followUp, today }: { leadId: string; follo
           Save
         </button>
       </div>
-      {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+      {msg && (
+        <p className="text-sm text-red-700" role="alert">
+          {msg}
+        </p>
+      )}
     </div>
   );
 }
@@ -169,7 +183,11 @@ export function Convert({ lead, templates, open }: { lead: Lead; templates: { id
         <button className={btn.ghost} onClick={() => setShow(false)}>
           Not yet
         </button>
-        {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+        {msg && (
+          <p className="text-sm text-red-700" role="alert">
+            {msg}
+          </p>
+        )}
       </div>
     </Card>
   );
@@ -177,23 +195,23 @@ export function Convert({ lead, templates, open }: { lead: Lead; templates: { id
 
 export function DeleteLead({ id }: { id: string }) {
   const router = useRouter();
-  const [confirm, setConfirm] = useState(false);
   const [pending, start] = useTransition();
   return (
-    <button
-      className={btn.danger}
+    <ConfirmButton
       disabled={pending}
-      onClick={() => {
-        if (!confirm) return setConfirm(true);
+      align="left"
+      confirm="Delete this lead and its history? This can't be undone."
+      confirmLabel="Delete lead"
+      onConfirm={() =>
         start(async () => {
           await deleteLead(id);
           router.push("/crm");
           router.refresh();
-        });
-      }}
+        })
+      }
     >
-      {confirm ? "Click again to delete this lead" : "Delete lead"}
-    </button>
+      Delete lead
+    </ConfirmButton>
   );
 }
 

@@ -107,14 +107,20 @@ export function BookingSettingsForm({ booking, services, site }: { booking: Book
             </button>
           </div>
         )}
-        <p className="mt-2 text-xs text-neutral-500">Bookings create a meeting in the calendar, move the lead to “Discovery call”, and email both sides a calendar invite (once Gmail sending is set up).</p>
+        <p className="mt-2 text-xs text-neutral-500">
+          Bookings create a meeting in the calendar, move the lead to “Discovery call”, and email both sides a calendar invite (once Gmail sending is set up).
+        </p>
       </Card>
 
       <div className="flex items-center gap-3">
         <button className={btn.primary} disabled={pending} onClick={save}>
           Save
         </button>
-        {msg && <span className={`text-sm ${msg.ok ? "text-green-700" : "text-red-700"}`} role="status">{msg.text}</span>}
+        {msg && (
+          <span className={`text-sm ${msg.ok ? "text-green-700" : "text-red-700"}`} role="status">
+            {msg.text}
+          </span>
+        )}
       </div>
     </div>
   );

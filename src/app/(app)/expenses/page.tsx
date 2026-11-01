@@ -18,7 +18,16 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
   const from = sp.from ?? (unpaidView ? undefined : month.from);
   const to = sp.to ?? (unpaidView ? undefined : month.to);
   const [expenses, categories, vendors, projects] = await Promise.all([
-    listExpenses({ from, to, category: sp.category, vendor: sp.vendor, project: sp.project, kind: unpaidView ? undefined : sp.kind, status: unpaidView ? "unpaid" : sp.status, q: sp.q }),
+    listExpenses({
+      from,
+      to,
+      category: sp.category,
+      vendor: sp.vendor,
+      project: sp.project,
+      kind: unpaidView ? undefined : sp.kind,
+      status: unpaidView ? "unpaid" : sp.status,
+      q: sp.q,
+    }),
     listCategories(),
     listVendors(),
     loggableProjects(),
@@ -104,7 +113,11 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
       </form>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Tile label={unpaidView ? "Still to pay" : from ? `Spent ${formatInvoiceDate(from)} – ${formatInvoiceDate(to)}` : "Spent"} value={formatMoney(unpaidView ? owed : total)} sub={`${shown.length} item${shown.length === 1 ? "" : "s"}`} />
+        <Tile
+          label={unpaidView ? "Still to pay" : from ? `Spent ${formatInvoiceDate(from)} – ${formatInvoiceDate(to)}` : "Spent"}
+          value={formatMoney(unpaidView ? owed : total)}
+          sub={`${shown.length} item${shown.length === 1 ? "" : "s"}`}
+        />
         <Tile label="GST input credit (claimable)" value={formatMoney(gst)} sub="before GSTR-2B matching" />
         <Tile label="Unpaid" value={formatMoney(owed)} sub="bills and approved claims" />
       </div>
@@ -116,7 +129,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
               <li key={name} className="grid grid-cols-[160px_1fr_auto] items-center gap-3">
                 <span className="truncate text-neutral-700">{name}</span>
                 <span className="h-2 rounded-full bg-neutral-100">
-                  <span className="block h-2 rounded-full bg-[#3846b4]" style={{ width: `${(v / cats[0][1]) * 100}%`, minWidth: 4 }} />
+                  <span className="block h-2 rounded-full bg-accent" style={{ width: `${(v / cats[0][1]) * 100}%`, minWidth: 4 }} />
                 </span>
                 <span className="tabular-nums">{formatMoney(v)}</span>
               </li>
@@ -175,7 +188,11 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
                       </td>
                       <td className="text-right tabular-nums">{formatMoney(e.total, e.currency)}</td>
                       <td className={`text-right text-xs whitespace-nowrap ${overdue ? "font-semibold text-red-700" : "text-neutral-600"}`}>
-                        {unpaidView ? (e.due_date ? `${overdue ? `${daysBetween(e.due_date, today)}d late` : formatInvoiceDate(e.due_date).replace(/, \d{4}$/, "")}` : "—") : status}
+                        {unpaidView
+                          ? e.due_date
+                            ? `${overdue ? `${daysBetween(e.due_date, today)}d late` : formatInvoiceDate(e.due_date).replace(/, \d{4}$/, "")}`
+                            : "—"
+                          : status}
                       </td>
                     </tr>
                   );
@@ -191,7 +208,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
 
 function Tile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+    <div className="rounded-xl bg-white px-4 py-3 border border-line">
       <div className="text-xs text-neutral-500">{label}</div>
       <div className="mt-0.5 text-xl font-semibold tabular-nums">{value}</div>
       {sub && <div className="text-xs text-neutral-500">{sub}</div>}

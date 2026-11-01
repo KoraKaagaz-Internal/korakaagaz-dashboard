@@ -133,7 +133,7 @@ async function Billing({ projectId, budget, canEdit }: { projectId: string; budg
             ["Outstanding", t.outstanding],
           ] as const
         ).map(([label, value]) => (
-          <div key={label} className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/5">
+          <div key={label} className="rounded-xl bg-white px-4 py-3 border border-line">
             <div className="text-xs text-neutral-500">{label}</div>
             <div className="text-lg font-semibold tabular-nums">{formatMoney(value)}</div>
             <div className="text-xs text-neutral-500">{label !== "Outstanding" ? pct(value) : ""}</div>

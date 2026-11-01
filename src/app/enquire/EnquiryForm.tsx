@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { submitEnquiry } from "@/app/actions/crm";
 
-const input = "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-[#081788]";
+const input = "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-navy";
 
 export function EnquiryForm({ services, source, bookingUrl }: { services: string[]; source: string; bookingUrl: string | null }) {
   const [f, setF] = useState({ name: "", email: "", phone: "", company: "", service: "", budget: "", message: "", website: "" });
@@ -15,11 +15,11 @@ export function EnquiryForm({ services, source, bookingUrl }: { services: string
 
   if (done)
     return (
-      <div className="rounded-2xl bg-white p-8 text-center shadow-sm ring-1 ring-black/5" role="status">
-        <h2 className="font-serif text-2xl text-[#081788]">Thank you, {f.name.split(" ")[0]}.</h2>
+      <div className="rounded-xl bg-white p-8 text-center border border-line" role="status">
+        <h2 className="font-serif text-2xl text-navy">Thank you, {f.name.split(" ")[0]}.</h2>
         <p className="mt-2 text-neutral-600">We&apos;ve got your message and will get back to you within a working day.</p>
         {bookingUrl && (
-          <a href={bookingUrl} target="_top" className="mt-5 inline-block rounded-lg bg-[#081788] px-4 py-2 text-sm font-medium text-white">
+          <a href={bookingUrl} target="_top" className="mt-5 inline-block rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white">
             Pick a time for a quick call
           </a>
         )}
@@ -34,7 +34,7 @@ export function EnquiryForm({ services, source, bookingUrl }: { services: string
   );
   return (
     <form
-      className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-black/5"
+      className="space-y-4 rounded-xl bg-white p-6 border border-line"
       onSubmit={(e) => {
         e.preventDefault();
         start(async () => {
@@ -92,7 +92,7 @@ export function EnquiryForm({ services, source, bookingUrl }: { services: string
         <input tabIndex={-1} autoComplete="off" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} />
       </label>
       {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
-      <button disabled={pending} className="rounded-lg bg-[#081788] px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">
+      <button disabled={pending} className="rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">
         {pending ? "Sending…" : "Send enquiry"}
       </button>
       <p className="text-xs text-neutral-500">We only use your details to reply to you.</p>

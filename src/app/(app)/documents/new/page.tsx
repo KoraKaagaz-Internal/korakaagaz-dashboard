@@ -48,7 +48,17 @@ export default async function NewDocumentPage({ searchParams }: { searchParams: 
     const abroad = client.country !== "India";
     Object.assign(initial, {
       client_id: client.id,
-      client: { name: client.name, email: client.email, phone: client.phone, address: client.address, city: client.city, pin: client.pin, state_code: client.state_code, country: client.country, gstin: client.gstin },
+      client: {
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        address: client.address,
+        city: client.city,
+        pin: client.pin,
+        state_code: client.state_code,
+        country: client.country,
+        gstin: client.gstin,
+      },
       place_of_supply: abroad ? "96" : client.state_code || s.state_code,
       export_type: abroad ? (s.lut_number ? "lut" : "igst") : "none",
       currency: abroad ? "USD" : "INR",

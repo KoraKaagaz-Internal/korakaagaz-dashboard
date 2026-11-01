@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const message = error ? (MESSAGES[error] ?? error) : "";
   return (
     <main className="grid min-h-screen place-items-center px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-sm ring-1 ring-black/5">
+      <div className="w-full max-w-sm rounded-xl bg-white p-8 border border-line">
         <h1 className="font-serif text-4xl leading-none text-navy uppercase">
           Kora
           <br />

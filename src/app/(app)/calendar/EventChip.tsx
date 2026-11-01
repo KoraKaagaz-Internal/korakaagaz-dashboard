@@ -2,14 +2,20 @@ import Link from "next/link";
 import { istTime, type EventType, type EventStatus } from "@/lib/calendar";
 
 export const TYPE_STYLE: Record<EventType, string> = {
-  shoot: "bg-[#3846b4]/10 text-[#26318a] ring-[#3846b4]/30",
+  shoot: "bg-accent/10 text-navy ring-accent/30",
   meeting: "bg-violet-50 text-violet-900 ring-violet-200",
   deadline: "bg-red-50 text-red-800 ring-red-200",
   other: "bg-neutral-100 text-neutral-700 ring-neutral-200",
 };
 export const TYPE_LABEL: Record<EventType, string> = { shoot: "Shoot", meeting: "Meeting", deadline: "Deadline", other: "Other" };
 
-export function EventChip({ e, compact }: { e: { id: string; type: EventType; title: string; starts_at: string; all_day: boolean; status: EventStatus; project_code?: string }; compact?: boolean }) {
+export function EventChip({
+  e,
+  compact,
+}: {
+  e: { id: string; type: EventType; title: string; starts_at: string; all_day: boolean; status: EventStatus; project_code?: string };
+  compact?: boolean;
+}) {
   const cancelled = e.status === "cancelled";
   return (
     <Link

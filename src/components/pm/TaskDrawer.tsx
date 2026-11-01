@@ -6,8 +6,9 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { addComment, createTask, deleteComment, deleteTask, loadTask, setAssignees, updateTask } from "@/app/actions/projects";
 import { startTimer } from "@/app/actions/time";
 import { NumberInput } from "@/components/NumberInput";
-import { Field, Input, Select, Textarea, btn } from "@/components/ui";
+import { ConfirmButton, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { PRIORITIES, TASK_STATUSES, displayName, type Person, type Task } from "@/lib/pm";
+import { formatDateTime } from "@/lib/money";
 import { hhmm } from "@/lib/time";
 import type { TaskDetail } from "@/lib/pm-data";
 import { Avatar } from "./Avatar";
@@ -25,7 +26,6 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
   const [msg, setMsg] = useState("");
   const [comment, setComment] = useState("");
   const [sub, setSub] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, start] = useTransition();
 
   const reload = useCallback(async () => {
@@ -39,7 +39,6 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
     setDetail(null);
     setMissing(false);
     setMsg("");
-    setConfirmDelete(false);
     reload();
   }, [reload]);
 
@@ -176,7 +175,12 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
 
             <section>
               <h3 className="mb-2 text-sm font-semibold">
-                Checklist {detail.subtasks.length > 0 && <span className="font-normal text-neutral-500">· {detail.subtasks.filter((s) => s.status === "done").length}/{detail.subtasks.length}</span>}
+                Checklist{" "}
+                {detail.subtasks.length > 0 && (
+                  <span className="font-normal text-neutral-500">
+                    · {detail.subtasks.filter((s) => s.status === "done").length}/{detail.subtasks.length}
+                  </span>
+                )}
               </h3>
               <ul className="space-y-1">
                 {detail.subtasks.map((s) => (
@@ -229,11 +233,17 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
                     <Avatar email={c.author_email} people={people} size={28} />
                     <div className="min-w-0 flex-1">
                       <div className="text-xs text-neutral-500">
-                        <span className="font-medium text-neutral-800">{displayName(c.author_email, people)}</span> · {new Date(c.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}
+                        <span className="font-medium text-neutral-800">{displayName(c.author_email, people)}</span> · {formatDateTime(c.created_at)}
                         {c.author_email === me && (
-                          <button className="ml-2 text-neutral-400 hover:text-red-600" onClick={() => run(() => deleteComment(c.id))}>
+                          <ConfirmButton
+                            className="ml-1 !h-6 !px-1.5 text-xs"
+                            align="left"
+                            confirm="Delete this comment?"
+                            confirmLabel="Delete"
+                            onConfirm={() => run(() => deleteComment(c.id))}
+                          >
                             Delete
-                          </button>
+                          </ConfirmButton>
                         )}
                       </div>
                       <p className="text-sm whitespace-pre-wrap text-neutral-800">{c.body}</p>
@@ -272,24 +282,29 @@ export function TaskDrawer({ people, canWork, me }: { people: Person[]; canWork:
               )}
             </section>
 
-            {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+            {msg && (
+              <p className="text-sm text-red-700" role="alert">
+                {msg}
+              </p>
+            )}
 
             {canWork && (
               <div className="border-t border-neutral-100 pt-4">
-                <button
-                  className={btn.danger}
-                  onClick={() => {
-                    if (!confirmDelete) return setConfirmDelete(true);
+                <ConfirmButton
+                  align="left"
+                  confirm="Delete this task with its checklist, files and comments? This can't be undone."
+                  confirmLabel="Delete task"
+                  onConfirm={() =>
                     start(async () => {
                       const r = await deleteTask(t.id);
                       if (!r.ok) return setMsg(r.message);
                       close();
                       router.refresh();
-                    });
-                  }}
+                    })
+                  }
                 >
-                  {confirmDelete ? "Click again to delete this task and its checklist, files and comments" : "Delete task"}
-                </button>
+                  Delete task
+                </ConfirmButton>
               </div>
             )}
           </div>

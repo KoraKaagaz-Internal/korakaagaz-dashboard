@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { deleteItem, saveItem } from "@/app/actions/catalog";
-import { Card, Field, Input, Textarea, btn } from "@/components/ui";
+import { Card, ConfirmButton, Field, Input, Textarea, btn } from "@/components/ui";
+import { toast } from "@/components/ui/Toaster";
 import { formatMoney } from "@/lib/money";
 import type { CatalogItem } from "@/lib/types";
 
@@ -75,18 +76,20 @@ export function ItemsManager({ initial, canEdit }: { initial: CatalogItem[]; can
                   <button className={btn.ghost} onClick={() => setForm({ id: it.id, name: it.name, description: it.description, sac: it.sac, unit_price: it.unit_price })}>
                     Edit
                   </button>
-                  <button
-                    className={btn.danger}
+                  <ConfirmButton
                     disabled={pending}
-                    onClick={() =>
+                    confirm={`Delete ${it.name}? Documents that used it aren't changed.`}
+                    confirmLabel="Delete item"
+                    onConfirm={() =>
                       start(async () => {
                         const r = await deleteItem(it.id);
                         if (r.ok) setItems((l) => l.filter((x) => x.id !== it.id));
+                        else toast.error(r.message);
                       })
                     }
                   >
                     Delete
-                  </button>
+                  </ConfirmButton>
                 </>
               )}
             </li>

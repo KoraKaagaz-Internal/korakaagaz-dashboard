@@ -330,6 +330,14 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-02</td><td><b>Design system (calm redesign, part B)</b>.
+      <ul>
+        <li>Colour tokens in <code>globals.css</code> (navy, accent, line, subtle, ok/warn/danger) replace hard-coded hex; one keyboard focus ring everywhere; cards are flat with a hairline border.</li>
+        <li>Shared components in <code>src/components/ui/</code>: PageHeader/Section, Tabs/Segmented, FilterBar, Button/ButtonLink, ConfirmButton, Toaster + <code>useAction</code>, EmptyState, Badge, Stat/StatRow, InfoTip, DataList (table on desktop, cards on phones). Date helpers <code>formatShortDate</code>, <code>formatDateTime</code> (IST), <code>formatRelative</code>.</li>
+        <li>Every delete/cancel now asks inline with ConfirmButton (no more browser pop-ups or "click again"). Issuing a document asks first and shows the amount and client.</li>
+        <li>Fixes: invoice editor and Reports no longer overflow on phones; project status errors are shown; item delete errors are shown; comment times are in IST; the empty revenue chart says so instead of "₹1 ₹1".</li>
+        <li><code>scripts/ui-audit.mjs</code>: every page at 1440px and 390px; fails on overflow, console errors, slow loads, <code>window.confirm</code> or brand hex in pages.</li>
+      </ul></td></tr>
     <tr><td>2026-11-02</td><td><b>No hourly pay anywhere</b> (from the full-site audit).
       <ul>
         <li>Projects bill by fixed fee or monthly retainer only. Hourly billing, ₹/hour rates, cost/bill rates, "Draft invoice from approved time", realisation and ₹/hour columns are gone.</li>

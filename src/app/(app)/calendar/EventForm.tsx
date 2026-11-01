@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { checkConflicts, deleteEvent, saveEvent } from "@/app/actions/calendar";
 import { PeoplePicker } from "@/components/pm/PeoplePicker";
-import { Card, Field, Input, Select, Textarea, btn } from "@/components/ui";
+import { Card, ConfirmButton, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { EVENT_TYPES, isoToIstLocal, istDate, istLocalToIso, type Conflict, type EventStatus, type EventType, type StudioEvent } from "@/lib/calendar";
 import { addDays } from "@/lib/money";
 import type { Person } from "@/lib/pm";
@@ -52,7 +52,6 @@ export function EventForm({
   const [kitSel, setKitSel] = useState<string[]>(event?.kit ?? []);
   const [conflicts, setConflicts] = useState<Conflict[]>([]);
   const [msg, setMsg] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, start] = useTransition();
 
   const times = useMemo(() => {
@@ -67,7 +66,9 @@ export function EventForm({
   useEffect(() => {
     if (!times) return;
     const id = setTimeout(() => {
-      checkConflicts({ id: event?.id, ...times, status: f.status, type: f.type, people: team, kit: kitSel }).then(setConflicts).catch(() => {});
+      checkConflicts({ id: event?.id, ...times, status: f.status, type: f.type, people: team, kit: kitSel })
+        .then(setConflicts)
+        .catch(() => {});
     }, 400);
     return () => clearTimeout(id);
   }, [times, f.status, f.type, team, kitSel, event?.id]);
@@ -93,7 +94,10 @@ export function EventForm({
         notes: f.notes,
         shot_list: f.shot_list,
         contacts: f.contacts,
-        people: [...team.map((e) => ({ member_email: e, external_name: "", role: roles[e] ?? "", phone: "" })), ...ext.filter((x) => x.external_name.trim()).map((x) => ({ member_email: null, ...x }))],
+        people: [
+          ...team.map((e) => ({ member_email: e, external_name: "", role: roles[e] ?? "", phone: "" })),
+          ...ext.filter((x) => x.external_name.trim()).map((x) => ({ member_email: null, ...x })),
+        ],
         kit: kitSel,
       });
       if (!r.ok) return setMsg(r.message);
@@ -179,7 +183,13 @@ export function EventForm({
               {team.map((e) => (
                 <li key={e} className="flex items-center gap-2">
                   <span className="w-40 truncate">{names([e])}</span>
-                  <Input className="!w-56" value={roles[e] ?? ""} onChange={(ev) => setRoles({ ...roles, [e]: ev.target.value })} placeholder="Role (photographer, stylist…)" aria-label={`Role for ${names([e])}`} />
+                  <Input
+                    className="!w-56"
+                    value={roles[e] ?? ""}
+                    onChange={(ev) => setRoles({ ...roles, [e]: ev.target.value })}
+                    placeholder="Role (photographer, stylist…)"
+                    aria-label={`Role for ${names([e])}`}
+                  />
                 </li>
               ))}
             </ul>
@@ -188,8 +198,18 @@ export function EventForm({
             <div className="mb-1 text-xs font-medium tracking-wide text-neutral-500 uppercase">Outside crew and talent</div>
             {ext.map((x, i) => (
               <div key={i} className="mb-1.5 grid grid-cols-[1fr_1fr_1fr_auto] gap-2">
-                <Input value={x.external_name} onChange={(e) => setExt(ext.map((y, j) => (j === i ? { ...y, external_name: e.target.value } : y)))} placeholder="Name" aria-label="Name" />
-                <Input value={x.role} onChange={(e) => setExt(ext.map((y, j) => (j === i ? { ...y, role: e.target.value } : y)))} placeholder="Role (model, MUA…)" aria-label="Role" />
+                <Input
+                  value={x.external_name}
+                  onChange={(e) => setExt(ext.map((y, j) => (j === i ? { ...y, external_name: e.target.value } : y)))}
+                  placeholder="Name"
+                  aria-label="Name"
+                />
+                <Input
+                  value={x.role}
+                  onChange={(e) => setExt(ext.map((y, j) => (j === i ? { ...y, role: e.target.value } : y)))}
+                  placeholder="Role (model, MUA…)"
+                  aria-label="Role"
+                />
                 <Input value={x.phone} onChange={(e) => setExt(ext.map((y, j) => (j === i ? { ...y, phone: e.target.value } : y)))} placeholder="Phone" aria-label="Phone" />
                 <button className={btn.ghost} onClick={() => setExt(ext.filter((_, j) => j !== i))} aria-label="Remove">
                   ✕
@@ -213,7 +233,11 @@ export function EventForm({
                   .filter((k) => (k.category || "Other") === c && (k.active || kitSel.includes(k.id)))
                   .map((k) => (
                     <label key={k.id} className="flex items-center gap-2 py-0.5 text-sm">
-                      <input type="checkbox" checked={kitSel.includes(k.id)} onChange={() => setKitSel(kitSel.includes(k.id) ? kitSel.filter((x) => x !== k.id) : [...kitSel, k.id])} />
+                      <input
+                        type="checkbox"
+                        checked={kitSel.includes(k.id)}
+                        onChange={() => setKitSel(kitSel.includes(k.id) ? kitSel.filter((x) => x !== k.id) : [...kitSel, k.id])}
+                      />
                       {k.name}
                     </label>
                   ))}
@@ -233,8 +257,8 @@ export function EventForm({
               <li key={c.with.id}>
                 {c.people.length > 0 && `${names(c.people)} `}
                 {c.kit.length > 0 && `${c.people.length ? "and " : ""}${kitNames(c.kit)} `}
-                {c.people.length + c.kit.length === 1 ? "is" : "are"} also on “{c.with.title}”
-                {c.with.status === "tentative" ? " (tentative)" : ""} at {new Date(c.with.starts_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}.
+                {c.people.length + c.kit.length === 1 ? "is" : "are"} also on “{c.with.title}”{c.with.status === "tentative" ? " (tentative)" : ""} at{" "}
+                {new Date(c.with.starts_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" })}.
               </li>
             ))}
           </ul>
@@ -245,7 +269,12 @@ export function EventForm({
       <Card title="Call sheet details">
         <div className="grid gap-3">
           <Field label="Shot list">
-            <Textarea rows={5} value={f.shot_list} onChange={(e) => setF({ ...f, shot_list: e.target.value })} placeholder={"1. Hero product on white\n2. Lifestyle, kitchen\n3. Detail close-ups"} />
+            <Textarea
+              rows={5}
+              value={f.shot_list}
+              onChange={(e) => setF({ ...f, shot_list: e.target.value })}
+              placeholder={"1. Hero product on white\n2. Lifestyle, kitchen\n3. Detail close-ups"}
+            />
           </Field>
           <Field label="Contacts on the day">
             <Textarea rows={2} value={f.contacts} onChange={(e) => setF({ ...f, contacts: e.target.value })} placeholder="Client: Riya, +91 98…  · Location manager: …" />
@@ -264,22 +293,29 @@ export function EventForm({
           Cancel
         </button>
         {event && (
-          <button
-            className={`${btn.danger} ml-auto`}
-            onClick={() => {
-              if (!confirmDelete) return setConfirmDelete(true);
-              start(async () => {
-                const r = await deleteEvent(event.id);
-                if (!r.ok) return setMsg(r.message);
-                router.push("/calendar");
-                router.refresh();
-              });
-            }}
-          >
-            {confirmDelete ? "Click again to delete" : "Delete event"}
-          </button>
+          <span className="ml-auto">
+            <ConfirmButton
+              size="md"
+              confirm="Delete this event? People booked on it are taken off."
+              confirmLabel="Delete event"
+              onConfirm={() =>
+                start(async () => {
+                  const r = await deleteEvent(event.id);
+                  if (!r.ok) return setMsg(r.message);
+                  router.push("/calendar");
+                  router.refresh();
+                })
+              }
+            >
+              Delete event
+            </ConfirmButton>
+          </span>
         )}
-        {msg && <p className="text-sm text-red-700" role="alert">{msg}</p>}
+        {msg && (
+          <p className="text-sm text-red-700" role="alert">
+            {msg}
+          </p>
+        )}
       </div>
     </div>
   );

@@ -68,7 +68,13 @@ export function PeoplePicker({
       </button>
       {open && (
         <div className="absolute z-50 mt-1 w-64 rounded-xl bg-white p-2 shadow-lg ring-1 ring-black/10">
-          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search people" className="mb-1 w-full rounded-md border border-neutral-200 px-2 py-1 text-sm outline-none focus:border-navy" />
+          <input
+            autoFocus
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search people"
+            className="mb-1 w-full rounded-md border border-neutral-200 px-2 py-1 text-sm outline-none focus:border-navy"
+          />
           <ul className="max-h-60 overflow-y-auto">
             {shown.map((p) => (
               <li key={p.email}>
