@@ -223,6 +223,9 @@ try {
   });
   check("stopping the timer saves at least a minute as draft", timed?.minutes >= 1 && timed?.status === "draft", JSON.stringify(timed));
 
+  // a retried "Start timer" can leave a second timer running; stop it so the timesheet starts clean
+  await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&timer_started_at=not.is.null`, { method: "DELETE" });
+
   // ------------------------------------------------------------ timesheet, submit, approve
   await A.go("/time");
   const cellInput = await admin.waitForSelector(`input[aria-label^='${callSheet.title}, ']:not([disabled])`);
@@ -240,7 +243,7 @@ try {
   await admin.screenshot({ path: ".visual/e2e-timesheet.png" });
   await cellEl.evaluate((el) => el.blur());
   const ninety = await until(async () => {
-    const r = await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&select=minutes,status`);
+    const r = await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&timer_started_at=is.null&select=minutes,status`);
     return r.length === 1 && r[0].minutes === 90 ? r[0] : null;
   });
   check("typing 1:30 in the timesheet saves 90 minutes", !!ninety, JSON.stringify(await api(`/rest/v1/time_entries?task_id=eq.${callSheet.id}&select=minutes,status`)));
