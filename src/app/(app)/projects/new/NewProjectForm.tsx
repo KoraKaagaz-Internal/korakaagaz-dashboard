@@ -9,6 +9,7 @@ import { PeoplePicker } from "@/components/pm/PeoplePicker";
 import { Card, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { PROJECT_TYPES, type Person } from "@/lib/pm";
 import type { Billing } from "@/lib/types";
+import { navigate } from "@/lib/navigate";
 
 interface Tpl {
   id: string;
@@ -68,7 +69,7 @@ export function NewProjectForm({
       setMsg("");
       const r = await createProject({ project: { ...p, status: "active" }, finance: fin, template_id: tpl || null, members });
       if (!r.ok) return setMsg(r.message);
-      router.push(`/projects/${r.id}`);
+      navigate(router, `/projects/${r.id}`);
     });
 
   return (

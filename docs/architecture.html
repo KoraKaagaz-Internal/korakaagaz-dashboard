@@ -348,6 +348,7 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-02</td><td><b>Fix: saves that sometimes didn't move on.</b> After "Create project", "Save event", "Create draft" and similar, Next.js occasionally dropped the follow-up navigation, leaving the button on "Creating…". <code>src/lib/navigate.ts</code> now pushes and, if the page hasn't changed within 4 seconds, loads it normally. Used by every save-then-open flow.</td></tr>
     <tr><td>2026-11-02</td><td><b>Phase 4: agreements and e-signatures.</b>
       <ul>
         <li>Migration 0015: <code>agreement_templates</code> (6 India-focused starters), <code>agreements</code> (AG-0001… numbers; text locked once sent; only the signing flow can mark signed or set the fingerprint), <code>agreement_signers</code> (token and code columns hidden from the API roles), <code>agreement_events</code> (append-only, SHA-256 hash-chained), <code>verify_agreement_hash()</code>.</li>

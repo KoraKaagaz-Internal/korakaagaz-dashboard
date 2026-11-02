@@ -176,16 +176,14 @@ export async function decline(token: string, reason: string): Promise<Out> {
     detail: { reason: reason.slice(0, 500) },
   });
   if (a.created_by) {
-    await supabase
-      .from("notifications")
-      .insert({
-        recipient_email: a.created_by,
-        actor_email: s.email,
-        kind: "agreement_declined",
-        title: `${s.name} declined ${a.title}`,
-        body: reason.slice(0, 300),
-        link: `/agreements/${a.id}`,
-      });
+    await supabase.from("notifications").insert({
+      recipient_email: a.created_by,
+      actor_email: s.email,
+      kind: "agreement_declined",
+      title: `${s.name} declined ${a.title}`,
+      body: reason.slice(0, 300),
+      link: `/agreements/${a.id}`,
+    });
   }
   revalidatePath(`/s/${token}`);
   return { ok: true, message: "Thanks for letting us know. The studio has been told." };

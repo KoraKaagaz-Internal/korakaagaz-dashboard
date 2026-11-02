@@ -9,6 +9,7 @@ import { EVENT_TYPES, isoToIstLocal, istDate, istLocalToIso, type Conflict, type
 import { addDays } from "@/lib/money";
 import type { Person } from "@/lib/pm";
 import type { KitItem } from "@/lib/time-data";
+import { navigate } from "@/lib/navigate";
 
 type External = { external_name: string; role: string; phone: string };
 
@@ -101,7 +102,7 @@ export function EventForm({
         kit: kitSel,
       });
       if (!r.ok) return setMsg(r.message);
-      router.push(`/calendar/${r.id}${r.conflicts.length ? "?conflicts=1" : ""}`);
+      navigate(router, `/calendar/${r.id}${r.conflicts.length ? "?conflicts=1" : ""}`);
       router.refresh();
     });
 
@@ -302,7 +303,7 @@ export function EventForm({
                 start(async () => {
                   const r = await deleteEvent(event.id);
                   if (!r.ok) return setMsg(r.message);
-                  router.push("/calendar");
+                  navigate(router, "/calendar");
                   router.refresh();
                 })
               }

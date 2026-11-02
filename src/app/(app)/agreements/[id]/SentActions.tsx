@@ -5,6 +5,7 @@ import { duplicateAgreement, finishSealing, quoteFromProposal, remindSigner, sig
 import { Button, ButtonLink, ConfirmButton } from "@/components/ui";
 import { toast, useAction } from "@/components/ui/Toaster";
 import type { AgreementKind, AgreementStatus } from "@/lib/agreements";
+import { navigate } from "@/lib/navigate";
 
 export function SentActions({
   id,
@@ -38,7 +39,7 @@ export function SentActions({
           disabled={quoting}
           onClick={async () => {
             const r = await quote(id);
-            if (r && r.ok) router.push(`/documents/${r.id}/edit`);
+            if (r && r.ok) navigate(router, `/documents/${r.id}/edit`);
           }}
         >
           {quoting ? "Drafting…" : "Create quote from proposal"}
@@ -54,7 +55,7 @@ export function SentActions({
         disabled={duping}
         onClick={async () => {
           const r = await dup(id);
-          if (r && r.ok) router.push(`/agreements/${r.id}`);
+          if (r && r.ok) navigate(router, `/agreements/${r.id}`);
         }}
       >
         Duplicate as draft

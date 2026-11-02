@@ -7,6 +7,7 @@ import { addActivity, convertLead, deleteLead, moveLead } from "@/app/actions/cr
 import { Card, ConfirmButton, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { LOST_REASONS, STAGES, type Lead, type Stage } from "@/lib/crm";
 import { addDays } from "@/lib/money";
+import { navigate } from "@/lib/navigate";
 
 export function StagePicker({ lead }: { lead: Lead }) {
   const router = useRouter();
@@ -205,7 +206,7 @@ export function DeleteLead({ id }: { id: string }) {
       onConfirm={() =>
         start(async () => {
           await deleteLead(id);
-          router.push("/crm");
+          navigate(router, "/crm");
           router.refresh();
         })
       }

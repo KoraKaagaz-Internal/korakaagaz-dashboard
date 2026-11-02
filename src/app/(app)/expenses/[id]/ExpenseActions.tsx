@@ -6,6 +6,7 @@ import { confirmDraft, deleteExpense, deleteExpensePayment, receiptUrl, recordEx
 import { NumberInput } from "@/components/NumberInput";
 import { ConfirmButton, Field, Input, Select, btn } from "@/components/ui";
 import { formatInvoiceDate, formatMoney } from "@/lib/money";
+import { navigate } from "@/lib/navigate";
 
 export function ReceiptButton({ id, name }: { id: string; name: string }) {
   const [msg, setMsg] = useState("");
@@ -168,7 +169,7 @@ export function Danger({ id, isDraft, canDelete, back }: { id: string; isDraft: 
             start(async () => {
               const r = await deleteExpense(id);
               if (!r.ok) return setMsg(r.message);
-              router.push(back);
+              navigate(router, back);
               router.refresh();
             })
           }

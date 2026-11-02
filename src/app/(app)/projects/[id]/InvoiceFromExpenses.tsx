@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { invoiceFromExpenses } from "@/app/actions/expenses";
 import { btn } from "@/components/ui";
+import { navigate } from "@/lib/navigate";
 
 export function InvoiceFromExpenses({ projectId, count }: { projectId: string; count: number }) {
   const router = useRouter();
@@ -18,7 +19,7 @@ export function InvoiceFromExpenses({ projectId, count }: { projectId: string; c
           start(async () => {
             const r = await invoiceFromExpenses(projectId);
             if (!r.ok) return setMsg(r.message);
-            router.push(`/documents/${r.id}/edit`);
+            navigate(router, `/documents/${r.id}/edit`);
           })
         }
       >

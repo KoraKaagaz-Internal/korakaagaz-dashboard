@@ -6,6 +6,7 @@ import { createAgreement } from "@/app/actions/agreements";
 import { Button, Field, Input, Select, Section } from "@/components/ui";
 import { toast } from "@/components/ui/Toaster";
 import { KIND_LABEL, type AgreementKind } from "@/lib/agreements";
+import { navigate } from "@/lib/navigate";
 
 type Opt = { id: string; name: string };
 
@@ -95,7 +96,7 @@ export function NewAgreementForm({
               title: f.title,
             });
             if (!r.ok) return void toast.error(r.message);
-            router.push(`/agreements/${r.id}`);
+            navigate(router, `/agreements/${r.id}`);
           })
         }
       >

@@ -8,6 +8,7 @@ import { AgreementBody, PriceTable } from "@/components/agreements/AgreementView
 import { Button, ConfirmButton, Field, InfoTip, Input, Section, Select, Textarea } from "@/components/ui";
 import { toast } from "@/components/ui/Toaster";
 import { unfilled, type Agreement, type PriceItem } from "@/lib/agreements";
+import { navigate } from "@/lib/navigate";
 
 type SignerDraft = { party: "client" | "studio" | "other"; name: string; email: string };
 type Opt = { id: string; name: string };
@@ -308,7 +309,7 @@ export function AgreementEditor({
                   const r = await deleteAgreement(agreement.id);
                   if (!r.ok) return void toast.error(r.message);
                   setSaved(JSON.stringify(f));
-                  router.push("/agreements");
+                  navigate(router, "/agreements");
                 })
               }
             >

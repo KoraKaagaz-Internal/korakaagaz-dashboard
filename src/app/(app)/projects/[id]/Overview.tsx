@@ -11,6 +11,7 @@ import { formatInvoiceDate, formatMoney, formatShortDate } from "@/lib/money";
 import { PROJECT_TYPES, displayName, type Person } from "@/lib/pm";
 import type { ProjectBundle } from "@/lib/pm-data";
 import type { Billing, ProjectFinance } from "@/lib/types";
+import { navigate } from "@/lib/navigate";
 
 export function Overview({
   bundle,
@@ -227,7 +228,7 @@ export function Overview({
                 start(async () => {
                   const r = await deleteProject(p.id);
                   if (!r.ok) return setMsg(r.message);
-                  router.push("/projects");
+                  navigate(router, "/projects");
                 })
               }
             >

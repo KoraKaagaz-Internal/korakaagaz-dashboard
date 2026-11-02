@@ -7,6 +7,7 @@ import { Card, ConfirmButton, Field, Input, Select, Textarea, btn } from "@/comp
 import type { Category, Vendor } from "@/lib/expense-data";
 import { TDS_NATURES } from "@/lib/expenses";
 import { GST_PORTAL_SEARCH, STATES, checkGstin } from "@/lib/gst";
+import { navigate } from "@/lib/navigate";
 
 const EMPTY = {
   name: "",
@@ -150,7 +151,7 @@ export function VendorForm({ vendor, categories, onDone }: { vendor?: Vendor; ca
               start(async () => {
                 const r = await deleteVendor(vendor.id);
                 if (!r.ok) return setMsg(r.message);
-                router.push("/vendors");
+                navigate(router, "/vendors");
                 router.refresh();
               })
             }

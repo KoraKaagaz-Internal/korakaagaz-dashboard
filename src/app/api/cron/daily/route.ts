@@ -178,16 +178,14 @@ export async function GET(request: NextRequest) {
     await supabase.from("agreements").update({ status: "expired" }).eq("id", a.id);
     await logEvent(supabase, { agreement_id: a.id, action: "expired", actor: "system" });
     if (a.created_by)
-      await supabase
-        .from("notifications")
-        .insert({
-          recipient_email: a.created_by,
-          actor_email: "system",
-          kind: "agreement_expired",
-          title: `Signing link lapsed: ${a.title}`,
-          body: "Duplicate it to send again.",
-          link: `/agreements/${a.id}`,
-        });
+      await supabase.from("notifications").insert({
+        recipient_email: a.created_by,
+        actor_email: "system",
+        kind: "agreement_expired",
+        title: `Signing link lapsed: ${a.title}`,
+        body: "Duplicate it to send again.",
+        link: `/agreements/${a.id}`,
+      });
   }
   const threeDaysAgo = new Date(Date.parse(`${today}T03:30:00Z`) - 3 * 86400000).toISOString();
   const { data: open } = await supabase.from("agreements").select("*").eq("status", "sent").lt("sent_at", threeDaysAgo);

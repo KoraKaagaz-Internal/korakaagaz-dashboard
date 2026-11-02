@@ -13,6 +13,7 @@ import { Card, ConfirmButton, Field, Input, Select, Textarea, btn } from "@/comp
 import { OUTSIDE_INDIA, STATES, autoGstMode, stateLabel } from "@/lib/gst";
 import { addDays, computeTotals, formatMoney } from "@/lib/money";
 import { DOC_LABELS, type BankAccount, type CatalogItem, type Client, type DocumentDraft, type LineItem, type Project, type SupplierSnapshot } from "@/lib/types";
+import { navigate } from "@/lib/navigate";
 
 const TERMS = [
   { label: "Due on receipt", days: 0 },
@@ -143,12 +144,12 @@ export function DocumentEditor({
         const issued = await issueDocument(result.id);
         if (!issued.ok) {
           setMessage({ ok: false, text: issued.message });
-          return router.push(`/documents/${result.id}/edit`);
+          return navigate(router, `/documents/${result.id}/edit`);
         }
-        return router.push(`/documents/${result.id}?flash=${encodeURIComponent(issued.message ?? "Issued")}`);
+        return navigate(router, `/documents/${result.id}?flash=${encodeURIComponent(issued.message ?? "Issued")}`);
       }
       setMessage({ ok: true, text: "Draft saved" });
-      if (!id) router.replace(`/documents/${result.id}/edit`);
+      if (!id) navigate(router, `/documents/${result.id}/edit`, { replace: true });
       router.refresh();
     });
 
@@ -186,7 +187,7 @@ export function DocumentEditor({
               confirmLabel="Leave"
               onConfirm={() => {
                 setSavedJson(JSON.stringify(doc));
-                router.push(id ? `/documents/${id}` : "/documents");
+                navigate(router, id ? `/documents/${id}` : "/documents");
               }}
             >
               <span aria-hidden>←</span> {id ? "Back" : "Invoices"}

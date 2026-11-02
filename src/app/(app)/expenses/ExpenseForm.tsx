@@ -11,6 +11,7 @@ import type { Category, Expense, Vendor } from "@/lib/expense-data";
 import { TDS_NATURES, nextRecurring, purchaseGst, type ExpenseKind } from "@/lib/expenses";
 import { formatMoney } from "@/lib/money";
 import { createClient } from "@/lib/supabase/client";
+import { navigate } from "@/lib/navigate";
 
 const RATES = [0, 5, 12, 18, 28, 40];
 const MAX = 50 * 1024 * 1024;
@@ -190,7 +191,7 @@ export function ExpenseForm({
         const a = await attachReceipt(r.id, path, small.name);
         if (!a.ok) return setMsg(`Saved, but the receipt didn't attach: ${a.message}`);
       }
-      router.push(f.kind === "claim" && !canEdit ? "/expenses/claims" : `/expenses/${r.id}`);
+      navigate(router, f.kind === "claim" && !canEdit ? "/expenses/claims" : `/expenses/${r.id}`);
       router.refresh();
     });
 

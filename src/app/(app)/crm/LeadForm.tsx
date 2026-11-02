@@ -7,6 +7,7 @@ import { NumberInput } from "@/components/NumberInput";
 import { Card, Field, Input, Select, Textarea, btn } from "@/components/ui";
 import { SOURCES, STAGES, type Lead } from "@/lib/crm";
 import type { Person } from "@/lib/pm";
+import { navigate } from "@/lib/navigate";
 
 export function LeadForm({ lead, people, services, me, onDone }: { lead?: Lead; people: Person[]; services: string[]; me: string; onDone?: () => void }) {
   const router = useRouter();
@@ -33,7 +34,7 @@ export function LeadForm({ lead, people, services, me, onDone }: { lead?: Lead; 
       const r = await saveLead({ ...l, id: lead?.id });
       if (!r.ok) return setMsg(r.message);
       if (onDone) onDone();
-      else router.push(`/crm/${r.id}`);
+      else navigate(router, `/crm/${r.id}`);
       router.refresh();
     });
   return (
