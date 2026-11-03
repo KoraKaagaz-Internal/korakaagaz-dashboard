@@ -50,7 +50,7 @@ export async function markSent(id: string) {
 
 /** One email to a client listing every unpaid invoice (statement-style reminder). */
 export async function sendStatement(clientId: string) {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const [settings, docs] = await Promise.all([getSettings(), listDocuments({ type: "invoice", client: clientId })]);
   const unpaid = docs.filter((d) => d.status === "issued" && d.balance && d.balance.balance > 0.005);
   if (!unpaid.length) return { ok: false as const, message: "Nothing outstanding for this client" };

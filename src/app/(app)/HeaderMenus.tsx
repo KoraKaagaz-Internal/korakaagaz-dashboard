@@ -39,16 +39,16 @@ function Menu({ label, trigger, children, className = "" }: { label: string; tri
 const item = "block rounded-lg px-3 py-2 text-ink hover:bg-subtle";
 
 /** "+ New" for everything you can create. */
-export function NewMenu({ isStaff, canEdit }: { isStaff: boolean; canEdit: boolean }) {
+export function NewMenu({ isStaff, canEdit, isAdmin }: { isStaff: boolean; canEdit: boolean; isAdmin: boolean }) {
   const items = [
     ...(canEdit && isStaff
       ? [
-          { href: "/documents/new?type=invoice", label: "Invoice" },
+          ...(isAdmin ? [{ href: "/documents/new?type=invoice", label: "Invoice" }] : []),
           { href: "/documents/new?type=quote", label: "Quote" },
           { href: "/projects/new", label: "Project" },
           { href: "/crm/new", label: "Lead" },
           { href: "/agreements/new", label: "Proposal or contract" },
-          { href: "/expenses/new", label: "Expense" },
+          { href: "/expenses/new", label: isAdmin ? "Expense" : "Expense claim" },
           { href: "/calendar/new", label: "Event" },
         ]
       : []),

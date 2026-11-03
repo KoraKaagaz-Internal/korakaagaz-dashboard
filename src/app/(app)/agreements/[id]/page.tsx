@@ -192,10 +192,7 @@ export default async function AgreementPage({ params }: { params: Promise<{ id: 
                 <li key={e.id}>
                   <span className="font-medium">{e.actor === "system" ? "System" : e.actor.replace(/ <.*>$/, "")}</span> {ACTION[e.action] ?? e.action}
                   {e.action === "voided" && e.detail.reason ? `: ${String(e.detail.reason)}` : ""}
-                  <div className="text-xs text-neutral-500">
-                    {formatDateTime(e.at)}
-                    {e.ip ? ` · ${e.ip}` : ""}
-                  </div>
+                  <div className="text-xs text-neutral-500">{formatDateTime(e.at)}</div>
                 </li>
               ))}
             </ol>

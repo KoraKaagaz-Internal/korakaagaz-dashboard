@@ -70,7 +70,8 @@ export interface Signer {
   verified_at: string | null;
   signed_at: string | null;
   signature_name: string | null;
-  signed_ip: string | null;
+  /** Only on the signing certificate. */
+  signed_ip?: string | null;
   declined_at: string | null;
   decline_reason: string;
 }

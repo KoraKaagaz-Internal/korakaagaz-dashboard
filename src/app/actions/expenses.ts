@@ -48,7 +48,7 @@ const vendorSchema = z.object({
 });
 
 export async function saveVendor(input: z.input<typeof vendorSchema>): Promise<Result<{ id: string }>> {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const parsed = vendorSchema.safeParse(input);
   if (!parsed.success) return fail(issues(parsed.error));
   const v = parsed.data;
@@ -69,7 +69,7 @@ export async function saveVendor(input: z.input<typeof vendorSchema>): Promise<R
 }
 
 export async function deleteVendor(id: string): Promise<Result> {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const { count } = await supabase.from("expenses").select("id", { count: "exact", head: true }).eq("vendor_id", id);
   if (count) return fail("This vendor has expenses. Keep it for your records.");
   const { error } = await supabase.from("vendors").delete().eq("id", id);
@@ -148,7 +148,8 @@ export type ExpenseInput = z.input<typeof expenseSchema>;
 /** Saves a bill, receipt or claim. GST and TDS are worked out on the server. */
 export async function saveExpense(input: ExpenseInput): Promise<Result<{ id: string }>> {
   const ctx = await requireTeam();
-  const { supabase, email, canEdit, role } = ctx;
+  // Only the admin records spend; members and freelancers file claims for what they paid.
+  const { supabase, email, isAdmin: canEdit, role } = ctx;
   if (role === "viewer") return fail("Viewers can't add expenses");
   const parsed = expenseSchema.safeParse(input);
   if (!parsed.success) return fail(issues(parsed.error));
@@ -269,7 +270,7 @@ export async function receiptUrl(expenseId: string): Promise<Result<{ url: strin
 
 /** TDS hint for the form: how much this vendor has billed this FY/month already. */
 export async function tdsHint(vendorId: string, date: string, taxable: number, nature: string, excludeId?: string) {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const [{ data: v }, totals] = await Promise.all([supabase.from("vendors").select("pan, is_company").eq("id", vendorId).single(), vendorTotals(vendorId, date, excludeId)]);
   const s = suggestTds({ nature, taxable, isCompany: !!v?.is_company, hasPan: !!v?.pan, paidThisYear: totals.year, paidThisMonth: totals.month });
   return { ...s, paidThisYear: round2(totals.year) };
@@ -313,7 +314,7 @@ const paymentSchema = z.object({
 });
 
 export async function recordExpensePayment(expenseId: string, input: z.input<typeof paymentSchema>): Promise<Result> {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const parsed = paymentSchema.safeParse(input);
   if (!parsed.success) return fail(issues(parsed.error));
   const { data: e } = await supabase.from("expenses").select("kind, approval").eq("id", expenseId).single();
@@ -328,7 +329,7 @@ export async function recordExpensePayment(expenseId: string, input: z.input<typ
 }
 
 export async function deleteExpensePayment(id: string, expenseId: string): Promise<Result> {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const { error, count } = await supabase.from("expense_payments").delete({ count: "exact" }).eq("id", id);
   if (error) return fail(error.message);
   if (!count) return fail("You can't remove this payment.");
@@ -366,7 +367,7 @@ export async function payClaims(ids: string[], input: Omit<z.input<typeof paymen
 
 /** Confirms a recurring copy the daily job drafted. */
 export async function confirmDraft(id: string): Promise<Result> {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const { error } = await supabase.from("expenses").update({ is_draft: false }).eq("id", id);
   if (error) return fail(error.message);
   refresh();
@@ -378,7 +379,7 @@ export async function confirmDraft(id: string): Promise<Result> {
 // ---------------------------------------------------------------------------
 /** Drafts a GST invoice for a project's billable, not-yet-invoiced expenses (with markup). */
 export async function invoiceFromExpenses(projectId: string): Promise<Result<{ id: string; count: number }>> {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const [{ data: project }, { data: rows }, settings] = await Promise.all([
     supabase.from("projects").select("id, name, code, client_id").eq("id", projectId).single(),
     supabase
@@ -476,7 +477,7 @@ export async function reconcile2b(
   from: string,
   to: string,
 ): Promise<Result<{ matched: number; mismatch: number; missing: number; notInBooks: { gstin: string; invoice_no: string; tax: number }[] }>> {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const portal = readPortal2b(csv);
   if (!portal.length)
     return fail("Couldn't find B2B lines in that file. Download GSTR-2B from the GST portal, open it in Excel or Sheets, save the B2B sheet as CSV, and upload that.");

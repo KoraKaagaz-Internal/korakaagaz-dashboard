@@ -7,7 +7,7 @@ export const metadata = { title: "Search" };
 
 /** One search box for projects, clients, leads and documents. */
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { supabase } = await requireMember();
+  const { supabase, isAdmin } = await requireMember();
   const q = ((await searchParams).q ?? "").trim().slice(0, 80);
   // PostgREST or-filter: strip characters that have meaning there
   const term = q.replace(/[%,()*:"\\]/g, " ").trim();
@@ -35,7 +35,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     { title: "Clients", rows: ((clients.data ?? []) as R[]).map((c) => ({ href: `/clients/${c.id}`, title: String(c.name), sub: String(c.city ?? "") })) },
     { title: "Leads", rows: ((leads.data ?? []) as R[]).map((l) => ({ href: `/crm/${l.id}`, title: String(l.name), sub: [l.company, l.stage].filter(Boolean).join(" · ") })) },
     {
-      title: "Invoices & quotes",
+      title: isAdmin ? "Invoices & quotes" : "Quotes",
       rows: ((docs.data ?? []) as R[]).map((d) => ({
         href: `/documents/${d.id}`,
         title: `${d.number ?? "Draft"} · ${(d.client_snapshot as { name?: string } | null)?.name ?? ""}`,

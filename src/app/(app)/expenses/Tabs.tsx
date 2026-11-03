@@ -8,6 +8,12 @@ const TABS = [
   { href: "/vendors", label: "Vendors" },
 ];
 
-export function ExpenseTabs({ current }: { current: string; isAdmin?: boolean }) {
-  return <Tabs label="Expense sections" items={TABS.map((t) => ({ ...t, active: t.href === current }))} />;
+// Members see project costs and their own claims; paying, GST and vendors are the admin's.
+const MEMBER_TABS = [
+  { href: "/expenses", label: "Project costs" },
+  { href: "/expenses/claims", label: "My claims" },
+];
+
+export function ExpenseTabs({ current, isAdmin = true }: { current: string; isAdmin?: boolean }) {
+  return <Tabs label="Expense sections" items={(isAdmin ? TABS : MEMBER_TABS).map((t) => ({ ...t, active: t.href === current }))} />;
 }

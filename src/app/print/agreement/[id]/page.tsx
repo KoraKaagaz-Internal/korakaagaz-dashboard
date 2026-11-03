@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { AgreementBody, PriceTable, SignatureBlocks } from "@/components/agreements/AgreementView";
-import { SIGNER_COLUMNS, toAgreement } from "@/lib/agreement-data";
+import { CERTIFICATE_SIGNER_COLUMNS, toAgreement } from "@/lib/agreement-data";
 import { checkPrintSig } from "@/lib/agreement-sign";
 import { KIND_LABEL, type Signer } from "@/lib/agreements";
 import { formatDateTime } from "@/lib/money";
@@ -32,7 +32,7 @@ export default async function AgreementPrint({ params, searchParams }: { params:
   const supabase = createAdminClient();
   const [{ data: a }, { data: signers }, { data: images }, { data: events }, { data: settings }] = await Promise.all([
     supabase.from("agreements").select("*").eq("id", id).single(),
-    supabase.from("agreement_signers").select(SIGNER_COLUMNS).eq("agreement_id", id).order("position"),
+    supabase.from("agreement_signers").select(CERTIFICATE_SIGNER_COLUMNS).eq("agreement_id", id).order("position"),
     supabase.from("agreement_signers").select("id, signature_image, signed_user_agent").eq("agreement_id", id),
     supabase.from("agreement_events").select("at, action, actor, ip, hash").eq("agreement_id", id).order("id"),
     supabase.from("settings").select("business_name, legal_name, address, gstin").eq("id", 1).single(),

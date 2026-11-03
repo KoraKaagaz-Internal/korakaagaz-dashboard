@@ -7,7 +7,7 @@ import { addDays, formatInvoiceDate, todayIso } from "@/lib/money";
 import { displayName } from "@/lib/pm";
 import { teamDirectory } from "@/lib/pm-data";
 import { weekDays, weekStart } from "@/lib/time";
-import { listEvents, listHolidays, listLeave } from "@/lib/time-data";
+import { listEvents, listHolidays, teamAway } from "@/lib/time-data";
 import { EventChip } from "./EventChip";
 import { FeedLink } from "./FeedLink";
 
@@ -25,7 +25,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const week = weekDays(weekStart(date));
   const from = view === "month" ? grid[0][0] : week[0];
   const to = view === "month" ? grid[5][6] : week[6];
-  const [events, holidays, leave, people] = await Promise.all([listEvents(from, to), listHolidays(), isStaff ? listLeave(from) : Promise.resolve([]), teamDirectory()]);
+  const [events, holidays, leave, people] = await Promise.all([listEvents(from, to), listHolidays(), isStaff ? teamAway(from) : Promise.resolve([]), teamDirectory()]);
   const onDay = (d: string) => events.filter((e) => eventDays(e).includes(d));
   const holiday = (d: string) => holidays.find((h) => h.day === d);
   const away = (d: string) => leave.filter((l) => l.status === "approved" && l.from_date <= d && d <= l.to_date);
@@ -191,7 +191,7 @@ async function CrewView({
   week: string[];
   events: Awaited<ReturnType<typeof listEvents>>;
   people: { email: string; name: string; role: string }[];
-  leave: Awaited<ReturnType<typeof listLeave>>;
+  leave: Awaited<ReturnType<typeof teamAway>>;
   today: string;
 }) {
   const { listKit } = await import("@/lib/time-data");

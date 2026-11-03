@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 /**
- * G then H/W/P = go Home / My work / Projects. Editors also get N = new invoice, Q = new quote,
+ * G then H/W/P = go Home / My work / Projects. Editors also get N = new invoice (admin), Q = new quote,
  * P = new project. / = search on the current page. Ignored while typing.
  */
-export function Shortcuts({ canEdit, isStaff }: { canEdit: boolean; isStaff: boolean }) {
+export function Shortcuts({ canEdit, isStaff, isAdmin }: { canEdit: boolean; isStaff: boolean; isAdmin: boolean }) {
   const router = useRouter();
   useEffect(() => {
     let go = 0;
@@ -22,7 +22,7 @@ export function Shortcuts({ canEdit, isStaff }: { canEdit: boolean; isStaff: boo
         return;
       }
       if (e.key === "g") go = Date.now();
-      else if (canEdit && e.key === "n") router.push("/documents/new?type=invoice");
+      else if (canEdit && isAdmin && e.key === "n") router.push("/documents/new?type=invoice");
       else if (canEdit && e.key === "q") router.push("/documents/new?type=quote");
       else if (canEdit && e.key === "p") router.push("/projects/new");
       else if (e.key === "/") {
@@ -38,6 +38,6 @@ export function Shortcuts({ canEdit, isStaff }: { canEdit: boolean; isStaff: boo
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [router, canEdit, isStaff]);
+  }, [router, canEdit, isStaff, isAdmin]);
   return null;
 }

@@ -38,8 +38,8 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
   const { canEdit, canWork, isStaff, isAdmin, email } = await requireTeam();
   const { id } = await params;
   const { tab: rawTab } = await searchParams;
-  // freelancers never see money: their tab is just hours
-  const tabs = TABS.map((t) => (t.key === "money" && !isStaff ? { ...t, label: "Hours" } : t));
+  // only the admin sees project money: everyone else's tab is hours (plus agreements for staff)
+  const tabs = TABS.map((t) => (t.key === "money" && !isAdmin ? { ...t, label: "Hours" } : t));
   const want = ALIASES[rawTab ?? ""] ?? rawTab;
   const tab = tabs.some((t) => t.key === want) ? want! : "board";
   const [bundle, people] = await Promise.all([getProjectBundle(id), teamDirectory()]);
@@ -104,10 +104,10 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
       )}
       {tab === "money" && (
         <div className="space-y-8">
-          {isStaff && <Billing projectId={p.id} budget={bundle.finance?.budget ?? 0} canEdit={canEdit} />}
+          {isAdmin && <Billing projectId={p.id} budget={bundle.finance?.budget ?? 0} canEdit={canEdit} />}
           {isStaff && <AgreementList filter={{ project: p.id }} newHref={`/agreements/new?project=${p.id}`} canEdit={canEdit} />}
           <Section title="Hours">
-            <ProjectTime project={p} people={people} />
+            <ProjectTime project={p} people={people} byPerson={isAdmin} />
           </Section>
         </div>
       )}

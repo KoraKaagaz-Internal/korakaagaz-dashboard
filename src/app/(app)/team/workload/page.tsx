@@ -5,7 +5,7 @@ import { addDays, formatShortDate, todayIso } from "@/lib/money";
 import { teamDirectory } from "@/lib/pm-data";
 import { availableDays, weekCapacity, weekLoad, weekStart } from "@/lib/time";
 import { TeamTabs } from "../TeamTabs";
-import { listEvents, listHolidays, listLeave, teamCapacity } from "@/lib/time-data";
+import { listEvents, listHolidays, teamAway, teamCapacity } from "@/lib/time-data";
 
 const WEEKS = 6;
 
@@ -19,7 +19,7 @@ export default async function WorkloadPage({ searchParams }: { searchParams: Pro
   const [people, capacity, leave, holidays, events, { data: tasks }] = await Promise.all([
     teamDirectory(),
     teamCapacity(),
-    listLeave(first),
+    teamAway(first),
     listHolidays(),
     listEvents(first, last),
     supabase.from("tasks").select("due_date, estimate_hours, status, task_assignees(member_email)").neq("status", "done").gte("due_date", first).lte("due_date", last),

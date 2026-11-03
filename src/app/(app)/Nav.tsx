@@ -71,17 +71,21 @@ function groups(role: Role): Group[] {
       items: [
         { href: "/crm", label: "Leads", icon: "spark" },
         { href: "/clients", label: "Clients", icon: "users" },
+        // Members make and send quotes; invoices and the rest of the money side are the admin's.
+        ...(role === "admin" ? [] : [{ href: "/documents", label: "Quotes", icon: "doc" as const }]),
         { href: "/agreements", label: "Agreements", icon: "pen" },
       ],
     },
-    {
-      title: "Money",
-      items: [
-        { href: "/documents", label: "Invoices", icon: "doc" },
-        { href: "/expenses", label: "Expenses", icon: "receipt", match: "/expenses|/vendors" },
-        { href: "/reports", label: "Reports", icon: "chart" },
-      ],
-    },
+    role === "admin"
+      ? {
+          title: "Money",
+          items: [
+            { href: "/documents", label: "Invoices", icon: "doc" },
+            { href: "/expenses", label: "Expenses", icon: "receipt", match: "/expenses|/vendors" },
+            { href: "/reports", label: "Reports", icon: "chart" },
+          ],
+        }
+      : { title: "Money", items: [{ href: "/expenses", label: "Expenses", icon: "receipt" }] },
     {
       title: "Studio",
       items: [

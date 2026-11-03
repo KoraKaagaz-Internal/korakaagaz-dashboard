@@ -10,7 +10,9 @@ import { ExpenseForm } from "../ExpenseForm";
 import { Danger, Payments, ReceiptButton } from "./ExpenseActions";
 
 export default async function ExpensePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ edit?: string }> }) {
-  const { canEdit, isAdmin, isStaff, email } = await requireTeam();
+  const { isAdmin, isStaff, email } = await requireTeam();
+  // Only the admin edits and pays spend; others fix their own claims until approved.
+  const canEdit = isAdmin;
   const { id } = await params;
   const { edit } = await searchParams;
   const found = await getExpense(id);
@@ -24,9 +26,9 @@ export default async function ExpensePage({ params, searchParams }: { params: Pr
   if (edit && editable) {
     const [categories, vendors, projects, accounts, settings] = await Promise.all([
       listCategories(),
-      listVendors(),
+      isAdmin ? listVendors() : Promise.resolve([]),
       loggableProjects(),
-      isStaff ? cashAccounts() : Promise.resolve([]),
+      isAdmin ? cashAccounts() : Promise.resolve([]),
       isStaff ? getSettings() : Promise.resolve(null),
     ]);
     return (
@@ -46,14 +48,14 @@ export default async function ExpensePage({ params, searchParams }: { params: Pr
     );
   }
 
-  const accounts = isStaff ? await cashAccounts() : [];
+  const accounts = isAdmin ? await cashAccounts() : [];
   const gst = e.cgst + e.sgst + e.igst;
   const canPay = e.kind === "claim" ? isAdmin && e.approval === "approved" : canEdit;
   const rows: [string, React.ReactNode][] = [
     ["Type", e.kind === "claim" ? `Team claim by ${e.created_by}` : e.kind === "bill" ? "Bill to pay" : "Paid expense"],
     [
       "Paid to",
-      e.vendor_id && isStaff ? (
+      e.vendor_id && isAdmin ? (
         <Link href={`/vendors/${e.vendor_id}`} className="text-navy hover:underline">
           {e.vendor}
         </Link>
@@ -147,7 +149,7 @@ export default async function ExpensePage({ params, searchParams }: { params: Pr
         {e.notes && <p className="mt-3 text-sm whitespace-pre-wrap text-neutral-700">{e.notes}</p>}
       </Card>
 
-      {(e.kind !== "claim" || e.approval === "approved") && (
+      {(isAdmin || mine) && (e.kind !== "claim" || e.approval === "approved") && (
         <Card title={`Payments · ${formatMoney(e.paid)} of ${formatMoney(e.payable)}`}>
           <Payments expenseId={e.id} balance={e.balance} payments={payments} accounts={accounts} canPay={canPay} today={today} />
         </Card>

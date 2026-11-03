@@ -61,7 +61,7 @@ const itemSchema = z.object({
 });
 
 export async function saveItem(input: z.input<typeof itemSchema>): Promise<{ ok: true; item: CatalogItem } | { ok: false; message: string }> {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const parsed = itemSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues.map((i) => i.message).join(", ") };
   const { id, ...it } = parsed.data;
@@ -73,7 +73,7 @@ export async function saveItem(input: z.input<typeof itemSchema>): Promise<{ ok:
 }
 
 export async function deleteItem(id: string) {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const { error } = await supabase.from("items").delete().eq("id", id);
   if (error) return { ok: false as const, message: error.message };
   revalidatePath("/items");

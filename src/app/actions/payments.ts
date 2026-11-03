@@ -18,7 +18,7 @@ const paymentSchema = z.object({
 export type PaymentInput = z.input<typeof paymentSchema>;
 
 export async function recordPayment(input: PaymentInput) {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const parsed = paymentSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, message: parsed.error.issues.map((i) => i.message).join(", ") };
   const p = parsed.data;
@@ -40,7 +40,7 @@ export async function recordPayment(input: PaymentInput) {
 }
 
 export async function deletePayment(id: string, documentId: string) {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const { error } = await supabase.from("payments").delete().eq("id", id);
   if (error) return { ok: false as const, message: error.message };
   revalidatePath(`/documents/${documentId}`);
@@ -49,7 +49,7 @@ export async function deletePayment(id: string, documentId: string) {
 
 /** Adjusts an advance (receipt voucher) against an invoice by recording it as a payment. */
 export async function adjustAdvance(invoiceId: string, receiptId: string, amount: number) {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const { data: receipt } = await supabase.from("documents").select("number, total, issue_date, doc_type, status").eq("id", receiptId).single();
   if (!receipt || receipt.doc_type !== "receipt" || receipt.status !== "issued") return { ok: false as const, message: "Pick an issued receipt voucher" };
   const { data: used } = await supabase.from("payments").select("amount").eq("mode", "advance").eq("reference", receipt.number);

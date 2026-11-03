@@ -93,7 +93,8 @@ export async function createProject(input: {
 }
 
 export async function updateProject(id: string, input: Partial<z.input<typeof projectSchema>>, finance?: z.input<typeof financeSchema>): Promise<Result> {
-  const { supabase } = await requireMember("member");
+  const { supabase, isAdmin } = await requireMember("member");
+  if (finance && !isAdmin) return fail("Only the admin changes a project's fee.");
   const parsed = projectSchema.partial().safeParse(input);
   if (!parsed.success) return fail(issues(parsed.error));
   const { id: _ignore, ...p } = parsed.data;

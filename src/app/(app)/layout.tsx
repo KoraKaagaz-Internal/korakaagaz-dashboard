@@ -14,7 +14,7 @@ import { TimerBar } from "./TimerBar";
 const FREELANCER_PATHS = ["/my-work", "/projects", "/calendar", "/time", "/team/leave", "/expenses/claims", "/expenses/new"];
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [{ user, role, canEdit }, timer, h] = await Promise.all([requireTeam(), runningTimer(), headers()]);
+  const [{ user, role, canEdit, isAdmin }, timer, h] = await Promise.all([requireTeam(), runningTimer(), headers()]);
   // Freelancers only get these sections; everything else redirects before any streaming starts.
   const path = h.get("x-path") ?? "/";
   const allowed = FREELANCER_PATHS.some((p) => path === p || path.startsWith(`${p}/`)) || /^\/expenses\/[0-9a-f-]{36}$/.test(path);
@@ -34,8 +34,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               <input
                 name="q"
                 type="search"
-                aria-label="Search projects, clients, leads and invoices"
-                placeholder="Search projects, clients, leads, invoices…  /"
+                aria-label={`Search projects, clients, leads and ${isAdmin ? "invoices" : "quotes"}`}
+                placeholder={`Search projects, clients, leads, ${isAdmin ? "invoices" : "quotes"}…  /`}
                 className="h-9 w-full rounded-lg border border-line bg-subtle px-3 text-sm outline-none placeholder:text-neutral-400 focus:border-navy focus:bg-white"
               />
             </form>
@@ -55,13 +55,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 </svg>
               </Link>
             )}
-            <NewMenu isStaff={role !== "freelancer"} canEdit={canEdit} />
+            <NewMenu isStaff={role !== "freelancer"} canEdit={canEdit} isAdmin={isAdmin} />
             <Bell />
             <ProfileMenu email={user.email ?? ""} name={displayName} role={role} signOut={signOut} />
           </div>
         </div>
       </header>
-      <Shortcuts canEdit={canEdit} isStaff={role !== "freelancer"} />
+      <Shortcuts canEdit={canEdit} isStaff={role !== "freelancer"} isAdmin={isAdmin} />
       <main className="mx-auto max-w-7xl px-4 py-6 pb-24 sm:py-8 md:pb-8">{children}</main>
       <Toaster />
     </div>

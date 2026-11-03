@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 
 /** CSV exports: documents, payments, tds, ledger (?client=), gstr1 (?section=). Filters: from, to, type, status, client. */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ report: string }> }) {
-  const { supabase } = await requireMember();
+  const { supabase } = await requireMember("admin");
   const { report } = await params;
   const sp = request.nextUrl.searchParams;
   const from = sp.get("from") ?? undefined;

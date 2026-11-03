@@ -207,33 +207,39 @@
     <tr><th>Can…</th><th>Admin (team@korakaagaz.co)</th><th>Member</th><th>Viewer</th><th>Freelancer</th><th>Client (share link)</th><th>Anyone else</th></tr>
     <tr><td>Sign in</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>no login</td><td>✗ (trigger rejects the account)</td></tr>
     <tr><td>See projects</td><td>all</td><td>all</td><td>all (read only)</td><td>only projects they're added to</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Create projects, change phases, deliverables, team, budget</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Create projects, change phases, deliverables, team, budget hours</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Add / move / edit tasks, comment, upload files</td><td>✓</td><td>✓</td><td>✗</td><td>on their projects</td><td>✗</td><td>✗</td></tr>
-    <tr><td>See project budgets and money</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
-    <tr><td>See documents, clients, reports</td><td>✓</td><td>✓</td><td>✓</td><td>✗ (only their project's client name)</td><td>only that one document</td><td>✗</td></tr>
-    <tr><td>Create / edit drafts, clients, items</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Issue (number + lock)</td><td>✓</td><td>✓, or "submit for approval" when that setting is on</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Send, record payments, credit notes, cancel</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See a project's fee, retainer amount and money tab (quoted, billed, received, expenses)</td><td>✓</td><td>✗ (hours only)</td><td>✗ (hours only)</td><td>✗ (hours only)</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See clients</td><td>✓</td><td>✓ (no ledger or statement)</td><td>✓ (no ledger or statement)</td><td>✗ (only their project's client name)</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Quotes: see, create, edit, issue, send, revise, mark won/lost</td><td>✓</td><td>✓ (issue goes to the admin when approval is on)</td><td>read only</td><td>✗</td><td>only that one quote</td><td>✗</td></tr>
+    <tr><td>Invoices, proformas, receipts, credit notes, payments, client statements, converting a quote to an invoice</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>only that one document</td><td>✗</td></tr>
+    <tr><td>Create / edit clients</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Items (price list) page, bank accounts, vendors, GST &amp; TDS, CSV exports, Reports, Home money figures</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Accept / decline a quote</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✓</td><td>✗</td></tr>
     <tr><td>Log time (timer, timesheet), submit the week</td><td>✓</td><td>✓</td><td>✗</td><td>on their projects</td><td>✗</td><td>✗</td></tr>
     <tr><td>Approve time, approve leave, holidays</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
-    <tr><td>See everyone's time, leave and the workload view</td><td>✓</td><td>✓</td><td>✓</td><td>own only</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See time entries</td><td>everyone's</td><td>own; project and task totals without names</td><td>own; totals</td><td>own; totals on their projects</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See leave</td><td>everyone's, with type and note</td><td>own in full; colleagues only as "Away"</td><td>same as member</td><td>own only</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Workload (booked hours vs capacity)</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Set weekly hours and turn timesheet approval on/off</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Create events, book crew and kit, edit the kit list</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>See events</td><td>all</td><td>all</td><td>all</td><td>their projects' events + ones they're booked on</td><td>✗</td><td>✗</td></tr>
     <tr><td>Agreements: templates, drafts, send, chase, void, quote from proposal</td><td>✓</td><td>✓</td><td>read only</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Sign or decline an agreement</td><td colspan="5">only the named signer, through their own link plus a code sent to their email</td><td>✗</td></tr>
-    <tr><td>Add bills and receipts, vendors, pay bills, re-bill expenses, GST &amp; TDS page</td><td>✓</td><td>✓</td><td>read only</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See expenses</td><td>all</td><td>project costs (not overheads, salaries or freelancer fees) + own claims</td><td>project costs</td><td>own claims</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Add bills and receipts, vendors, pay bills, re-bill expenses</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>File own expense claims (with receipt)</td><td>✓</td><td>✓</td><td>✗</td><td>✓ (own projects)</td><td>✗</td><td>✗</td></tr>
+    <tr><td>See other people's claims</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Approve and reimburse claims, record TDS deposits, edit categories</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Reports</td><td>✓</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Leads: add, move, log activity, convert to client + project</td><td>✓</td><td>✓</td><td>read only</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Enquiry form &amp; booking page settings; delete leads</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Send an enquiry / book a call (public pages)</td><td colspan="5">anyone with the link, with no login; spam-limited</td><td>✓</td></tr>
+    <tr><td>Activity history</td><td>everything</td><td>projects, tasks, files, events, leads, clients, agreements, quotes (no money, settings or HR history)</td><td>same as member</td><td>their projects' work items</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Signers' IP address and device</td><td colspan="2">on the signing certificate PDF only</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Delete a project</td><td>✓ (only if nothing issued or approved time is tagged to it)</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Settings, bank accounts, Team (invite/remove)</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
   </table></div>
-  <p class="muted">Enforced in the database, not just the UI. RLS uses <code>is_member()</code> (staff: admin, member, viewer), <code>is_team()</code> (staff + freelancers), <code>on_project(id)</code> (staff, or added to that project), <code>can_work(id)</code> (editors, or freelancers on that project), <code>can_edit()</code> and <code>is_admin()</code>. Money lives in <code>project_finance</code>, which only staff can read. There is exactly one admin: the admin can't be invited, demoted or removed.</p>
+  <p class="muted">Enforced in the database, not just the UI. RLS uses <code>is_member()</code> (staff: admin, member, viewer), <code>is_team()</code> (staff + freelancers), <code>on_project(id)</code> (staff, or added to that project), <code>can_work(id)</code> (editors, or freelancers on that project), <code>can_edit()</code> and <code>is_admin()</code>. Money is admin-only (migration 0016): <code>project_finance</code>, invoices and payments, bank accounts, vendors, TDS, other people's time, leave details and claims. Members get names-free totals through <code>project_minutes()</code>, colleagues' leave as "away" through <code>team_away()</code>, and the default bank account for quotes through <code>document_bank()</code>. There is exactly one admin: the admin can't be invited, demoted or removed.</p>
 </section>
 
 <section id="data">
@@ -241,19 +247,19 @@
   <div class="tablewrap"><table>
     <tr><th>Table</th><th>Holds</th><th>Notes</th></tr>
     <tr><td><code>members</code></td><td>Invited emails, role, joined date</td><td>No direct access; only via admin RPCs. <code>gate_new_user</code> trigger blocks sign-ups that aren't on this list.</td></tr>
-    <tr><td><code>settings</code> (1 row)</td><td>Business, GSTIN, PAN, LUT, signatory, prefixes, defaults, terms, message templates</td><td>Admin-only writes. Signature stored as a small data URL.</td></tr>
-    <tr><td><code>bank_accounts</code></td><td>Account, IFSC, SWIFT, UPI ID, default flag</td><td>Admin-only writes.</td></tr>
+    <tr><td><code>settings</code> (1 row)</td><td>Business, GSTIN, PAN, LUT, signatory, prefixes, defaults, terms, message templates</td><td>Staff read (it prints on quotes); admin-only writes.</td></tr>
+    <tr><td><code>bank_accounts</code></td><td>Account, IFSC, SWIFT, UPI ID, default flag</td><td>Admin only. Quotes print the default account via <code>document_bank()</code>.</td></tr>
     <tr><td><code>clients</code>, <code>items</code></td><td>Clients (state, GSTIN, country), services catalog with SAC</td><td>Members write, viewers read. Freelancers can't read them.</td></tr>
     <tr><td><code>projects</code></td><td>Code (<code>KK-0001</code>), client (optional), type, status, dates, lead, budget hours, template</td><td>Staff read all; freelancers read projects they're on.</td></tr>
-    <tr><td><code>project_finance</code></td><td>Fee, billing type (fixed fee or monthly retainer), retainer per month</td><td>Staff only. Kept apart so RLS can hide money from freelancers.</td></tr>
+    <tr><td><code>project_finance</code></td><td>Fee, billing type (fixed fee or monthly retainer), retainer per month</td><td>Admin only. Members creating a project add its row with the amounts zeroed (trigger).</td></tr>
     <tr><td><code>project_members</code></td><td>Who is on each project</td><td>Decides what freelancers can see.</td></tr>
     <tr><td><code>project_templates</code></td><td>Six studio templates: phases, tasks with hours and day offsets, deliverables</td><td>Applied by <code>apply_project_template()</code>.</td></tr>
     <tr><td><code>phases</code>, <code>tasks</code>, <code>task_assignees</code>, <code>task_comments</code>, <code>deliverables</code></td><td>Plan and work items. Tasks have status, priority, dates, estimate, labels, subtasks (<code>parent_id</code>), "client can see" flag, fractional <code>sort</code></td><td>Everyone on the project reads; editors and that project's freelancers change tasks; only editors change phases and deliverables.</td></tr>
     <tr><td><code>files</code></td><td>Uploads (Storage path) or links (Drive etc.) on a project or task</td><td>Same project rules; uploader or editor deletes.</td></tr>
-    <tr><td><code>time_entries</code></td><td>Person, project, task, date, minutes, note, status (draft → submitted → approved/rejected), running timer start, invoice it was billed on</td><td>People see their own; staff see all. Owners edit only draft or sent-back time. Only the admin approves. Approved time can't be deleted, and once invoiced its hours are locked (trigger). One running timer per person (unique index).</td></tr>
+    <tr><td><code>time_entries</code></td><td>Person, project, task, date, minutes, note, status (draft → submitted → approved/rejected), running timer start, invoice it was billed on</td><td>People see their own; the admin sees all; totals without names via <code>project_minutes()</code>. New entries start as drafts. Owners edit only draft or sent-back time. Only the admin approves. Approved time can't be deleted, and once invoiced its hours are locked (trigger). One running timer per person (unique index).</td></tr>
     <tr><td><code>members</code> (new columns)</td><td><code>weekly_capacity_hours</code>, <code>ics_token</code></td><td>Capacity read via <code>team_capacity()</code> (staff), set via <code>admin_set_capacity()</code> (admin). No hourly rates (removed in 0014).</td></tr>
     <tr><td><code>events</code>, <code>event_people</code>, <code>event_kit</code>, <code>kit</code></td><td>Shoots, meetings, deadlines with times, location, map link, tentative/confirmed/cancelled, call time, shot list, contacts; crew (team or outside, with role/phone); kit bookings</td><td>Editors write. Freelancers see events on their projects or ones they're booked on (<code>on_event()</code>).</td></tr>
-    <tr><td><code>leave_requests</code>, <code>holidays</code></td><td>Leave (dates, half day, type, status) and studio holidays</td><td>Anyone requests their own; only the admin decides. Staff see all leave; freelancers their own.</td></tr>
+    <tr><td><code>leave_requests</code>, <code>holidays</code></td><td>Leave (dates, half day, type, status) and studio holidays</td><td>Anyone requests their own; only the admin decides and sees everyone's. Others see colleagues as "away" (no type or note) via <code>team_away()</code>.</td></tr>
     <tr><td><code>leads</code></td><td>Name, company, contact, source, service, budget, value, stage, furthest stage, lost reason, owner, follow-up, message, linked client/project, hashed IP (form rate limit), won/lost dates</td><td>Staff read; editors write; never readable by freelancers or anon. Public submissions go through validated server code with the service key.</td></tr>
     <tr><td><code>agreement_templates</code></td><td>Name, type, description, body with merge fields, default pricing, usual length in months</td><td>Staff read; editors write.</td></tr>
     <tr><td><code>agreements</code></td><td>Number, title, type, status, client/project/lead, body, pricing (with the client's add-on choices), GST rate, dates (link expiry, start, end, renewal notice), signed-PDF path and SHA-256, quote link</td><td>Staff read; editors write drafts. Once sent the text is locked (trigger); only the signing flow (service key) can mark it signed or set the fingerprint; only drafts can be deleted.</td></tr>
@@ -261,21 +267,21 @@
     <tr><td><code>agreement_events</code></td><td>Every step with time, actor, IP, device and details; each row's SHA-256 covers the previous row's</td><td>Append-only: updates and deletes are refused even for the service key (rows go only when a draft agreement is deleted). Staff can add notes as themselves only.</td></tr>
     <tr><td><code>lead_activities</code></td><td>Calls, WhatsApp, email, meetings, notes, stage changes</td><td>Authors can only post as themselves.</td></tr>
     <tr><td><code>settings.booking</code>, <code>settings.enquiry_services</code></td><td>Booking page (slug, length, days, hours, buffer, notice, horizon, location) and the form's service list</td><td>Admin edits in Leads → Enquiry form &amp; booking.</td></tr>
-    <tr><td><code>vendors</code></td><td>Name, type, GSTIN, PAN, state, contact, bank/UPI, default category, TDS nature, company flag, MSME flag</td><td>Staff read; editors write. GSTIN checked by checksum; state and PAN derived from it.</td></tr>
+    <tr><td><code>vendors</code></td><td>Name, type, GSTIN, PAN, state, contact, bank/UPI, default category, TDS nature, company flag, MSME flag</td><td>Admin only (PAN and bank details). Expenses keep a copy of the vendor's name so members still see who was paid. GSTIN checked by checksum.</td></tr>
     <tr><td><code>expense_categories</code></td><td>19 seeded: input-credit rule (claimable / blocked s.17(5) / none), project cost vs overhead, TDS nature, reverse charge, monthly budget</td><td>Everyone on the team reads; admin edits.</td></tr>
-    <tr><td><code>expenses</code></td><td>Bills, receipts, claims: amounts, CGST/SGST/IGST, RCM, input-credit status, GSTR-2B status, TDS nature/rate/amount, paid from, approval, due date, billable + markup, invoice it was billed on, recurring rule, receipt path</td><td>Staff see all; people see their own claims. Only the admin approves claims (trigger). Paid or invoiced expenses are locked.</td></tr>
-    <tr><td><code>expense_payments</code>, <code>expense_balances</code> view</td><td>Payments (date, amount, mode, account, reference); payable = total − TDS, paid, balance</td><td>Editors pay bills; only the admin reimburses claims.</td></tr>
+    <tr><td><code>expenses</code></td><td>Bills, receipts, claims: amounts, CGST/SGST/IGST, RCM, input-credit status, GSTR-2B status, TDS nature/rate/amount, paid from, approval, due date, billable + markup, invoice it was billed on, recurring rule, receipt path</td><td>Admin sees all and records spend; members and viewers see project costs in project-cost categories (not freelancer fees); people see their own claims. Claims start as submitted; only the admin approves (trigger). Invoiced expenses are locked.</td></tr>
+    <tr><td><code>expense_payments</code>, <code>expense_balances</code> view</td><td>Payments (date, amount, mode, account, reference); payable = total − TDS, paid, balance</td><td>Only the admin pays bills and reimburses claims; claim owners see their own reimbursements.</td></tr>
     <tr><td><code>tds_challans</code></td><td>Monthly TDS deposits (CIN, BSR, date), linked to the deductions</td><td>Admin writes.</td></tr>
     <tr><td><code>bank_accounts</code> (new columns)</td><td><code>kind</code> (bank / petty cash), opening balance and date</td><td>Drives cash in hand and runway in Reports. Petty cash never shows on invoices.</td></tr>
     <tr><td><code>notifications</code></td><td>Assigned, mentioned, commented, status changes, added to project</td><td>Each person reads only their own; can't be forged (actor must be you).</td></tr>
-    <tr><td><code>documents</code> + <code>document_items</code></td><td>All five document types, snapshots of client + supplier, totals, share token, status</td><td>Unique <code>(doc_type, fy, number)</code>. Triggers lock issued documents and block deleting them.</td></tr>
-    <tr><td><code>payments</code></td><td>Amount, TDS + section, mode, reference</td><td>Feeds the <code>document_balances</code> view (paid / partial / unpaid / overdue).</td></tr>
+    <tr><td><code>documents</code> + <code>document_items</code></td><td>All five document types, snapshots of client + supplier, totals, share token, status</td><td>Admin sees all; members and viewers see quotes only. New documents start as drafts, and only the admin can issue when approval is on (trigger). Unique <code>(doc_type, fy, number)</code>. Triggers lock issued documents and block deleting them.</td></tr>
+    <tr><td><code>payments</code></td><td>Amount, TDS + section, mode, reference</td><td>Admin only. Feeds the <code>document_balances</code> view (paid / partial / unpaid / overdue).</td></tr>
     <tr><td><code>doc_counters</code></td><td>Next number per document type + FY</td><td>Used by <code>next_doc_number()</code>; resets with each FY.</td></tr>
     <tr><td><code>email_log</code></td><td>Every send/reminder/invite: sent, failed or skipped</td><td></td></tr>
-    <tr><td><code>audit_events</code></td><td>Who did what, with field-level diffs; <code>project_id</code> for the project activity feed</td><td>Append-only for users (no update/delete grants). Freelancers see only their projects' task/comment/file/deliverable events. Sort-only changes (board reordering) aren't logged.</td></tr>
-    <tr><td>Storage <code>invoices/documents/…pdf</code></td><td>Latest PDF of issued documents</td><td>Private bucket; members read.</td></tr>
+    <tr><td><code>audit_events</code></td><td>Who did what, with field-level diffs; <code>project_id</code> for the project activity feed</td><td>Append-only for users (no update/delete grants); entries can only be written as yourself. Never stores calendar-feed tokens. Members and viewers see project, sales and quote history; money, settings and HR history are admin-only. Freelancers see only their projects' task/comment/file/deliverable events. Sort-only changes (board reordering) aren't logged.</td></tr>
+    <tr><td>Storage <code>invoices/documents/…pdf</code></td><td>Latest PDF of issued documents</td><td>Private bucket; admin only (the app saves copies with the service key).</td></tr>
     <tr><td>Storage <code>files/projects/&lt;id&gt;/…</code></td><td>Project and task uploads</td><td>Private; 50 MB per file; access follows project membership; 5-minute signed download links.</td></tr>
-    <tr><td>Storage <code>files/expenses/&lt;id&gt;/…</code></td><td>Receipts</td><td>Staff, or the person who filed the claim. Photos shrink to WebP in the browser.</td></tr>
+    <tr><td>Storage <code>files/expenses/&lt;id&gt;/…</code></td><td>Receipts</td><td>The admin; the person who filed the claim; staff for project-cost receipts. Photos shrink to WebP in the browser.</td></tr>
   </table></div>
   <h3>Secrets</h3>
   <p>Kept in <code>.env.local</code> (git-ignored) and Vercel env vars only: Supabase service-role key (used by the daily cron only), <code>CRON_SECRET</code>, Gmail app password (<code>SMTP_PASS</code>), DB password. The anon key is public by design; RLS protects the data.</p>
@@ -348,6 +354,15 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-04</td><td><b>What a member can see.</b> Members run projects and sales; the studio's money, pay and private HR data are the admin's. Viewers see what members see, read-only.
+      <ul>
+        <li>Migrations 0016–0019: invoices, payments, bank accounts, vendors, TDS, project fees, overhead/salary/freelancer-fee expenses, other people's claims, time entries and leave details are admin-only in the database. New helpers: <code>project_minutes()</code> (hours without names), <code>team_away()</code> (who is away, not why), <code>document_bank()</code> (default account for quotes).</li>
+        <li>Closed holes: claims and time can't be created already approved; members can't skip invoice approval (trigger); only the admin deletes projects and leads; audit entries can't be forged; members can't delete signed agreements or other stored files, or replace the signature; the old member payment policy from 0010 is gone.</li>
+        <li><b>Calendar links reset:</b> everyone's private calendar-feed token was readable in the activity log. Tokens are scrubbed from the log, never stored there again, and every token was replaced (subscribe again from Calendar).</li>
+        <li>App: members get "Quotes" instead of "Invoices", a Home with follow-ups, tasks and shoots (no ₹), "Project costs" and "My claims" under Expenses, an Hours tab on projects, no Reports, exports, vendors, GST, items or Time → Team. Signer IP addresses only appear on the signing certificate.</li>
+        <li><code>.vercelignore</code> keeps local build output out of deploys.</li>
+        <li>Tests: security-test 191 (47 new for members and viewers); ui-audit adds a member pass (17 checks).</li>
+      </ul></td></tr>
     <tr><td>2026-11-02</td><td><b>Fix: saves that sometimes didn't move on.</b> After "Create project", "Save event", "Create draft" and similar, Next.js occasionally dropped the follow-up navigation, leaving the button on "Creating…". <code>src/lib/navigate.ts</code> now pushes and, if the page hasn't changed within 4 seconds, loads it normally. Used by every save-then-open flow.</td></tr>
     <tr><td>2026-11-02</td><td><b>Phase 4: agreements and e-signatures.</b>
       <ul>

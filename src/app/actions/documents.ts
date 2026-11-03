@@ -67,6 +67,8 @@ const documentSchema = z.object({
 export type DocumentInput = z.input<typeof documentSchema>;
 type Result = { ok: true; id: string; message?: string } | { ok: false; message: string };
 
+const QUOTES_ONLY = "Members can make quotes; invoices and other documents are for the admin.";
+
 function friendly(error: { code?: string; message: string }): string {
   if (error.code === "23505") return "That number is already used for this document type and financial year.";
   if (error.code === "42501") return error.message.replace(/^.*?: /, "");
@@ -74,10 +76,11 @@ function friendly(error: { code?: string; message: string }): string {
 }
 
 export async function saveDocument(input: DocumentInput): Promise<Result> {
-  const { supabase } = await requireMember("member");
+  const { supabase, isAdmin } = await requireMember("member");
   const parsed = documentSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") };
   const d = parsed.data;
+  if (!isAdmin && d.doc_type !== "quote") return { ok: false, message: QUOTES_ONLY };
   const items = d.items.filter((i) => i.title || i.description || i.unit_price);
   if (!items.length) return { ok: false, message: "Add at least one line item" };
   if (d.number && !isValidDocNumber(d.number)) return { ok: false, message: "Number: max 16 characters, letters, digits, / and - only" };
@@ -179,7 +182,11 @@ export async function sendBackToDraft(id: string): Promise<Result> {
 }
 
 export async function cancelDocument(id: string): Promise<Result> {
-  const { supabase } = await requireMember("member");
+  const { supabase, isAdmin } = await requireMember("member");
+  if (!isAdmin) {
+    const { data } = await supabase.from("documents").select("doc_type").eq("id", id).maybeSingle();
+    if (data?.doc_type !== "quote") return { ok: false, message: QUOTES_ONLY };
+  }
   const { count } = await supabase.from("payments").select("id", { count: "exact", head: true }).eq("document_id", id);
   if (count) return { ok: false, message: "This document has payments. Delete them first, or issue a credit note instead." };
   const { error } = await supabase.from("documents").update({ status: "cancelled", reminders_enabled: false, recurring: null }).eq("id", id);
@@ -209,7 +216,7 @@ async function copyToDraft(sourceId: string, opts: { doc_type?: DocType; relatio
 }
 
 export async function convertDocument(id: string, to: "invoice" | "proforma") {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const result = await copyToDraft(id, { doc_type: to, relation: "converted_from" });
   if (!result.ok) return result;
   // Converting a quote counts as winning it.
@@ -218,6 +225,7 @@ export async function convertDocument(id: string, to: "invoice" | "proforma") {
 }
 
 export async function createCreditNote(invoiceId: string) {
+  await requireMember("admin");
   const result = await copyToDraft(invoiceId, { doc_type: "credit_note", relation: "credit_for" });
   if (!result.ok) return result;
   redirect(`/documents/${result.id}/edit`);
@@ -262,7 +270,7 @@ export async function setReminders(id: string, enabled: boolean): Promise<Result
 }
 
 export async function setRecurring(id: string, every: "month" | "quarter" | null, next: string | null): Promise<Result> {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
   const recurring = every && next ? { every, next } : null;
   const { error } = await supabase.from("documents").update({ recurring }).eq("id", id);
   if (error) return { ok: false, message: friendly(error) };

@@ -7,7 +7,9 @@ import type { Settings } from "./types";
 
 type Row = Record<string, unknown>;
 
-export const SIGNER_COLUMNS = "id, position, party, name, email, viewed_at, verified_at, signed_at, signature_name, signed_ip, declined_at, decline_reason";
+export const SIGNER_COLUMNS = "id, position, party, name, email, viewed_at, verified_at, signed_at, signature_name, declined_at, decline_reason";
+/** The signing certificate (service role) also prints where each person signed from. */
+export const CERTIFICATE_SIGNER_COLUMNS = `${SIGNER_COLUMNS}, signed_ip`;
 
 export function toAgreement(r: Row): Agreement {
   return {
@@ -50,8 +52,6 @@ export interface AgreementEvent {
   at: string;
   action: string;
   actor: string;
-  ip: string | null;
-  user_agent: string | null;
   detail: Record<string, unknown>;
   hash: string;
 }
@@ -62,7 +62,7 @@ export async function getAgreement(id: string) {
   const [{ data }, { data: signers }, { data: events }] = await Promise.all([
     supabase.from("agreements").select("*, clients(name, email), projects(code, name), leads(name, company)").eq("id", id).maybeSingle(),
     supabase.from("agreement_signers").select(SIGNER_COLUMNS).eq("agreement_id", id).order("position"),
-    supabase.from("agreement_events").select("id, at, action, actor, ip, user_agent, detail, hash").eq("agreement_id", id).order("id"),
+    supabase.from("agreement_events").select("id, at, action, actor, detail, hash").eq("agreement_id", id).order("id"),
   ]);
   if (!data) return null;
   const r = data as Row;

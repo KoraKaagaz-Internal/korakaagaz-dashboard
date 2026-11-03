@@ -54,6 +54,14 @@ export async function submittedEntries(): Promise<TimeRow[]> {
   return ((data ?? []) as Row[]).map(toTime);
 }
 
+/** Logged minutes on a project by task and month, everyone's together (no names). */
+export async function projectMinutes(projectId: string): Promise<{ task_id: string | null; month: string; minutes: number }[]> {
+  const { supabase } = await requireTeam();
+  const { data } = await supabase.rpc("project_minutes", { p_project: projectId });
+  return ((data ?? []) as Row[]).map((r) => ({ task_id: (r.task_id as string) ?? null, month: String(r.month), minutes: Number(r.minutes) }));
+}
+
+/** A project's entries: everyone's for the admin, your own for everyone else (RLS). */
 export async function projectEntries(projectId: string): Promise<TimeRow[]> {
   const { supabase } = await requireTeam();
   const { data } = await supabase.from("time_entries").select(TIME_SELECT).eq("project_id", projectId).order("work_date", { ascending: false });
@@ -174,12 +182,35 @@ export interface LeaveRow extends Leave {
   created_at: string;
 }
 
+/** Leave requests: everyone's for the admin, your own for everyone else (RLS). */
 export async function listLeave(from?: string): Promise<LeaveRow[]> {
   const { supabase } = await requireTeam();
   let q = supabase.from("leave_requests").select("*").order("from_date", { ascending: false });
   if (from) q = q.gte("to_date", from);
   const { data } = await q;
   return (data ?? []) as LeaveRow[];
+}
+
+/**
+ * Approved leave for the team. The admin gets the full rows; everyone else sees colleagues as
+ * plain "away" (the type and note stay private) plus their own requests in full.
+ */
+export async function teamAway(from?: string): Promise<LeaveRow[]> {
+  const { supabase, isAdmin, email } = await requireTeam();
+  if (isAdmin) return (await listLeave(from)).filter((l) => l.status === "approved");
+  const { data } = await supabase.rpc("team_away", { p_from: from ?? null });
+  return ((data ?? []) as Row[]).map((l) => ({
+    id: l.id as string,
+    member_email: l.member_email as string,
+    from_date: l.from_date as string,
+    to_date: l.to_date as string,
+    half_day: !!l.half_day,
+    status: "approved",
+    kind: l.member_email === email ? "own" : "away",
+    note: "",
+    decided_by: null,
+    created_at: "",
+  })) as LeaveRow[];
 }
 
 export async function listHolidays(): Promise<{ day: string; name: string }[]> {

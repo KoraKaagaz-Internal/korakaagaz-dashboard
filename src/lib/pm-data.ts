@@ -36,10 +36,10 @@ export interface ProjectCard extends Project {
 
 /** Every project the signed-in person can see (RLS: staff all, freelancers their own). */
 export async function listProjectCards(): Promise<ProjectCard[]> {
-  const { supabase, isStaff } = await requireTeam();
+  const { supabase, isAdmin } = await requireTeam();
   const { data } = await supabase
     .from("projects")
-    .select(`*, project_members(member_email), tasks(status, due_date, parent_id, estimate_hours)${isStaff ? ", project_finance(*)" : ""}`)
+    .select(`*, project_members(member_email), tasks(status, due_date, parent_id, estimate_hours)${isAdmin ? ", project_finance(*)" : ""}`)
     .order("created_at", { ascending: false });
   const rows = (data ?? []) as unknown as Row[];
   const names = await clientNames(rows.map((r) => r.id as string));
@@ -80,7 +80,7 @@ export interface ProjectBundle {
 }
 
 export async function getProjectBundle(id: string): Promise<ProjectBundle> {
-  const { supabase, isStaff } = await requireTeam();
+  const { supabase, isAdmin } = await requireTeam();
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const [p, phases, tasks, deliverables, files, members, finance, names] = await Promise.all([
     supabase.from("projects").select("*").eq("id", id).maybeSingle(),
@@ -89,7 +89,8 @@ export async function getProjectBundle(id: string): Promise<ProjectBundle> {
     supabase.from("deliverables").select("*").eq("project_id", id).order("sort"),
     supabase.from("files").select("*").eq("project_id", id).order("created_at", { ascending: false }),
     supabase.from("project_members").select("member_email, role_on_project").eq("project_id", id).order("added_at"),
-    isStaff ? supabase.from("project_finance").select("*").eq("project_id", id).maybeSingle() : Promise.resolve({ data: null }),
+    // the fee and retainer amount are the admin's
+    isAdmin ? supabase.from("project_finance").select("*").eq("project_id", id).maybeSingle() : Promise.resolve({ data: null }),
     clientNames([id]),
   ]);
   if (!p.data) notFound();
@@ -161,7 +162,8 @@ export async function getTaskDetail(id: string): Promise<TaskDetail | null> {
     supabase.from("files").select("*").eq("task_id", id).order("created_at", { ascending: false }),
     supabase.from("phases").select("*").eq("project_id", pid).order("sort"),
     supabase.from("project_members").select("member_email").eq("project_id", pid),
-    supabase.from("time_entries").select("minutes").eq("task_id", id),
+    // everyone's hours on the task, without who logged them
+    supabase.rpc("project_minutes", { p_project: pid }),
   ]);
   return {
     task: toTask(t as Row),
@@ -171,7 +173,7 @@ export async function getTaskDetail(id: string): Promise<TaskDetail | null> {
     files: ((files.data ?? []) as Row[]).map((f) => ({ ...(f as unknown as FileRow), size: Number(f.size ?? 0) })),
     phases: (phases.data ?? []) as Phase[],
     members: (members.data ?? []).map((m) => m.member_email as string),
-    logged_minutes: (time.data ?? []).reduce((sum, r) => sum + Number(r.minutes), 0),
+    logged_minutes: ((time.data ?? []) as Row[]).filter((r) => r.task_id === id).reduce((sum, r) => sum + Number(r.minutes), 0),
   };
 }
 

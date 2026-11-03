@@ -35,7 +35,7 @@ export default async function ClaimsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title={isStaff ? "Expenses" : "My claims"}
+        title={isAdmin ? "Expenses" : "My claims"}
         subtitle="Spent your own money on studio work? File a claim with the receipt and get reimbursed."
         actions={
           <>
@@ -46,7 +46,7 @@ export default async function ClaimsPage() {
             )}
           </>
         }
-        tabs={isStaff ? <ExpenseTabs current="/expenses/claims" /> : undefined}
+        tabs={isStaff ? <ExpenseTabs current="/expenses/claims" isAdmin={isAdmin} /> : undefined}
       />
 
       {isAdmin && (

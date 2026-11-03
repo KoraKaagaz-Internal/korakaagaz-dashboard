@@ -4,7 +4,7 @@ import { SettingsHeader } from "../settings/SettingsTabs";
 import { ItemsManager } from "./ItemsManager";
 
 export default async function ItemsPage() {
-  const { canEdit, isAdmin } = await requireMember();
+  const { canEdit, isAdmin } = await requireMember("admin");
   const items = await listItems();
   return (
     <div className="mx-auto max-w-4xl space-y-4">

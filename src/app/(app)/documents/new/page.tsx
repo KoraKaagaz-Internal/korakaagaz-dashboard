@@ -5,9 +5,9 @@ import { DocumentEditor } from "../DocumentEditor";
 import { editorData } from "../editor-data";
 
 export default async function NewDocumentPage({ searchParams }: { searchParams: Promise<{ type?: string; client?: string; project?: string }> }) {
-  await requireMember("member");
+  const { isAdmin } = await requireMember("member");
   const params = await searchParams;
-  const docType: DocType = DOC_TYPES.includes(params.type as DocType) ? (params.type as DocType) : "invoice";
+  const docType: DocType = !isAdmin ? "quote" : DOC_TYPES.includes(params.type as DocType) ? (params.type as DocType) : "invoice";
   const today = todayIso();
   const data = await editorData(docType, today, null);
   const s = data.settings;

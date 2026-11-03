@@ -7,7 +7,7 @@ import { financialYear, formatMoney, formatShortDate, todayIso } from "@/lib/mon
 import { VendorForm } from "../VendorForm";
 
 export default async function VendorPage({ params }: { params: Promise<{ id: string }> }) {
-  const { canEdit } = await requireMember();
+  const { canEdit } = await requireMember("admin");
   const { id } = await params;
   const [vendor, categories, expenses] = await Promise.all([getVendor(id), listCategories(), listExpenses({ vendor: id }, 2000)]);
   if (!vendor) notFound();

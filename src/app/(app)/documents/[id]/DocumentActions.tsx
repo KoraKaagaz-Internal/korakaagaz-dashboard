@@ -157,7 +157,7 @@ export function DocumentActions({
             </button>
           )}
 
-          {canEdit && doc.doc_type === "quote" && (doc.status === "issued" || doc.status === "accepted") && (
+          {isAdmin && doc.doc_type === "quote" && (doc.status === "issued" || doc.status === "accepted") && (
             <>
               <button className={btn.primary} disabled={pending} onClick={() => run(() => convertDocument(doc.id, "invoice"))}>
                 Convert to invoice

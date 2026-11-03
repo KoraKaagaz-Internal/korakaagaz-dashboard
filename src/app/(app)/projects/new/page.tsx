@@ -6,7 +6,7 @@ import { NewProjectForm } from "./NewProjectForm";
 import { PageHeader } from "@/components/ui";
 
 export default async function NewProjectPage({ searchParams }: { searchParams: Promise<{ client?: string }> }) {
-  const { email } = await requireMember("member");
+  const { email, isAdmin } = await requireMember("member");
   const { client } = await searchParams;
   const [templates, clients, people] = await Promise.all([listTemplates(), listClients(), teamDirectory()]);
   return (
@@ -27,6 +27,7 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
         me={email}
         today={todayIso()}
         clientId={client ?? ""}
+        isAdmin={isAdmin}
       />
     </div>
   );

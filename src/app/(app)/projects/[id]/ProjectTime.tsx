@@ -2,29 +2,38 @@ import { ProgressBar } from "@/components/pm/Pills";
 import { Card } from "@/components/ui";
 import { formatShortDate, todayIso } from "@/lib/money";
 import { displayName, type Person } from "@/lib/pm";
+import { createClient } from "@/lib/supabase/server";
 import { hhmm, monthRange, retainerBurn } from "@/lib/time";
-import { projectEntries, timeApprovalOn } from "@/lib/time-data";
+import { projectEntries, projectMinutes, timeApprovalOn } from "@/lib/time-data";
 import type { Project } from "@/lib/types";
 
 const STATUS_TEXT = { draft: "Draft", submitted: "Waiting approval", approved: "Approved", rejected: "Sent back" } as const;
 
-/** Hours logged vs the budget, retainer hours this month, who logged what. No money. */
-export async function ProjectTime({ project, people }: { project: Project; people: Person[] }) {
-  const [entries, approval] = await Promise.all([projectEntries(project.id), timeApprovalOn()]);
+/**
+ * Hours logged vs the budget and retainer hours this month. No money. The admin also sees who
+ * logged what; everyone else sees hours by task and their own entries.
+ */
+export async function ProjectTime({ project, people, byPerson: showPeople }: { project: Project; people: Person[]; byPerson: boolean }) {
+  const [entries, totals, approval] = await Promise.all([projectEntries(project.id), projectMinutes(project.id), timeApprovalOn()]);
   const done = entries.filter((e) => !e.timer_started_at);
-  const total = done.reduce((s, e) => s + e.minutes, 0);
+  const total = totals.reduce((s, r) => s + r.minutes, 0);
   const approved = done.filter((e) => e.status === "approved").reduce((s, e) => s + e.minutes, 0);
   const month = monthRange(todayIso());
-  const thisMonth = done.filter((e) => e.work_date >= month.from && e.work_date <= month.to).reduce((s, e) => s + e.minutes, 0);
+  const thisMonth = totals.filter((r) => r.month === month.from).reduce((s, r) => s + r.minutes, 0);
   const burn = project.retainer_hours_month ? retainerBurn(thisMonth, project.retainer_hours_month) : null;
   const byPerson = new Map<string, number>();
   for (const e of done) byPerson.set(e.member_email, (byPerson.get(e.member_email) ?? 0) + e.minutes);
+  const byTask = new Map<string | null, number>();
+  for (const r of totals) byTask.set(r.task_id, (byTask.get(r.task_id) ?? 0) + r.minutes);
+  const taskIds = [...byTask.keys()].filter((t): t is string => !!t);
+  const { data: titles } = taskIds.length ? await (await createClient()).from("tasks").select("id, title").in("id", taskIds) : { data: [] };
+  const title = new Map((titles ?? []).map((t) => [t.id as string, t.title as string]));
   const hoursPct = project.budget_hours ? Math.round((total / 60 / project.budget_hours) * 100) : 0;
 
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-xl bg-white px-4 py-3 border border-line">
+        <div className="rounded-xl border border-line bg-white px-4 py-3">
           <div className="text-xs text-neutral-500">Logged</div>
           <div className="text-lg font-semibold tabular-nums">{hhmm(total)} h</div>
           {project.budget_hours > 0 && (
@@ -35,7 +44,7 @@ export async function ProjectTime({ project, people }: { project: Project; peopl
           )}
         </div>
         {burn && (
-          <div className="rounded-xl bg-white px-4 py-3 border border-line">
+          <div className="rounded-xl border border-line bg-white px-4 py-3">
             <div className="text-xs text-neutral-500">Retainer this month</div>
             <div className="text-lg font-semibold tabular-nums">
               {burn.usedHours} / {burn.includedHours} h
@@ -49,7 +58,7 @@ export async function ProjectTime({ project, people }: { project: Project; peopl
           </div>
         )}
         {!burn && (
-          <div className="rounded-xl bg-white px-4 py-3 border border-line">
+          <div className="rounded-xl border border-line bg-white px-4 py-3">
             <div className="text-xs text-neutral-500">This month</div>
             <div className="text-lg font-semibold tabular-nums">{hhmm(thisMonth)} h</div>
           </div>
@@ -57,30 +66,49 @@ export async function ProjectTime({ project, people }: { project: Project; peopl
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_2fr]">
-        <Card title="By person">
-          {byPerson.size ? (
-            <ul className="space-y-1 text-sm">
-              {[...byPerson.entries()]
-                .sort((a, b) => b[1] - a[1])
-                .map(([e, m]) => (
-                  <li key={e} className="flex justify-between">
-                    <span>{displayName(e, people)}</span>
-                    <span className="tabular-nums">{hhmm(m)}</span>
-                  </li>
-                ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-neutral-500">No time logged yet.</p>
-          )}
-          {approval && <p className="mt-3 text-xs text-neutral-500">Approved: {hhmm(approved)} h</p>}
-        </Card>
-        <Card title="Entries">
+        {showPeople ? (
+          <Card title="By person">
+            {byPerson.size ? (
+              <ul className="space-y-1 text-sm">
+                {[...byPerson.entries()]
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([e, m]) => (
+                    <li key={e} className="flex justify-between">
+                      <span>{displayName(e, people)}</span>
+                      <span className="tabular-nums">{hhmm(m)}</span>
+                    </li>
+                  ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-neutral-500">No time logged yet.</p>
+            )}
+            {approval && <p className="mt-3 text-xs text-neutral-500">Approved: {hhmm(approved)} h</p>}
+          </Card>
+        ) : (
+          <Card title="By task">
+            {byTask.size ? (
+              <ul className="space-y-1 text-sm">
+                {[...byTask.entries()]
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([t, m]) => (
+                    <li key={t ?? "general"} className="flex justify-between gap-3">
+                      <span className="truncate">{t ? (title.get(t) ?? "Task") : "General"}</span>
+                      <span className="tabular-nums">{hhmm(m)}</span>
+                    </li>
+                  ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-neutral-500">No time logged yet.</p>
+            )}
+          </Card>
+        )}
+        <Card title={showPeople ? "Entries" : "Your entries"}>
           {entries.length ? (
             <ul className="divide-y divide-line text-sm">
               {entries.slice(0, 100).map((e) => (
                 <li key={e.id} className="flex items-center gap-3 py-1.5">
                   <span className="w-20 text-xs text-neutral-500">{formatShortDate(e.work_date)}</span>
-                  <span className="w-28 truncate">{displayName(e.member_email, people)}</span>
+                  {showPeople && <span className="w-28 truncate">{displayName(e.member_email, people)}</span>}
                   <span className="min-w-0 flex-1 truncate text-neutral-600">
                     {e.task_title || "General"}
                     {e.note ? ` · ${e.note}` : ""}

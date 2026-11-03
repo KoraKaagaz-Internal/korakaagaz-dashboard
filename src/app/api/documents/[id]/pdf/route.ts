@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { documentPdf } from "@/lib/document-pdf";
 import { pdfFileName } from "@/lib/pdf";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getUser } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -18,7 +19,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   // Keep the latest PDF of issued documents in Storage.
   if (doc.number) {
     const path = `documents/${pdfFileName(doc.number)}`;
-    const { error } = await supabase.storage.from("invoices").upload(path, pdf, { contentType: "application/pdf", upsert: true });
+    // The stored copies are admin-only; anyone who can read the document (above) may refresh its PDF.
+    const { error } = await createAdminClient().storage.from("invoices").upload(path, pdf, { contentType: "application/pdf", upsert: true });
     if (!error) await supabase.from("documents").update({ pdf_path: path }).eq("id", id);
   }
 

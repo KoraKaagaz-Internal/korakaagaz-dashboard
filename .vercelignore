@@ -1,0 +1,8 @@
+# Local build output and screenshots never go up with a deploy (Vercel builds from source).
+.next
+.next-*
+.visual
+node_modules
+tsconfig.tsbuildinfo
+.env*
+!.env.example

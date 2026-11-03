@@ -13,7 +13,7 @@ import { Reconcile } from "./Reconcile";
 const monthLabel = (iso: string) => new Date(`${iso.slice(0, 7)}-01T00:00:00Z`).toLocaleDateString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
 
 export default async function GstPage({ searchParams }: { searchParams: Promise<{ month?: string }> }) {
-  const { isAdmin } = await requireMember();
+  const { isAdmin } = await requireMember("admin");
   const sp = await searchParams;
   const today = todayIso();
   // default: last month (that's what gets filed this month)

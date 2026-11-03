@@ -69,7 +69,12 @@ export async function getSettings(): Promise<Settings> {
 
 /** Bank accounts for documents; `withCash` adds the petty-cash account (Settings, expenses). */
 export async function listBankAccounts(withCash = false): Promise<BankAccount[]> {
-  const { supabase } = await requireMember();
+  const { supabase, isAdmin } = await requireMember();
+  if (!isAdmin) {
+    // Members get only the default account, which quotes print (no balances, no other accounts).
+    const { data } = await supabase.rpc("document_bank");
+    return ((data ?? []) as BankAccount[]).map((b) => ({ ...b, kind: "bank", opening_balance: 0, opening_date: null }));
+  }
   let q = supabase.from("bank_accounts").select("*").order("is_default", { ascending: false }).order("created_at");
   if (!withCash) q = q.neq("kind", "cash");
   const { data } = await q;

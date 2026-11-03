@@ -8,7 +8,7 @@ import { formatInvoiceDate } from "@/lib/money";
 import { displayName, type Person } from "@/lib/pm";
 import type { LeaveRow } from "@/lib/time-data";
 
-const KIND_LABEL: Record<string, string> = { casual: "Casual leave", sick: "Sick leave", unpaid: "Unpaid leave", other: "Other" };
+const KIND_LABEL: Record<string, string> = { casual: "Casual leave", sick: "Sick leave", unpaid: "Unpaid leave", other: "Other", away: "Away" };
 const STATUS_LABEL: Record<string, string> = { pending: "Waiting approval", approved: "Approved", declined: "Declined" };
 const STATUS: Record<string, string> = { pending: "bg-warn/10 text-warn", approved: "bg-ok/10 text-ok", declined: "bg-neutral-200 text-neutral-600" };
 

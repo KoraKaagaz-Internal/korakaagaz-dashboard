@@ -1,4 +1,5 @@
-// Visits every page as the admin at desktop (1440) and phone (390) widths and fails on:
+// Visits every page as the admin at desktop (1440) and phone (390) widths, then as a throwaway
+// member (checking the admin-only pages turn them away and no money shows), and fails on:
 // sideways overflow, console errors, slow loads (> 3 s), window.confirm in the source,
 // and hard-coded brand hex colours outside the allowed files. Read-only: safe on real data.
 // Screenshots go to .visual/audit/ for a visual review.
@@ -108,6 +109,60 @@ try {
       );
       check(`${tag === "d" ? "desktop" : "phone"} ${path}`, !problems.length, problems.join("; ") || `${ms} ms`);
     }
+  }
+
+  // ---------------------------------------------------------------- as a member
+  const MEMBER = `ui-member-${Date.now()}@example.com`;
+  const adminApi = (path, init = {}) =>
+    fetch(`${SUPABASE_URL}${path}`, { ...init, headers: { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, "Content-Type": "application/json", ...init.headers } });
+  await adminApi("/rest/v1/members", { method: "POST", body: JSON.stringify({ email: MEMBER, role: "member", invited_by: "ui-audit" }) });
+  let memberId = null;
+  try {
+    const user = await adminApi("/auth/v1/admin/users", { method: "POST", body: JSON.stringify({ email: MEMBER, email_confirm: true }) }).then((r) => r.json());
+    memberId = user.id;
+    const mLink = await adminApi("/auth/v1/admin/generate_link", { method: "POST", body: JSON.stringify({ type: "magiclink", email: MEMBER }) }).then((r) => r.json());
+    const ctx = await browser.createBrowserContext();
+    const mp = await ctx.newPage();
+    await mp.setViewport({ width: 1440, height: 900 });
+    await mp.goto(`${base}/auth/callback?token_hash=${mLink.hashed_token ?? mLink.properties?.hashed_token}&type=magiclink`, { waitUntil: "load" });
+    const errors = [];
+    mp.on("pageerror", (e) => errors.push(e.message.slice(0, 160)));
+    const text = async (path) => {
+      errors.length = 0;
+      await mp.goto(`${base}${path}`, { waitUntil: "networkidle2", timeout: 60000 }).catch(() => {});
+      // streamed pages redirect on the client, so give the address a moment to settle
+      await mp.waitForFunction((p) => location.pathname + location.search !== p, { timeout: 4000 }, path).catch(() => {});
+      await mp.waitForNetworkIdle({ idleTime: 300, timeout: 10000 }).catch(() => {});
+      return { url: new URL(mp.url()), body: await mp.evaluate(() => document.querySelector("main")?.innerText ?? "") };
+    };
+    for (const path of ["/reports", "/vendors", "/expenses/gst", "/settings", "/items", "/team", "/expenses/categories", "/crm/settings"]) {
+      const { url } = await text(path);
+      check(`member is turned away from ${path}`, url.pathname === "/" && url.searchParams.get("denied") === "1", url.pathname);
+    }
+    const home = await text("/");
+    check("member's Home shows no money", !/Owed to you|Revenue this FY|Collected this FY|₹/.test(home.body) && /Follow-ups due/.test(home.body));
+    const docs = await text("/documents");
+    check("member's documents page is Quotes", /Quotes/.test(docs.body) && !/Export CSV|Balance|Credit notes/.test(docs.body));
+    const newDoc = await text("/documents/new?type=invoice");
+    check("member making an invoice gets a quote instead", /quote/i.test(newDoc.body) && !/Tax invoice/i.test(newDoc.body));
+    const exp = await text("/expenses");
+    check("member's expenses are project costs only", /Project costs/.test(exp.body) && !/GST you can claim back|Bills to pay|Vendors/.test(exp.body));
+    const time = await text("/time");
+    check("member's Time has no Team tab", !(await mp.$$eval("nav a", (as) => as.some((a) => a.textContent?.trim() === "Team" && a.getAttribute("href")?.startsWith("/time")))));
+    const nav = await mp.$$eval("aside a, nav a", (as) => as.map((a) => a.textContent?.trim()));
+    check("member's menu has no Invoices or Reports", !nav.includes("Invoices") && !nav.includes("Reports") && nav.includes("Quotes"), nav.join(","));
+    if (project) {
+      const money = await text(`/projects/${project}?tab=money`);
+      check("member's project tab is hours, no money", /Logged/.test(money.body) && !/Quoted|Received|Outstanding|₹/.test(money.body));
+    }
+    const leave = await text("/team/leave");
+    check("member's leave page shows no leave types of others", !/Sick leave|Unpaid leave/.test(leave.body.replace(/Ask for leave[\s\S]*?Request/, "")));
+    check("member pages have no errors", !errors.length, errors[0]);
+    await ctx.close();
+    void time;
+  } finally {
+    if (memberId) await adminApi(`/auth/v1/admin/users/${memberId}`, { method: "DELETE" });
+    await adminApi(`/rest/v1/members?email=eq.${encodeURIComponent(MEMBER)}`, { method: "DELETE" });
   }
 } finally {
   await browser.close();

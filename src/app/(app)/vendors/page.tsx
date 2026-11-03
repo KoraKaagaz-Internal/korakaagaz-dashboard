@@ -8,7 +8,7 @@ import { ExpenseTabs } from "../expenses/Tabs";
 import { VendorForm } from "./VendorForm";
 
 export default async function VendorsPage({ searchParams }: { searchParams: Promise<{ new?: string }> }) {
-  const { canEdit, isAdmin } = await requireMember();
+  const { canEdit, isAdmin } = await requireMember("admin");
   const sp = await searchParams;
   const fy = financialYear(todayIso());
   const [vendors, categories, expenses] = await Promise.all([listVendors(), listCategories(), listExpenses({ from: `20${fy.slice(0, 2)}-04-01` }, 5000)]);

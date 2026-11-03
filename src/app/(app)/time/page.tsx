@@ -10,14 +10,15 @@ import { Approvals } from "./Approvals";
 import { Timesheet } from "./Timesheet";
 
 export default async function TimePage({ searchParams }: { searchParams: Promise<{ week?: string; tab?: string }> }) {
-  const { isAdmin, isStaff, canWork } = await requireTeam();
+  const { isAdmin, canWork } = await requireTeam();
   const sp = await searchParams;
   const today = todayIso();
   const approval = await timeApprovalOn();
   const monday = weekStart(/^\d{4}-\d{2}-\d{2}$/.test(sp.week ?? "") ? sp.week! : today);
   const tabs = [
     { key: "week", label: "My timesheet" },
-    ...(isStaff ? [{ key: "team", label: "Team" }] : []),
+    // who logged what is the admin's view; everyone else sees their own hours
+    ...(isAdmin ? [{ key: "team", label: "Team" }] : []),
     ...(isAdmin && approval ? [{ key: "approve", label: "Approve" }] : []),
   ];
   const tab = tabs.some((t) => t.key === sp.tab) ? sp.tab! : "week";
@@ -54,7 +55,7 @@ export default async function TimePage({ searchParams }: { searchParams: Promise
         <Timesheet monday={monday} entries={await myEntries(monday, addDays(monday, 6))} projects={await loggableProjects()} today={today} canWork={canWork} approval={approval} />
       )}
       {tab === "approve" && isAdmin && approval && <Approvals rows={await submittedEntries()} names={names} />}
-      {tab === "team" && isStaff && <TeamWeek monday={monday} people={people} />}
+      {tab === "team" && isAdmin && <TeamWeek monday={monday} people={people} />}
     </div>
   );
 }

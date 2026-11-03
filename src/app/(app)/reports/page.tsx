@@ -53,7 +53,7 @@ const PRESETS: { key: Preset; label: string }[] = [
 const pct = (n: number | null) => (n === null ? "—" : `${Math.round(n)}%`);
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
-  await requireMember();
+  await requireMember("admin");
   const sp = await searchParams;
   const today = todayIso();
   const preset = (PRESETS.some((p) => p.key === sp.p) ? sp.p : "fy") as Preset;
