@@ -125,7 +125,7 @@ async function Billing({ projectId, fee, people, today }: { projectId: string; f
   const [docs, expenses, { data: pays }] = await Promise.all([
     listDocuments({ project: projectId }),
     listExpenses({ project: projectId }, 500),
-    supabase.from("payments").select("id, paid_on, amount, tds_amount, mode, note, document_id, documents(number, currency, fx_rate)").eq("project_id", projectId).order("paid_on", { ascending: false }),
+    supabase.from("payments").select("id, paid_on, amount, tds_amount, mode, note, file_name, document_id, documents(number, currency, fx_rate)").eq("project_id", projectId).order("paid_on", { ascending: false }),
   ]);
   const payments = ((pays ?? []) as unknown as {
     id: string;
@@ -134,6 +134,7 @@ async function Billing({ projectId, fee, people, today }: { projectId: string; f
     tds_amount: number;
     mode: string;
     note: string;
+    file_name: string;
     document_id: string | null;
     documents: { number: string; currency: string; fx_rate: number } | null;
   }[]).map((x) => {
@@ -178,7 +179,7 @@ async function Billing({ projectId, fee, people, today }: { projectId: string; f
           projectId={projectId}
           today={today}
           pendingAmount={m.pending}
-          rows={payments.map((x) => ({ id: x.id, paid_on: x.paid_on, amount: x.amount + x.tds_amount, mode: x.mode, note: x.note, invoice: x.document_id ? { id: x.document_id, number: x.documents?.number ?? "" } : null }))}
+          rows={payments.map((x) => ({ id: x.id, paid_on: x.paid_on, amount: x.amount + x.tds_amount, mode: x.mode, note: x.note, file_name: x.file_name ?? "", invoice: x.document_id ? { id: x.document_id, number: x.documents?.number ?? "" } : null }))}
         />
         <SplitCard
           projectId={projectId}

@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { deleteProjectPayment, recordProjectPayment, saveSplit } from "@/app/actions/projects";
+import { attachPaymentFile, deleteProjectPayment, paymentFileUrl, recordProjectPayment, saveSplit } from "@/app/actions/projects";
 import { deleteExpense, recordExpensePayment } from "@/app/actions/expenses";
 import { NumberInput } from "@/components/NumberInput";
+import { safeName, shrinkImage } from "@/components/pm/Files";
 import { SplitInput } from "@/components/pm/SplitInput";
 import { Card, ConfirmButton, Input, Select, btn } from "@/components/ui";
 import { useAction } from "@/components/ui/Toaster";
 import { formatMoney, formatShortDate } from "@/lib/money";
 import type { Person } from "@/lib/pm";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/components/ui/Toaster";
 
 export interface PaymentRow {
   id: string;
@@ -18,6 +21,29 @@ export interface PaymentRow {
   mode: string;
   note: string;
   invoice: { id: string; number: string } | null;
+  /** an invoice made outside the app, attached as a file */
+  file_name: string;
+}
+
+const INVOICE_FILES = "application/pdf,image/*";
+
+/** Uploads straight to the admin-only "invoices" bucket, then links the file to the payment. */
+async function uploadInvoice(paymentId: string, file: File) {
+  const small = await shrinkImage(file);
+  const path = `payments/${paymentId}/${crypto.randomUUID()}-${safeName(small.name)}`;
+  const { error } = await createClient().storage.from("invoices").upload(path, small, { contentType: small.type || "application/octet-stream" });
+  if (error) return { ok: false as const, message: `The invoice didn't upload: ${error.message}` };
+  return attachPaymentFile(paymentId, path, small.name);
+}
+
+async function openInvoice(paymentId: string) {
+  const tab = window.open("", "_blank"); // opened before the await so pop-up blockers allow it
+  const r = await paymentFileUrl(paymentId);
+  if (r.ok && tab) tab.location.href = r.url;
+  else {
+    tab?.close();
+    toast.error(r.ok ? "Allow pop-ups to open the invoice" : r.message);
+  }
 }
 
 export interface SplitRow {
@@ -31,7 +57,9 @@ export interface SplitRow {
 /** Money received on the project: straight payments, plus payments on its invoices (read-only here). */
 export function PaymentsCard({ projectId, rows, pendingAmount, today }: { projectId: string; rows: PaymentRow[]; pendingAmount: number; today: string }) {
   const [form, setForm] = useState({ paid_on: today, amount: 0, mode: "upi" as const, note: "" });
+  const [file, setFile] = useState<File | null>(null);
   const [record, recording] = useAction(recordProjectPayment, { success: "Payment recorded" });
+  const [attach, attaching] = useAction(uploadInvoice, { success: "Invoice attached" });
   const [remove] = useAction(deleteProjectPayment, { success: "Payment removed" });
   return (
     <Card title="Payments received">
@@ -50,6 +78,18 @@ export function PaymentsCard({ projectId, rows, pendingAmount, today }: { projec
                 )}
                 {p.note ? ` · ${p.note}` : ""}
               </span>
+              {p.file_name ? (
+                <button type="button" className="max-w-32 truncate text-xs text-navy hover:underline" title={p.file_name} onClick={() => openInvoice(p.id)}>
+                  📎 {p.file_name}
+                </button>
+              ) : (
+                !p.invoice && (
+                  <label className={`cursor-pointer text-xs text-navy hover:underline ${attaching ? "pointer-events-none opacity-50" : ""}`}>
+                    Attach invoice
+                    <input type="file" accept={INVOICE_FILES} className="sr-only" onChange={(e) => e.target.files?.[0] && attach(p.id, e.target.files[0])} />
+                  </label>
+                )
+              )}
               <span className="tabular-nums">{formatMoney(p.amount)}</span>
               {!p.invoice && (
                 <ConfirmButton confirm="Remove this payment?" confirmLabel="Remove" onConfirm={() => remove(p.id, projectId)}>
@@ -72,13 +112,26 @@ export function PaymentsCard({ projectId, rows, pendingAmount, today }: { projec
           <option value="cheque">Cheque</option>
           <option value="wire">Wire</option>
         </Select>
+        <label className="col-span-2 flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-line px-3 py-2 text-sm text-neutral-600 hover:border-navy sm:col-span-3">
+          <span aria-hidden>📎</span>
+          <span className="truncate">{file ? file.name : "Attach the invoice (PDF or photo, optional)"}</span>
+          <input type="file" accept={INVOICE_FILES} className="sr-only" aria-label="Attach invoice" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          {file && (
+            <button type="button" className="ml-auto text-xs text-neutral-400 hover:text-danger" onClick={(e) => (e.preventDefault(), setFile(null))}>
+              Remove
+            </button>
+          )}
+        </label>
         <Input className="col-span-2 sm:col-span-2" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} placeholder="Note (optional)" aria-label="Note" />
         <button
           className={`${btn.primary} col-span-2 sm:col-span-1`}
-          disabled={recording || !(form.amount > 0)}
+          disabled={recording || attaching || !(form.amount > 0)}
           onClick={async () => {
             const r = await record({ project_id: projectId, ...form });
-            if (r?.ok) setForm({ ...form, amount: 0, note: "" });
+            if (!r?.ok) return;
+            if (file) await attach(r.id, file);
+            setForm({ ...form, amount: 0, note: "" });
+            setFile(null);
           }}
         >
           Record

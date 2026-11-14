@@ -128,23 +128,48 @@ const projectPaymentSchema = z.object({
   note: z.string().trim().max(500).default(""),
 });
 
-export async function recordProjectPayment(input: z.input<typeof projectPaymentSchema>): Promise<Result> {
+export async function recordProjectPayment(input: z.input<typeof projectPaymentSchema>): Promise<Result<{ id: string }>> {
   const { supabase } = await requireMember("admin");
   const parsed = projectPaymentSchema.safeParse(input);
   if (!parsed.success) return fail(issues(parsed.error));
-  const { error } = await supabase.from("payments").insert(parsed.data);
+  const { data, error } = await supabase.from("payments").insert(parsed.data).select("id").single();
   if (error) return fail(error.message);
   revalidatePath(`/projects/${parsed.data.project_id}`);
   revalidatePath("/");
+  return { ok: true, id: data.id as string };
+}
+
+/** Called after the browser uploads an invoice file to payments/<id>/ in the admin-only "invoices" bucket. */
+export async function attachPaymentFile(paymentId: string, path: string, name: string): Promise<Result> {
+  const { supabase } = await requireMember("admin");
+  if (!path.startsWith(`payments/${paymentId}/`)) return fail("Bad upload path");
+  const { data: old } = await supabase.from("payments").select("file_path, project_id").eq("id", paymentId).single();
+  const { error } = await supabase.from("payments").update({ file_path: path, file_name: name.slice(0, 200) }).eq("id", paymentId);
+  if (error) {
+    await supabase.storage.from("invoices").remove([path]);
+    return fail(error.message);
+  }
+  if (old?.file_path && old.file_path !== path) await supabase.storage.from("invoices").remove([old.file_path]);
+  if (old?.project_id) revalidatePath(`/projects/${old.project_id}`);
   return { ok: true };
+}
+
+export async function paymentFileUrl(paymentId: string): Promise<Result<{ url: string }>> {
+  const { supabase } = await requireMember("admin");
+  const { data: p } = await supabase.from("payments").select("file_path").eq("id", paymentId).single();
+  if (!p?.file_path) return fail("No invoice attached");
+  const { data, error } = await supabase.storage.from("invoices").createSignedUrl(p.file_path, 300);
+  if (error || !data) return fail(error?.message ?? "Couldn't open the invoice");
+  return { ok: true, url: data.signedUrl };
 }
 
 export async function deleteProjectPayment(id: string, projectId: string): Promise<Result> {
   const { supabase } = await requireMember("admin");
   // payments on invoices are removed from the invoice, so its balance stays right
-  const { error, count } = await supabase.from("payments").delete({ count: "exact" }).eq("id", id).is("document_id", null);
+  const { data: gone, error } = await supabase.from("payments").delete().eq("id", id).is("document_id", null).select("file_path");
   if (error) return fail(error.message);
-  if (!count) return fail("Remove invoice payments from the invoice.");
+  if (!gone?.length) return fail("Remove invoice payments from the invoice.");
+  if (gone[0].file_path) await supabase.storage.from("invoices").remove([gone[0].file_path as string]);
   revalidatePath(`/projects/${projectId}`);
   return { ok: true };
 }
