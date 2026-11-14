@@ -251,7 +251,9 @@ try {
   // ---------------------------------------------------------------- project money: payment, team split, Home
   await api(`/rest/v1/project_finance?project_id=eq.${project.id}`, { method: "PATCH", body: JSON.stringify({ budget: 20000, billing: "fixed" }) });
   await A.go(`/projects/${project.id}?tab=money`);
+  await admin.waitForNetworkIdle({ idleTime: 500 }).catch(() => {}); // typing before hydration is lost
   await (await admin.waitForSelector("input[aria-label='Amount received']")).type("8000");
+  await admin.waitForSelector("::-p-xpath(//button[normalize-space()='Record' and not(@disabled)])");
   await A.button("Record");
   const pay = await until(async () => (await api(`/rest/v1/payments?project_id=eq.${project.id}&select=amount,document_id`))[0]);
   check("record a payment straight on a project (no invoice)", Number(pay?.amount) === 8000 && pay?.document_id === null, JSON.stringify(pay));
