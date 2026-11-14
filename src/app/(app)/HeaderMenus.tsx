@@ -43,7 +43,13 @@ export function NewMenu({ isStaff, canEdit, isAdmin }: { isStaff: boolean; canEd
   const items = [
     ...(canEdit && isStaff
       ? [
-          ...(isAdmin ? [{ href: "/documents/new?type=invoice", label: "Invoice" }] : []),
+          ...(isAdmin
+            ? [
+                { href: "/projects?pay=1", label: "Payment received" },
+                { href: "/projects?pay=1&for=team", label: "Team payout" },
+                { href: "/documents/new?type=invoice", label: "Invoice" },
+              ]
+            : []),
           { href: "/documents/new?type=quote", label: "Quote" },
           { href: "/projects/new", label: "Project" },
           { href: "/crm/new", label: "Lead" },

@@ -227,7 +227,9 @@ function toBalance(b: Row): Balance {
 async function balancesFor(ids: string[]) {
   if (!ids.length) return new Map<string, Row>();
   const { supabase } = await requireMember();
-  const { data } = await supabase.from("document_balances").select("*").in("id", ids);
+  const { data, error } = await supabase.from("document_balances").select("*").in("id", ids);
+  // without balances every invoice would look fully owed: fail loudly instead
+  if (error) throw error;
   return new Map((data ?? []).map((b) => [String(b.id), b as Row]));
 }
 

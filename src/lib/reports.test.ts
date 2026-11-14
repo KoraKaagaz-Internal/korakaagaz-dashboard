@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ageing, kpis, revenueByMonth } from "./reports";
+import { ageing, cashByMonth, kpis, moneyIn } from "./reports";
 import type { DocumentRecord } from "./types";
 
 const doc = (o: Partial<DocumentRecord>): DocumentRecord =>
@@ -33,14 +33,17 @@ describe("ageing", () => {
   });
 });
 
-describe("revenueByMonth", () => {
-  it("counts issued invoices minus credit notes, in INR", () => {
-    const rows = revenueByMonth(
-      [doc({}), doc({ doc_type: "credit_note", taxable: 2000 }), doc({ currency: "USD", fx_rate: 83, taxable: 100 }), doc({ status: "draft" })],
+describe("cashByMonth", () => {
+  it("buckets money in and out by month, last 12 months only", () => {
+    const rows = cashByMonth(
+      [{ date: "2026-10-05", amount: 20000 }, { date: "2026-10-20", amount: 5000 }, { date: "2024-01-01", amount: 999 }],
+      [{ date: "2026-09-30", amount: 3000 }],
       "2026-10-27",
     );
-    expect(rows.at(-1)).toMatchObject({ month: "2026-10", value: 10000 - 2000 + 8300 });
     expect(rows).toHaveLength(12);
+    expect(rows.at(-1)).toMatchObject({ month: "2026-10", in: 25000, out: 0 });
+    expect(rows.at(-2)).toMatchObject({ month: "2026-09", in: 0, out: 3000 });
+    expect(rows[0].month).toBe("2025-11");
   });
 });
 
@@ -53,5 +56,21 @@ describe("kpis", () => {
       "2026-10-27",
     );
     expect(k).toMatchObject({ outstanding: 11800, overdue: 11800, overdueCount: 1, revenueFy: 10000, collectedFy: 9000, tdsFy: 1000, quotesOpen: 5000, winRate: 0.5 });
+  });
+});
+
+describe("moneyIn", () => {
+  it("counts advances once, on the day the receipt was issued", () => {
+    const rows = moneyIn(
+      [doc({ doc_type: "receipt", total: 5000, issue_date: "2026-09-01" }), doc({ doc_type: "receipt", status: "draft", total: 1 })],
+      [
+        { paid_on: "2026-10-10", amount: 3000, tds_amount: 0, mode: "advance", currency: "INR", fx_rate: 1 }, // adjusting that receipt
+        { paid_on: "2026-10-11", amount: 100, tds_amount: 10, mode: "upi", currency: "USD", fx_rate: 80 },
+      ],
+    );
+    expect(rows).toEqual([
+      { date: "2026-10-11", amount: 8000, tds: 800 },
+      { date: "2026-09-01", amount: 5000, tds: 0 },
+    ]);
   });
 });

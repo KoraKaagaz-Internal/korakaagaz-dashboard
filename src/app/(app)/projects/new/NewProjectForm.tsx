@@ -3,10 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ClientForm } from "@/components/ClientForm";
-import { createProject } from "@/app/actions/projects";
+import { createProject, saveSplit } from "@/app/actions/projects";
 import { NumberInput } from "@/components/NumberInput";
 import { PeoplePicker } from "@/components/pm/PeoplePicker";
+import { SplitInput } from "@/components/pm/SplitInput";
 import { Card, Field, Input, Select, Textarea, btn } from "@/components/ui";
+import { formatMoney } from "@/lib/money";
 import { PROJECT_TYPES, type Person } from "@/lib/pm";
 import type { Billing } from "@/lib/types";
 import { navigate } from "@/lib/navigate";
@@ -16,7 +18,6 @@ interface Tpl {
   name: string;
   description: string;
   billing: Billing;
-  budget_hours: number;
   task_count: number;
   type: string;
 }
@@ -36,7 +37,7 @@ export function NewProjectForm({
   me: string;
   today: string;
   clientId: string;
-  /** Members plan hours; the fee and retainer amount are the admin's. */
+  /** The fee, retainer amount and team split are the admin's. */
   isAdmin: boolean;
 }) {
   const router = useRouter();
@@ -49,8 +50,6 @@ export function NewProjectForm({
     start_date: today,
     due_date: "",
     owner_email: me,
-    budget_hours: 0,
-    retainer_hours_month: 0,
   });
   const [fin, setFin] = useState({
     budget: 0,
@@ -58,6 +57,7 @@ export function NewProjectForm({
     retainer_amount_month: 0,
   });
   const [members, setMembers] = useState<string[]>([me]);
+  const [splits, setSplits] = useState<{ name: string; amount: number }[]>([]);
   const [clients, setClients] = useState(initialClients);
   const [addingClient, setAddingClient] = useState(false);
   const [msg, setMsg] = useState("");
@@ -66,12 +66,7 @@ export function NewProjectForm({
   const pick = (t: Tpl | null) => {
     setTpl(t?.id ?? "");
     if (t) {
-      setP((x) => ({
-        ...x,
-        type: t.type,
-        budget_hours: t.budget_hours,
-        retainer_hours_month: t.billing === "retainer" ? t.budget_hours : 0,
-      }));
+      setP((x) => ({ ...x, type: t.type }));
       setFin((f) => ({ ...f, billing: t.billing }));
     }
   };
@@ -86,7 +81,11 @@ export function NewProjectForm({
         members,
       });
       if (!r.ok) return setMsg(r.message);
-      navigate(router, `/projects/${r.id}`);
+      for (const s of splits) {
+        const sr = await saveSplit({ project_id: r.id, ...s });
+        if (!sr.ok) return setMsg(`Project created, but a team split failed: ${sr.message}`);
+      }
+      navigate(router, splits.length ? `/projects/${r.id}?tab=money` : `/projects/${r.id}`);
     });
 
   return (
@@ -111,8 +110,7 @@ export function NewProjectForm({
                 </div>
                 {t && (
                   <div className="mt-2 text-xs text-neutral-400">
-                    {t.task_count} tasks · ~{t.budget_hours} h
-                    {t.billing === "retainer" ? " / month" : ""}
+                    {t.task_count} tasks{t.billing === "retainer" ? " · monthly retainer" : ""}
                   </div>
                 )}
               </button>
@@ -231,59 +229,41 @@ export function NewProjectForm({
         </div>
       </Card>
 
-      <Card title={isAdmin ? "3. Budget" : "3. Hours"}>
+      <Card title={isAdmin ? "3. Fee and team split" : "3. Billing"}>
         <div className="grid gap-3 sm:grid-cols-4">
           <Field label="Billing">
-            <Select
-              value={fin.billing}
-              onChange={(e) =>
-                setFin({ ...fin, billing: e.target.value as Billing })
-              }
-            >
+            <Select value={fin.billing} onChange={(e) => setFin({ ...fin, billing: e.target.value as Billing })}>
               <option value="fixed">Fixed fee</option>
               <option value="retainer">Monthly retainer</option>
             </Select>
           </Field>
-          {fin.billing === "retainer" ? (
-            <>
-              {isAdmin && (
-                <Field label="Retainer ₹ / month">
-                  <NumberInput
-                    value={fin.retainer_amount_month}
-                    onValue={(v) =>
-                      setFin({ ...fin, retainer_amount_month: v })
-                    }
-                    min={0}
-                  />
-                </Field>
-              )}
-              <Field label="Hours / month">
-                <NumberInput
-                  value={p.retainer_hours_month}
-                  onValue={(v) => setP({ ...p, retainer_hours_month: v })}
-                  min={0}
-                />
+          {isAdmin &&
+            (fin.billing === "retainer" ? (
+              <Field label="Retainer ₹ / month">
+                <NumberInput value={fin.retainer_amount_month} onValue={(v) => setFin({ ...fin, retainer_amount_month: v })} min={0} />
               </Field>
-            </>
-          ) : (
-            isAdmin && (
+            ) : (
               <Field label="Fee (₹)">
-                <NumberInput
-                  value={fin.budget}
-                  onValue={(v) => setFin({ ...fin, budget: v })}
-                  min={0}
-                />
+                <NumberInput value={fin.budget} onValue={(v) => setFin({ ...fin, budget: v })} min={0} />
               </Field>
-            )
-          )}
-          <Field label="Budget hours">
-            <NumberInput
-              value={p.budget_hours}
-              onValue={(v) => setP({ ...p, budget_hours: v })}
-              min={0}
-            />
-          </Field>
+            ))}
         </div>
+        {isAdmin && (
+          <div className="mt-4 space-y-2">
+            <span className="block text-xs font-medium tracking-wide text-neutral-500 uppercase">Team split (optional)</span>
+            {splits.map((s, i) => (
+              <div key={i} className="flex items-center gap-3 text-sm">
+                <span className="flex-1">{s.name}</span>
+                <span className="tabular-nums">{formatMoney(s.amount)}</span>
+                <button type="button" className="text-xs text-neutral-400 hover:text-danger" onClick={() => setSplits(splits.filter((_, k) => k !== i))} aria-label={`Remove ${s.name}`}>
+                  Remove
+                </button>
+              </div>
+            ))}
+            <SplitInput people={people.filter((x) => x.email !== me)} fee={fin.billing === "retainer" ? fin.retainer_amount_month : fin.budget} onAdd={(s) => setSplits([...splits, s])} />
+            <p className="text-xs text-neutral-500">What you&apos;ll pay each person for this project. Mark it paid later from the project&apos;s Money tab.</p>
+          </div>
+        )}
       </Card>
 
       <div className="flex items-center gap-3">

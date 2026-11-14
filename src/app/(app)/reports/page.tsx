@@ -7,6 +7,7 @@ import {
   billedVsCollected,
   cashPosition,
   cashRevenue,
+  directRevenue,
   categoryMonths,
   cei,
   clientValue,
@@ -82,12 +83,14 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const clientNames = [...new Map(data.docs.filter((d) => d.client_id).map((d) => [d.client_id!, d.client_name])).entries()].sort((a, b) => a[1].localeCompare(b[1]));
   const docs = client && clientIds.has(client) ? data.docs.filter((d) => d.client_id === client) : data.docs;
   const docIds = new Set(docs.map((d) => d.id));
-  const pays = data.pays.filter((p) => docIds.has(p.document_id));
-  const clientProjects = new Set(docs.map((d) => d.project_id).filter(Boolean));
+  const clientProjects = new Set([...docs.map((d) => d.project_id), ...(client ? data.projects.filter((x) => x.client_id === client).map((x) => x.id) : [])].filter(Boolean));
+  // invoice payments of these documents, plus money logged straight on their projects
+  const pays = data.pays.filter((p) => (p.document_id ? docIds.has(p.document_id) : !client || clientProjects.has(p.project_id)));
+  const direct = directRevenue(pays, data.projects);
   const exps = client ? data.exps.filter((e) => e.project_id && clientProjects.has(e.project_id)) : data.exps;
 
-  const rev = basis === "cash" ? cashRevenue(docs, pays) : accrualRevenue(docs);
-  const accrual = accrualRevenue(docs);
+  const rev = [...(basis === "cash" ? cashRevenue(docs, pays) : accrualRevenue(docs)), ...direct];
+  const accrual = [...accrualRevenue(docs), ...direct];
   const costEvents = expenseCosts(exps);
   const p = pnl(rev, costEvents, cur.from, cur.to);
   const pp = pnl(rev, costEvents, prev.from, prev.to);
@@ -103,7 +106,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const ar = receivablesAt(docs, pays, today);
   const ceiNow = cei(docs, pays, cur.from, cur.to < today ? cur.to : today, today);
   const receipts = data.pays.map((x) => {
-    const d = data.docs.find((y) => y.id === x.document_id);
+    const d = x.document_id ? data.docs.find((y) => y.id === x.document_id) : undefined;
     return {
       date: x.paid_on,
       amount: (d && d.currency !== "INR" ? d.fx_rate : 1) * x.amount,
@@ -116,7 +119,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     docs: data.docs,
     exps: data.exps,
   });
-  const projects = projectTable(client ? data.projects.filter((x) => clientProjects.has(x.id)) : data.projects, accrual, costEvents, data.projectMinutes).slice(0, 12);
+  const projects = projectTable(client ? data.projects.filter((x) => clientProjects.has(x.id)) : data.projects, accrual, costEvents).slice(0, 12);
   const team = people.filter((x) => x.role !== "viewer");
   const util = utilisation(
     data.time,
@@ -128,11 +131,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     data.leave,
     data.holidays,
   );
-  const utilAll = (() => {
-    const w = util.flatMap((u) => u.weeks);
-    const cap = w.reduce((s, x) => s + x.capacity, 0);
-    return cap ? Math.round((w.reduce((s, x) => s + x.logged, 0) / cap) * 100) : null;
-  })();
   const hoursLogged = Math.round(util.reduce((s, u) => s + u.weeks.reduce((t, w) => t + w.logged, 0), 0));
   const ot = onTime(data.tasks, cur.from, cur.to);
   const funnel = quoteFunnel(docs, cur.from, cur.to);
@@ -264,7 +262,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           sub={`${dso[dso.length - 1]?.dso ?? "—"} days to get paid · aim ≤ 45`}
           info="Days to get paid (DSO): how many days of billing are still unpaid. Under the MSME Act, business clients must pay within 45 days."
         />
-        <Kpi label="Team hours used (8 weeks)" value={pct(utilAll)} sub="hours logged ÷ hours available" />
         <Kpi
           label="Biggest client share"
           value={conc[0] ? pct(conc[0].share) : "—"}
@@ -597,26 +594,24 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       {/* ------------------------------------------------------------- projects & team */}
       <h2 className="pt-2 text-lg font-semibold">Projects &amp; team</h2>
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <Kpi label="Tasks done on time" value={pct(ot.pct)} sub={`${ot.done} finished · ${ot.late} late`} />
         <Kpi label="Hours logged (8 weeks)" value={String(hoursLogged)} sub="across the team" />
-        <Kpi label="Over-budget projects" value={String(projects.filter((x) => x.overBudget).length)} sub="hours past the estimate" upIsGood={false} />
         <Kpi label="Quotes accepted" value={`${funnel.stages[1].count} of ${funnel.stages[0].count}`} sub={compactInr(funnel.stages[1].value)} />
       </section>
       <div className="grid gap-5 lg:grid-cols-2">
         <div className="lg:col-span-2">
           <Frame
             title="Project profitability"
-            subtitle="All time: revenue − project expenses. Hours are compared with each project's budget hours."
+            subtitle="All time: revenue − project expenses (team split, freelancers, props…)."
             table={{
-              columns: ["Project", "Revenue", "Expenses", "Profit", "Margin", "Hours"],
+              columns: ["Project", "Revenue", "Expenses", "Profit", "Margin"],
               rows: projects.map((x) => [
                 `${x.code} ${x.name}`,
                 inrFull(x.revenue),
                 inrFull(x.expenses),
                 inrFull(x.profit),
                 pct(x.margin),
-                x.budget_hours ? `${x.hours} of ${x.budget_hours}` : x.hours,
               ]),
             }}
           >
@@ -630,7 +625,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                       <th className="text-right font-medium">Expenses</th>
                       <th className="text-right font-medium">Profit</th>
                       <th className="w-40 pl-3 font-medium">Margin</th>
-                      <th className="text-right font-medium">Hours</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-line">
@@ -640,7 +634,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                           <Link href={`/projects/${x.id}?tab=money`} className="hover:text-navy">
                             <span className="font-mono text-xs text-neutral-400">{x.code}</span> {x.name}
                           </Link>
-                          {x.overBudget && <span className="ml-1.5 text-xs text-danger">▲ over hours</span>}
                         </td>
                         <td className="text-right tabular-nums">{compactInr(x.revenue)}</td>
                         <td className="text-right tabular-nums">{compactInr(x.expenses)}</td>
@@ -661,17 +654,13 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
                             </span>
                           )}
                         </td>
-                        <td className="text-right tabular-nums">
-                          {x.hours}
-                          {x.budget_hours ? <span className="text-neutral-400"> / {x.budget_hours}</span> : null}
-                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-neutral-500">Tag invoices, expenses and time to projects to see this.</p>
+              <p className="text-sm text-neutral-500">Record payments and expenses on projects to see this.</p>
             )}
           </Frame>
         </div>

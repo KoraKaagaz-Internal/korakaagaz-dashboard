@@ -1,16 +1,15 @@
-import { ProgressBar } from "@/components/pm/Pills";
 import { Card } from "@/components/ui";
 import { formatShortDate, todayIso } from "@/lib/money";
 import { displayName, type Person } from "@/lib/pm";
 import { createClient } from "@/lib/supabase/server";
-import { hhmm, monthRange, retainerBurn } from "@/lib/time";
+import { hhmm, monthRange } from "@/lib/time";
 import { projectEntries, projectMinutes, timeApprovalOn } from "@/lib/time-data";
 import type { Project } from "@/lib/types";
 
 const STATUS_TEXT = { draft: "Draft", submitted: "Waiting approval", approved: "Approved", rejected: "Sent back" } as const;
 
 /**
- * Hours logged vs the budget and retainer hours this month. No money. The admin also sees who
+ * Hours logged on the project, in total and this month. No money. The admin also sees who
  * logged what; everyone else sees hours by task and their own entries.
  */
 export async function ProjectTime({ project, people, byPerson: showPeople }: { project: Project; people: Person[]; byPerson: boolean }) {
@@ -20,7 +19,6 @@ export async function ProjectTime({ project, people, byPerson: showPeople }: { p
   const approved = done.filter((e) => e.status === "approved").reduce((s, e) => s + e.minutes, 0);
   const month = monthRange(todayIso());
   const thisMonth = totals.filter((r) => r.month === month.from).reduce((s, r) => s + r.minutes, 0);
-  const burn = project.retainer_hours_month ? retainerBurn(thisMonth, project.retainer_hours_month) : null;
   const byPerson = new Map<string, number>();
   for (const e of done) byPerson.set(e.member_email, (byPerson.get(e.member_email) ?? 0) + e.minutes);
   const byTask = new Map<string | null, number>();
@@ -28,7 +26,6 @@ export async function ProjectTime({ project, people, byPerson: showPeople }: { p
   const taskIds = [...byTask.keys()].filter((t): t is string => !!t);
   const { data: titles } = taskIds.length ? await (await createClient()).from("tasks").select("id, title").in("id", taskIds) : { data: [] };
   const title = new Map((titles ?? []).map((t) => [t.id as string, t.title as string]));
-  const hoursPct = project.budget_hours ? Math.round((total / 60 / project.budget_hours) * 100) : 0;
 
   return (
     <div className="space-y-5">
@@ -36,33 +33,11 @@ export async function ProjectTime({ project, people, byPerson: showPeople }: { p
         <div className="rounded-xl border border-line bg-white px-4 py-3">
           <div className="text-xs text-neutral-500">Logged</div>
           <div className="text-lg font-semibold tabular-nums">{hhmm(total)} h</div>
-          {project.budget_hours > 0 && (
-            <div className="mt-1">
-              <ProgressBar pct={hoursPct} label={`${hoursPct}% of ${project.budget_hours} budgeted hours`} />
-              <div className={`text-xs ${hoursPct > 100 ? "font-medium text-danger" : "text-neutral-500"}`}>of {project.budget_hours} h budget</div>
-            </div>
-          )}
         </div>
-        {burn && (
-          <div className="rounded-xl border border-line bg-white px-4 py-3">
-            <div className="text-xs text-neutral-500">Retainer this month</div>
-            <div className="text-lg font-semibold tabular-nums">
-              {burn.usedHours} / {burn.includedHours} h
-            </div>
-            <div className="mt-1">
-              <ProgressBar pct={burn.pct} label={`${burn.pct}% of the monthly hours used`} />
-            </div>
-            <div className={`text-xs ${burn.overHours ? "font-medium text-danger" : "text-neutral-500"}`}>
-              {burn.overHours ? `${burn.overHours} h over: bill extra or roll back` : `${burn.leftHours} h left`}
-            </div>
-          </div>
-        )}
-        {!burn && (
-          <div className="rounded-xl border border-line bg-white px-4 py-3">
-            <div className="text-xs text-neutral-500">This month</div>
-            <div className="text-lg font-semibold tabular-nums">{hhmm(thisMonth)} h</div>
-          </div>
-        )}
+        <div className="rounded-xl border border-line bg-white px-4 py-3">
+          <div className="text-xs text-neutral-500">This month</div>
+          <div className="text-lg font-semibold tabular-nums">{hhmm(thisMonth)} h</div>
+        </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_2fr]">

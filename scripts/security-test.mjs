@@ -417,6 +417,26 @@ try {
   check("members see project costs", seenIds.includes(bill.id));
   check("members cannot see salaries", !seenIds.includes(salary.id));
   check("members cannot see freelancer fees", !seenIds.includes(fee.id));
+  // 12a. Project money (0020): payments logged straight on a project and the team split are the admin's.
+  const { data: splitCat } = await admin.from("expense_categories").select("id").eq("name", "Freelancer: team split").single();
+  check("the team split category exists", !!splitCat);
+  const { data: splitRow } = await admin
+    .from("expenses")
+    .insert({ kind: "bill", vendor_name: "Sec Teammate", category_id: splitCat.id, project_id: pA.id, expense_date: today, taxable: 3000, total: 3000 })
+    .select("id")
+    .single();
+  const { data: mSplit } = await member.from("expenses").select("id").eq("id", splitRow.id);
+  check("members cannot see the team split", (mSplit ?? []).length === 0);
+  const { data: projPay, error: projPayErr } = await admin.from("payments").insert({ project_id: pA.id, paid_on: today, amount: 5000 }).select("id").single();
+  check("the admin can log a payment on a project", !projPayErr, projPayErr?.message);
+  const { error: mProjPay } = await member.from("payments").insert({ project_id: pA.id, paid_on: today, amount: 1 });
+  check("members cannot log project payments", !!mProjPay);
+  const { data: mSeeProjPay } = await member.from("payments").select("id").eq("project_id", pA.id);
+  check("members cannot see project payments", (mSeeProjPay ?? []).length === 0);
+  const { error: orphanPay } = await admin.from("payments").insert({ paid_on: today, amount: 1 });
+  check("a payment needs an invoice or a project", !!orphanPay);
+  await admin.from("payments").delete().eq("id", projPay?.id);
+  await admin.from("expenses").delete().eq("id", splitRow.id);
   const { data: vSees } = await viewer.from("expenses").select("id").in("id", [bill.id, salary.id]);
   check("viewers see the same as members", (vSees ?? []).length === 1);
   const { error: mBill } = await member.from("expenses").insert({ kind: "bill", vendor_name: "x", category_id: cat.id, project_id: pA.id, expense_date: today, taxable: 1, total: 1 });

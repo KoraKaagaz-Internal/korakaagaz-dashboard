@@ -354,7 +354,7 @@ try {
   check("freelancer is kept out of clients", new URL(fl.url()).pathname === "/my-work");
   await F.go("/projects?show=all");
   const fp = await F.body();
-  check("freelancer sees only their project", fp.includes(PROJECT) && !/Budget ₹/.test(fp));
+  check("freelancer sees only their project", fp.includes(PROJECT) && !/Fee ₹|pending/.test(fp));
   await F.go(`/projects/${projectId}`);
   const tabs = await fl.$$eval("nav[aria-label='Project sections'] a", (els) => els.map((e) => e.textContent));
   check("freelancer has no Money tab, only Hours", !tabs.includes("Money") && tabs.includes("Hours"), tabs.join(","));

@@ -37,8 +37,6 @@ export function Overview({
     start_date: p.start_date ?? "",
     due_date: p.due_date ?? "",
     owner_email: p.owner_email ?? "",
-    budget_hours: p.budget_hours,
-    retainer_hours_month: p.retainer_hours_month,
   });
   const [fin, setFin] = useState<ProjectFinance>(finance ?? { budget: 0, billing: "fixed", retainer_amount_month: 0 });
   const [msg, setMsg] = useState("");
@@ -80,7 +78,6 @@ export function Overview({
                 <Item label="Start">{formatInvoiceDate(p.start_date) || "—"}</Item>
                 <Item label="Due">{formatInvoiceDate(p.due_date) || "—"}</Item>
                 <Item label="Estimated">{totalHours ? `${totalHours} h of tasks` : "—"}</Item>
-                <Item label="Budget hours">{p.budget_hours ? `${p.budget_hours} h${p.retainer_hours_month ? ` (${p.retainer_hours_month} h/month)` : ""}` : "—"}</Item>
               </dl>
             </div>
           ) : (
@@ -125,12 +122,6 @@ export function Overview({
               </Field>
               <Field label="Due">
                 <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
-              </Field>
-              <Field label="Budget hours">
-                <NumberInput value={form.budget_hours} onValue={(v) => setForm({ ...form, budget_hours: v })} min={0} />
-              </Field>
-              <Field label="Retainer hours / month">
-                <NumberInput value={form.retainer_hours_month} onValue={(v) => setForm({ ...form, retainer_hours_month: v })} min={0} />
               </Field>
               <Field label="Brief" className="sm:col-span-2">
                 <Textarea rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />

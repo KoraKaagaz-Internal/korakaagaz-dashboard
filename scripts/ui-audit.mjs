@@ -140,7 +140,7 @@ try {
       check(`member is turned away from ${path}`, url.pathname === "/" && url.searchParams.get("denied") === "1", url.pathname);
     }
     const home = await text("/");
-    check("member's Home shows no money", !/Owed to you|Revenue this FY|Collected this FY|₹/.test(home.body) && /Follow-ups due/.test(home.body));
+    check("member's Home shows no money", !/Received this FY|Pending from clients|To pay team|₹/.test(home.body) && /Follow-ups due/.test(home.body));
     const docs = await text("/documents");
     check("member's documents page is Quotes", /Quotes/.test(docs.body) && !/Export CSV|Balance|Credit notes/.test(docs.body));
     const newDoc = await text("/documents/new?type=invoice");

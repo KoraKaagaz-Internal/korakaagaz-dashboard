@@ -6,6 +6,8 @@ import { requireMember, requireTeam } from "@/lib/data";
 import { todayIso } from "@/lib/money";
 import { mentionedEmails, type Person } from "@/lib/pm";
 import { getTaskDetail } from "@/lib/pm-data";
+import { SPLIT_CATEGORY } from "@/lib/projects";
+import { saveExpense } from "./expenses";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; message: string };
 type Supa = Awaited<ReturnType<typeof requireTeam>>["supabase"];
@@ -43,8 +45,6 @@ const projectSchema = z.object({
     .nullable()
     .or(z.literal("").transform(() => null))
     .default(null),
-  budget_hours: z.coerce.number().min(0).default(0),
-  retainer_hours_month: z.coerce.number().min(0).default(0),
   colour: z.string().default(""),
 });
 
@@ -116,10 +116,69 @@ export async function updateProject(id: string, input: Partial<z.input<typeof pr
   return { ok: true };
 }
 
+// ---------------------------------------------------------------------------
+// Project money (admin): payments straight on a project, and the team split
+// ---------------------------------------------------------------------------
+const projectPaymentSchema = z.object({
+  project_id: uuid,
+  paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date"),
+  amount: z.coerce.number().positive("Enter the amount received"),
+  tds_amount: z.coerce.number().min(0).default(0),
+  mode: z.enum(["upi", "bank", "cash", "cheque", "wire"]).default("upi"),
+  note: z.string().trim().max(500).default(""),
+});
+
+export async function recordProjectPayment(input: z.input<typeof projectPaymentSchema>): Promise<Result> {
+  const { supabase } = await requireMember("admin");
+  const parsed = projectPaymentSchema.safeParse(input);
+  if (!parsed.success) return fail(issues(parsed.error));
+  const { error } = await supabase.from("payments").insert(parsed.data);
+  if (error) return fail(error.message);
+  revalidatePath(`/projects/${parsed.data.project_id}`);
+  revalidatePath("/");
+  return { ok: true };
+}
+
+export async function deleteProjectPayment(id: string, projectId: string): Promise<Result> {
+  const { supabase } = await requireMember("admin");
+  // payments on invoices are removed from the invoice, so its balance stays right
+  const { error, count } = await supabase.from("payments").delete({ count: "exact" }).eq("id", id).is("document_id", null);
+  if (error) return fail(error.message);
+  if (!count) return fail("Remove invoice payments from the invoice.");
+  revalidatePath(`/projects/${projectId}`);
+  return { ok: true };
+}
+
+/** One person's share of a project: a bill in the team-split category, paid off with "Mark paid". */
+export async function saveSplit(input: { id?: string; project_id: string; name: string; amount: number }): Promise<Result<{ id: string }>> {
+  const { supabase } = await requireMember("admin");
+  const name = input.name.trim();
+  if (!name) return fail("Who is this for?");
+  if (!(input.amount > 0)) return fail("Enter an amount");
+  const { data: cat } = await supabase.from("expense_categories").select("id").eq("name", SPLIT_CATEGORY).single();
+  if (!cat) return fail("The team split category is missing. Run the latest database migration.");
+  const r = await saveExpense({
+    id: input.id,
+    kind: "bill",
+    vendor_name: name,
+    category_id: cat.id as string,
+    expense_date: todayIso(),
+    description: `Team split · ${name}`,
+    project_id: input.project_id,
+    taxable: input.amount,
+    gst_rate: 0,
+    tds_nature: "none",
+  });
+  if (r.ok) revalidatePath(`/projects/${input.project_id}`);
+  return r;
+}
+
 export async function deleteProject(id: string): Promise<Result> {
   const { supabase } = await requireMember("admin");
   const { count } = await supabase.from("documents").select("id", { count: "exact", head: true }).eq("project_id", id).neq("status", "draft");
   if (count) return fail("This project has issued billing documents. Mark it Done or Cancelled instead.");
+  const { count: paid } = await supabase.from("payments").select("id", { count: "exact", head: true }).eq("project_id", id);
+  if (paid) return fail("This project has payments recorded. Mark it Done or Cancelled instead.");
   const { count: approvedTime } = await supabase.from("time_entries").select("id", { count: "exact", head: true }).eq("project_id", id).eq("status", "approved");
   if (approvedTime) return fail("This project has approved time. Mark it Done or Cancelled instead.");
   const { data: files } = await supabase.from("files").select("storage_path").eq("project_id", id).eq("kind", "upload");

@@ -18,7 +18,6 @@ export default async function NewProjectPage({ searchParams }: { searchParams: P
           name: t.name,
           description: t.description,
           billing: t.billing,
-          budget_hours: t.budget_hours,
           task_count: t.task_count,
           type: t.type,
         }))}

@@ -17,6 +17,8 @@ import {
   period,
   pnl,
   projectTable,
+  directRevenue,
+  billedVsCollected,
   quoteFunnel,
   receivablesAt,
   utilisation,
@@ -98,7 +100,7 @@ describe("revenue, costs and P&L", () => {
     expect(accrualRevenue(docs).map((r) => r.amount)).toEqual([100000, -10000, 84000]);
   });
   it("cash revenue strips the GST share and counts TDS the client kept", () => {
-    expect(cashRevenue(docs, [{ document_id: "a", paid_on: "2026-10-25", amount: 108000, tds_amount: 10000 }])[0].amount).toBe(100000);
+    expect(cashRevenue(docs, [{ document_id: "a", project_id: null, paid_on: "2026-10-25", amount: 108000, tds_amount: 10000 }])[0].amount).toBe(100000);
   });
   it("expense cost is pre-GST only when the credit comes back", () => {
     const c = expenseCosts([exp({}), exp({ itc_status: "blocked" }), exp({ kind: "claim", approval: "submitted" }), exp({ is_draft: true })]);
@@ -150,7 +152,7 @@ describe("cash and collections", () => {
     doc({ id: "a", issue_date: "2026-08-01", total: 1000, taxable: 1000, due_date: "2026-08-15", balance: 400 }),
     doc({ id: "b", issue_date: "2026-09-10", total: 2000, taxable: 2000, due_date: "2026-11-20", balance: 2000 }),
   ];
-  const pays = [{ document_id: "a", paid_on: "2026-09-05", amount: 500, tds_amount: 100 }];
+  const pays = [{ document_id: "a", project_id: null, paid_on: "2026-09-05", amount: 500, tds_amount: 100 }];
   it("receivables at a date", () => {
     expect(receivablesAt(docs, pays, "2026-08-31")).toBe(1000);
     expect(receivablesAt(docs, pays, "2026-09-30")).toBe(2400);
@@ -190,15 +192,23 @@ describe("cash and collections", () => {
 });
 
 describe("projects and team", () => {
-  it("project profit and hours against the budget", () => {
+  it("project profit", () => {
     const t = projectTable(
-      [{ id: "p", code: "KK-1", name: "Shoot", status: "active", budget_hours: 10 }],
+      [{ id: "p", code: "KK-1", name: "Shoot", status: "active" }],
       [{ date: "2026-10-01", client: "A", project_id: "p", amount: 50000 }],
       [{ date: "2026-10-01", category: "Props", kind: "pass_through", project_id: "p", amount: 10000 }],
-      new Map([["p", 1200]]),
     );
-    expect(t[0]).toMatchObject({ revenue: 50000, expenses: 10000, hours: 20, profit: 40000, margin: 80, overBudget: true });
-    expect(t[0]).not.toHaveProperty("ehr");
+    expect(t[0]).toMatchObject({ revenue: 50000, expenses: 10000, profit: 40000, margin: 80 });
+    expect(t[0]).not.toHaveProperty("hours");
+  });
+  it("money logged straight on a project counts as revenue and as collected", () => {
+    const pays = [
+      { document_id: null, project_id: "p", paid_on: "2026-10-05", amount: 20000, tds_amount: 0 },
+      { document_id: "a", project_id: "p", paid_on: "2026-10-06", amount: 1, tds_amount: 0 },
+    ];
+    expect(directRevenue(pays, [{ id: "p", client_name: "Acme" }])).toEqual([{ date: "2026-10-05", client: "Acme", project_id: "p", amount: 20000 }]);
+    const m = billedVsCollected([], pays, [{ key: "2026-10", label: "Oct", from: "2026-10-01", to: "2026-10-31" }]);
+    expect(m[0].Collected).toBe(20000); // the invoice payment's document isn't in the list, so only the direct one counts
   });
   it("utilisation per week against capacity after leave", () => {
     const u = utilisation(

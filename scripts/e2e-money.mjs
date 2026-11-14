@@ -230,7 +230,7 @@ try {
   const rep = await A.body();
   const sections = ["Profit & loss", "Clients & services", "Cash & collections", "Projects & team", "GST & exports"];
   check("reports show every section", sections.every((s) => rep.includes(s)), sections.filter((s) => !rep.includes(s)).join(","));
-  check("health strip shows revenue, cash and win rate", ["Revenue", "Cash in hand", "Quote win rate", "Team hours used"].every((s) => rep.includes(s)));
+  check("health strip shows revenue, cash and win rate", ["Revenue", "Cash in hand", "Quote win rate"].every((s) => rep.includes(s)));
   await admin.screenshot({ path: ".visual/e2e-reports.png", fullPage: true });
   await A.tap("::-p-xpath(//button[normalize-space()='View as table'])");
   await admin.waitForSelector("::-p-xpath(//button[normalize-space()='View as chart'])");
@@ -247,6 +247,34 @@ try {
   await A.go("/expenses");
   check("expenses page lists this month's bill", (await A.body()).includes(VENDOR));
   await admin.screenshot({ path: ".visual/e2e-expenses.png" });
+
+  // ---------------------------------------------------------------- project money: payment, team split, Home
+  await api(`/rest/v1/project_finance?project_id=eq.${project.id}`, { method: "PATCH", body: JSON.stringify({ budget: 20000, billing: "fixed" }) });
+  await A.go(`/projects/${project.id}?tab=money`);
+  await (await admin.waitForSelector("input[aria-label='Amount received']")).type("8000");
+  await A.button("Record");
+  const pay = await until(async () => (await api(`/rest/v1/payments?project_id=eq.${project.id}&select=amount,document_id`))[0]);
+  check("record a payment straight on a project (no invoice)", Number(pay?.amount) === 8000 && pay?.document_id === null, JSON.stringify(pay));
+  check(
+    "project P&L shows received and pending",
+    await until(async () => /Received\s*₹\s?8,000/.test(await A.body()) && /Pending from client\s*₹\s?12,000/.test(await A.body())),
+  );
+  await (await admin.waitForSelector("input[aria-label='Who']")).type("E2E Teammate");
+  await admin.select("select[aria-label='₹ or %']", "pct");
+  await (await admin.waitForSelector("input[aria-label='Percent of fee']")).type("30");
+  await A.tap("::-p-xpath(//button[starts-with(normalize-space(), 'Add')])");
+  const split = await until(async () => (await api(`/rest/v1/expenses?project_id=eq.${project.id}&vendor_name=eq.E2E%20Teammate&select=id,total,expense_categories(name)`))[0]);
+  if (split) made.expenses.push(split.id);
+  check("add a 30% team split as ₹ of the fee", Number(split?.total) === 6000 && split?.expense_categories?.name === "Freelancer: team split", JSON.stringify(split));
+  await until(async () => (await A.body()).includes("Mark paid"));
+  await A.button("Mark paid");
+  const splitPaid = await until(async () => (await api(`/rest/v1/expense_payments?expense_id=eq.${split?.id}&select=amount`))[0]);
+  check("mark the team split paid", Number(splitPaid?.amount) === 6000, JSON.stringify(splitPaid));
+  check("project shows the split paid and your share", await until(async () => /₹\s?6,000(\.00)? paid · ₹\s?0(\.00)? to pay/.test(await A.body()) && (await A.body()).includes("Your share")));
+  await A.go("/");
+  const home = await A.body();
+  check("Home shows received, pending and team money", ["Received this FY", "Pending from clients", "To pay team", "Net this FY", "Money in vs money out"].every((x) => home.includes(x)));
+  check("Home lists the project with money pending", home.includes(`E2E money project ${stamp}`));
 } catch (e) {
   check("unexpected error", false, e.message.split("\n")[0]);
   await admin.screenshot({ path: ".visual/e2e-money-error.png" }).catch(() => {});
@@ -270,6 +298,7 @@ try {
     await api(`/rest/v1/audit_events?entity_id=eq.${made.vendor}`, { method: "DELETE" });
   }
   if (made.project) {
+    await api(`/rest/v1/payments?project_id=eq.${made.project}`, { method: "DELETE" });
     await api(`/rest/v1/projects?id=eq.${made.project}`, { method: "DELETE" });
     await api(`/rest/v1/audit_events?project_id=eq.${made.project}`, { method: "DELETE" });
   }

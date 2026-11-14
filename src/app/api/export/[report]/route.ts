@@ -44,7 +44,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       "Payment status": d.balance?.payment_status ?? "",
     }));
   } else if (report === "payments" || report === "tds") {
-    let q = supabase.from("payments").select("*, documents(number, currency, client_snapshot)").order("paid_on");
+    let q = supabase.from("payments").select("*, documents(number, currency, client_snapshot), projects(code, clients(name))").order("paid_on");
     if (from) q = q.gte("paid_on", from);
     if (to) q = q.lte("paid_on", to);
     if (report === "tds") q = q.gt("tds_amount", 0);
@@ -52,7 +52,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     rows = (data ?? []).map((p) => ({
       Date: p.paid_on,
       Invoice: p.documents?.number ?? "",
-      Client: p.documents?.client_snapshot?.name ?? "",
+      Project: p.projects?.code ?? "",
+      Client: p.documents?.client_snapshot?.name ?? p.projects?.clients?.name ?? "",
       "Client GSTIN": p.documents?.client_snapshot?.gstin ?? "",
       Currency: p.documents?.currency ?? "INR",
       Amount: Number(p.amount),

@@ -198,7 +198,9 @@ export interface Balance {
 
 export interface Payment {
   id: string;
-  document_id: string;
+  /** null when the money was logged straight on a project */
+  document_id: string | null;
+  project_id: string | null;
   paid_on: string;
   amount: number;
   tds_amount: number;

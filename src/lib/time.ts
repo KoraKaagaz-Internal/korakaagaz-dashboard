@@ -131,18 +131,6 @@ export function weekCapacity(weeklyHours: number, days: number): number {
   return Math.round(((weeklyHours * days) / 5) * 10) / 10;
 }
 
-/** Retainer use for a month: hours logged vs included, and what rolls over (if allowed). */
-export function retainerBurn(minutesLogged: number, includedHours: number) {
-  const used = minutesLogged / 60;
-  return {
-    usedHours: Math.round(used * 10) / 10,
-    includedHours,
-    pct: includedHours > 0 ? Math.round((used / includedHours) * 100) : 0,
-    overHours: Math.max(0, Math.round((used - includedHours) * 10) / 10),
-    leftHours: Math.max(0, Math.round((includedHours - used) * 10) / 10),
-  };
-}
-
 /** Days from the 1st to the last of the month containing the date. */
 export function monthRange(iso: string): { from: string; to: string } {
   const from = `${iso.slice(0, 7)}-01`;

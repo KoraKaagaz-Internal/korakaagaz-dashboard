@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { BarChart } from "@/components/BarChart";
+import { Columns, Frame } from "@/components/charts/Charts";
+import { SERIES, inrFull } from "@/lib/format";
 import {
   EmptyState,
   PageHeader,
@@ -22,7 +23,8 @@ import {
   formatShortDate,
   todayIso,
 } from "@/lib/money";
-import { ageing, kpis, revenueByMonth } from "@/lib/reports";
+import { SPLIT_CATEGORY, projectFee } from "@/lib/projects";
+import { ageing, cashByMonth, inr, kpis, moneyIn } from "@/lib/reports";
 import { listEvents, timeApprovalOn } from "@/lib/time-data";
 import { DOC_LABELS } from "@/lib/types";
 
@@ -56,6 +58,8 @@ export default async function Home({
     claims,
     approval,
     { data: tasks },
+    { data: outPays },
+    { data: projectRows },
   ] = await Promise.all([
     listDocuments(),
     isAdmin
@@ -93,6 +97,10 @@ export default async function Home({
       .lte("due_date", week)
       .order("due_date")
       .limit(8),
+    isAdmin ? supabase.from("expense_payments").select("paid_on, amount") : Promise.resolve({ data: [] }),
+    isAdmin
+      ? supabase.from("projects").select("id, code, name, status, start_date, due_date, project_finance(budget, billing, retainer_amount_month)").neq("status", "cancelled")
+      : Promise.resolve({ data: [] }),
   ]);
   const submittedTime =
     isAdmin && approval
@@ -121,8 +129,27 @@ export default async function Home({
     fx_rate: Number(p.documents?.fx_rate ?? 1),
   }));
   const k = kpis(docs, payments, fy, today);
-  const revenue = revenueByMonth(docs, today);
   const aged = ageing(docs, today);
+
+  // Money: what came in, what went out, what clients and the team are still owed.
+  const ins = moneyIn(docs, payments);
+  const outs = (outPays ?? []).map((x) => ({ date: x.paid_on as string, amount: Number(x.amount) }));
+  const cash = cashByMonth(ins, outs, today);
+  const spentFy = outs.filter((x) => financialYear(x.date) === fy).reduce((sum, x) => sum + x.amount, 0);
+  const receivedBy = new Map<string, number>();
+  for (const x of payments) if (x.project_id) receivedBy.set(x.project_id, (receivedBy.get(x.project_id) ?? 0) + inr(x, x.amount + x.tds_amount));
+  const pendingProjects = (projectRows ?? [])
+    .map((r) => {
+      const fin = Array.isArray(r.project_finance) ? r.project_finance[0] : r.project_finance;
+      const fee = projectFee(fin ? { budget: Number(fin.budget), billing: fin.billing, retainer_amount_month: Number(fin.retainer_amount_month) } : null, r, today);
+      return { id: r.id as string, code: r.code as string, name: r.name as string, status: r.status as string, pending: Math.max(0, fee - (receivedBy.get(r.id) ?? 0)) };
+    })
+    .filter((x) => x.pending > 0.5)
+    .sort((a, b) => b.pending - a.pending);
+  // invoices without a project aren't in any project's fee, so add their balances once
+  const looseInvoices = docs.filter((d) => d.doc_type === "invoice" && d.status === "issued" && !d.project_id).reduce((sum, d) => sum + inr(d, d.balance?.balance ?? 0), 0);
+  const pendingTotal = pendingProjects.reduce((sum, x) => sum + x.pending, 0) + looseInvoices;
+  const teamDue = bills.filter((e) => e.category === SPLIT_CATEGORY).reduce((sum, e) => sum + e.balance, 0);
   const drafts = docs.filter((d) => d.status === "draft").slice(0, 6);
 
   // One list of things someone has to act on, most urgent first.
@@ -153,6 +180,16 @@ export default async function Home({
         what: `${daysBetween(d.due_date ?? d.issue_date, today)}d overdue`,
         title: `${d.number} · ${d.client.name}`,
         detail: formatMoney(d.balance?.balance ?? d.total, d.currency),
+      })),
+    ...pendingProjects
+      .filter((x) => x.status === "done" || x.status === "review")
+      .map((x): Attention => ({
+        key: `pending-${x.id}`,
+        href: `/projects/${x.id}?tab=money`,
+        tone: x.status === "done" ? "danger" : "warn",
+        what: "Payment pending",
+        title: `${x.code} · ${x.name}`,
+        detail: formatMoney(x.pending),
       })),
     ...(followUps ?? []).map((l): Attention => ({
       key: l.id,
@@ -231,37 +268,25 @@ export default async function Home({
 
       {isAdmin ? (
         <StatRow>
-          <StatLink href="/documents?type=invoice&status=unpaid">
-            <Stat label="Owed to you" value={formatMoney(k.outstanding)} />
+          <StatLink href="/reports?basis=cash">
+            <Stat label="Received this FY" value={formatMoney(k.collectedFy)} sub={k.tdsFy ? `+ ${formatMoney(k.tdsFy)} TDS` : undefined} info="Money that reached you this financial year: payments on projects and invoices, and advances." />
           </StatLink>
-          <StatLink href="/documents?type=invoice&status=overdue">
+          <StatLink href="#pending">
             <Stat
-              label={`Overdue · ${k.overdueCount}`}
-              value={formatMoney(k.overdue)}
-              tone={k.overdue > 0 ? "danger" : undefined}
+              label="Pending from clients"
+              value={formatMoney(pendingTotal)}
+              tone={pendingTotal > 0 ? "warn" : undefined}
+              sub={k.overdue > 0 ? `${formatMoney(k.overdue)} overdue` : `${pendingProjects.length} project${pendingProjects.length === 1 ? "" : "s"}`}
+              info="Project fees not yet received, plus unpaid invoices that aren't on a project."
             />
           </StatLink>
-          <Stat
-            label="Revenue this FY"
-            value={formatMoney(k.revenueFy)}
-            info="Taxable value of invoices issued this financial year, after credit notes."
-          />
-          <Stat
-            label="Collected this FY"
-            value={formatMoney(k.collectedFy)}
-            sub={k.tdsFy ? `+ ${formatMoney(k.tdsFy)} TDS` : undefined}
-          />
-          <StatLink href="/documents?type=quote&status=issued">
-            <Stat
-              label={`Open quotes · ${k.quotesOpenCount}`}
-              value={formatMoney(k.quotesOpen)}
-              sub={
-                k.winRate === null
-                  ? undefined
-                  : `${Math.round(k.winRate * 100)}% won`
-              }
-            />
+          <StatLink href="/expenses?status=unpaid">
+            <Stat label="To pay team" value={formatMoney(teamDue)} tone={teamDue > 0 ? "warn" : undefined} info="Team splits on projects that haven't been marked paid yet." />
           </StatLink>
+          <StatLink href="/expenses">
+            <Stat label="Spent this FY" value={formatMoney(spentFy)} info="Everything paid out this financial year: team payouts, bills, salaries and claims." />
+          </StatLink>
+          <Stat label="Net this FY" value={formatMoney(k.collectedFy - spentFy)} tone={k.collectedFy - spentFy < 0 ? "danger" : "ok"} info="Received minus spent, this financial year." />
         </StatRow>
       ) : (
         <StatRow>
@@ -397,61 +422,76 @@ export default async function Home({
 
       {isAdmin && (
         <div className="grid gap-8 lg:grid-cols-[3fr_2fr]">
-          <Section
-            title="Revenue, last 12 months"
-            actions={
-              <Link
-                href="/reports"
-                className="text-sm text-navy hover:underline"
-              >
-                Reports →
-              </Link>
-            }
+          <Frame
+            title="Money in vs money out"
+            subtitle="Last 12 months, by the date money moved"
+            legend={[
+              { label: "In", color: SERIES[2] },
+              { label: "Out", color: SERIES[1] },
+            ]}
+            table={{ columns: ["Month", "In", "Out", "Net"], rows: cash.map((c) => [c.label, inrFull(c.in), inrFull(c.out), inrFull(c.in - c.out)]) }}
           >
-            <div className="pl-10">
-              <BarChart
-                bars={revenue.map((r) => ({
-                  key: r.month,
-                  label: r.label,
-                  value: r.value,
-                  detail: r.month,
-                }))}
-                title="Revenue"
-                height={150}
-              />
-            </div>
-          </Section>
-          <Section title="Owed to you, by age">
-            <ul className="space-y-2.5">
-              {aged.map((a) => {
-                const max = Math.max(1, ...aged.map((x) => x.value));
-                return (
-                  <li
-                    key={a.bucket}
-                    className="grid grid-cols-[88px_1fr_auto] items-center gap-3 text-sm"
-                    title={`${a.count} invoice(s)`}
-                  >
-                    <span className="text-neutral-600">{a.bucket}</span>
-                    <span className="h-2 rounded-full bg-subtle">
-                      <span
-                        className="block h-2 rounded-full bg-accent"
-                        style={{
-                          width: `${(a.value / max) * 100}%`,
-                          minWidth: a.value ? 4 : 0,
-                        }}
-                      />
-                    </span>
-                    <span className="text-right tabular-nums">
-                      {formatMoney(a.value)}{" "}
-                      <span className="text-xs text-neutral-400">
-                        · {a.count}
-                      </span>
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </Section>
+            <Columns
+              data={cash}
+              series={[
+                { key: "in", label: "In", color: SERIES[2] },
+                { key: "out", label: "Out", color: SERIES[1] },
+              ]}
+              height={170}
+            />
+          </Frame>
+          <div id="pending" className="space-y-8">
+            <Section title="Pending from clients">
+              {pendingProjects.length ? (
+                <ul className="divide-y divide-line text-sm">
+                  {pendingProjects.slice(0, 8).map((x) => (
+                    <li key={x.id}>
+                      <Link href={`/projects/${x.id}?tab=money`} className="flex items-center gap-3 py-2 hover:text-navy">
+                        <span className="font-mono text-xs text-neutral-400">{x.code}</span>
+                        <span className="min-w-0 flex-1 truncate">{x.name}</span>
+                        <span className="tabular-nums">{formatMoney(x.pending)}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="py-2 text-sm text-neutral-500">Every project fee has been received.</p>
+              )}
+            </Section>
+            {aged.some((a) => a.value > 0) && (
+              <Section title="Owed to you, by age">
+                <ul className="space-y-2.5">
+                  {aged.map((a) => {
+                    const max = Math.max(1, ...aged.map((x) => x.value));
+                    return (
+                      <li
+                        key={a.bucket}
+                        className="grid grid-cols-[88px_1fr_auto] items-center gap-3 text-sm"
+                        title={`${a.count} invoice(s)`}
+                      >
+                        <span className="text-neutral-600">{a.bucket}</span>
+                        <span className="h-2 rounded-full bg-subtle">
+                          <span
+                            className="block h-2 rounded-full bg-accent"
+                            style={{
+                              width: `${(a.value / max) * 100}%`,
+                              minWidth: a.value ? 4 : 0,
+                            }}
+                          />
+                        </span>
+                        <span className="text-right tabular-nums">
+                          {formatMoney(a.value)}{" "}
+                          <span className="text-xs text-neutral-400">
+                            · {a.count}
+                          </span>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Section>
+            )}
+          </div>
         </div>
       )}
 

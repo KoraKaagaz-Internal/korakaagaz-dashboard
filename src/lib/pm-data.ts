@@ -179,10 +179,9 @@ export async function getTaskDetail(id: string): Promise<TaskDetail | null> {
 
 export async function listTemplates() {
   const { supabase } = await requireTeam();
-  const { data } = await supabase.from("project_templates").select("id, name, type, description, billing, budget_hours, data").order("name");
+  const { data } = await supabase.from("project_templates").select("id, name, type, description, billing, data").order("name");
   return (data ?? []).map((t) => ({
     ...(t as { id: string; name: string; type: string; description: string; billing: ProjectFinance["billing"]; data: { tasks: unknown[]; phases: string[] } }),
-    budget_hours: Number(t.budget_hours),
     task_count: ((t.data as { tasks?: unknown[] })?.tasks ?? []).length,
   }));
 }

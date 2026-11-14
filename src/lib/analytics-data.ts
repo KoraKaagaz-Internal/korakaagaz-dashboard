@@ -10,13 +10,13 @@ const n = (v: unknown) => Number(v ?? 0);
 /** Everything Reports needs, in one round of parallel queries. */
 export async function loadAnalytics(opts: { since: string; until: string; weeksFrom: string }) {
   const { supabase, isAdmin } = await requireMember();
-  const [docs, bals, pays, exps, expBals, expPays, accounts, projects, tasks, time, capacity, leave, holidays, projectTime, leads] = await Promise.all([
+  const [docs, bals, pays, exps, expBals, expPays, accounts, projects, tasks, time, capacity, leave, holidays, leads] = await Promise.all([
     supabase
       .from("documents")
       .select("id, doc_type, status, client_id, client_snapshot, project_id, issue_date, due_date, currency, fx_rate, taxable, total, source_id, source_relation, recurring")
       .neq("status", "draft"),
     supabase.from("document_balances").select("id, balance"),
-    supabase.from("payments").select("document_id, paid_on, amount, tds_amount"),
+    supabase.from("payments").select("document_id, project_id, paid_on, amount, tds_amount"),
     supabase
       .from("expenses")
       .select(
@@ -26,13 +26,12 @@ export async function loadAnalytics(opts: { since: string; until: string; weeksF
     supabase.from("expense_balances").select("expense_id, balance"),
     supabase.from("expense_payments").select("paid_on, amount"),
     supabase.from("bank_accounts").select("opening_balance, opening_date"),
-    supabase.from("projects").select("id, code, name, status, budget_hours"),
+    supabase.from("projects").select("id, code, name, status, client_id, clients(name)"),
     supabase.from("tasks").select("due_date, completed_at").not("completed_at", "is", null).gte("completed_at", `${opts.since}T00:00:00Z`),
     supabase.from("time_entries").select("member_email, work_date, minutes").is("timer_started_at", null).neq("status", "rejected").gte("work_date", opts.weeksFrom),
     supabase.rpc("team_capacity"),
     supabase.from("leave_requests").select("member_email, from_date, to_date, half_day, status").eq("status", "approved").gte("to_date", opts.weeksFrom),
     supabase.from("holidays").select("day"),
-    supabase.from("time_entries").select("project_id, minutes").is("timer_started_at", null).neq("status", "rejected").limit(50000),
     supabase.from("leads").select("stage, furthest_stage, source, value, created_at, won_at"),
   ]);
 
@@ -56,7 +55,8 @@ export async function loadAnalytics(opts: { since: string; until: string; weeksF
     balance: balance.has(d.id as string) ? balance.get(d.id as string)! : null,
   }));
   const aPays: APay[] = ((pays.data ?? []) as Row[]).map((p) => ({
-    document_id: p.document_id as string,
+    document_id: (p.document_id as string) ?? null,
+    project_id: (p.project_id as string) ?? null,
     paid_on: p.paid_on as string,
     amount: n(p.amount),
     tds_amount: n(p.tds_amount),
@@ -106,17 +106,14 @@ export async function loadAnalytics(opts: { since: string; until: string; weeksF
       code: p.code as string,
       name: p.name as string,
       status: p.status as string,
-      budget_hours: n(p.budget_hours),
+      client_id: (p.client_id as string) ?? null,
+      client_name: (p.clients as { name?: string } | null)?.name ?? "",
     })),
     tasks: (tasks.data ?? []) as { due_date: string | null; completed_at: string | null }[],
     time: ((time.data ?? []) as Row[]).map((t) => ({ member_email: t.member_email as string, work_date: t.work_date as string, minutes: n(t.minutes) })),
     capacity: new Map(((capacity.data ?? []) as Row[]).map((c) => [c.email as string, n(c.weekly_capacity_hours)])),
     leave: (leave.data ?? []) as { member_email: string; from_date: string; to_date: string; half_day: boolean; status: "approved" }[],
     holidays: ((holidays.data ?? []) as Row[]).map((h) => h.day as string),
-    projectMinutes: ((projectTime.data ?? []) as Row[]).reduce(
-      (m, t) => m.set(t.project_id as string, (m.get(t.project_id as string) ?? 0) + n(t.minutes)),
-      new Map<string, number>(),
-    ),
   };
 }
 

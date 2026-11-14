@@ -22,7 +22,9 @@ export interface ADoc {
   balance: number | null;
 }
 export interface APay {
-  document_id: string;
+  /** null for money logged straight on a project (no invoice) */
+  document_id: string | null;
+  project_id: string | null;
   paid_on: string;
   amount: number;
   tds_amount: number;
@@ -171,11 +173,19 @@ export function cashRevenue(docs: ADoc[], pays: APay[]): RevEvent[] {
   const byId = new Map(docs.map((d) => [d.id, d]));
   const out: RevEvent[] = [];
   for (const p of pays) {
-    const d = byId.get(p.document_id);
+    const d = p.document_id ? byId.get(p.document_id) : undefined;
     if (!d || !d.total) continue;
     out.push({ date: p.paid_on, client: d.client_name || "Unknown", project_id: d.project_id, amount: round2(inr(d, (p.amount + p.tds_amount) * (d.taxable / d.total))) });
   }
   return out;
+}
+
+/** Money logged straight on a project, with no invoice: revenue on the day it came in (INR, no GST). */
+export function directRevenue(pays: APay[], projects: { id: string; client_name: string }[]): RevEvent[] {
+  const client = new Map(projects.map((p) => [p.id, p.client_name]));
+  return pays
+    .filter((p) => !p.document_id)
+    .map((p) => ({ date: p.paid_on, client: client.get(p.project_id ?? "") || "Unknown", project_id: p.project_id, amount: round2(p.amount + p.tds_amount) }));
 }
 
 export interface CostEvent {
@@ -383,7 +393,7 @@ export function receivablesAt(docs: ADoc[], pays: APay[], date: string) {
   }
   const byId = new Map(docs.map((d) => [d.id, d]));
   for (const p of pays) {
-    if (p.paid_on > date || !ids.has(p.document_id)) continue;
+    if (p.paid_on > date || !p.document_id || !ids.has(p.document_id)) continue;
     ar -= inr(byId.get(p.document_id)!, p.amount + p.tds_amount);
   }
   return round2(Math.max(0, ar));
@@ -398,7 +408,11 @@ const billedIn = (docs: ADoc[], from: string, to: string) =>
 
 const collectedIn = (docs: ADoc[], pays: APay[], from: string, to: string) => {
   const byId = new Map(docs.map((d) => [d.id, d]));
-  return round2(pays.filter((p) => within(p.paid_on, from, to) && byId.has(p.document_id)).reduce((s, p) => s + inr(byId.get(p.document_id)!, p.amount + p.tds_amount), 0));
+  return round2(
+    pays
+      .filter((p) => within(p.paid_on, from, to) && (!p.document_id || byId.has(p.document_id)))
+      .reduce((s, p) => s + (p.document_id ? inr(byId.get(p.document_id)!, p.amount + p.tds_amount) : p.amount + p.tds_amount), 0),
+  );
 };
 
 /** Days sales outstanding at the end of each month: receivables ÷ last 90 days' billing × 90. */
@@ -514,22 +528,16 @@ export function forecast13w(input: { today: string; cash: number; docs: ADoc[]; 
 // ---------------------------------------------------------------------------
 // Projects and team
 // ---------------------------------------------------------------------------
-/** Per project, all time: revenue, expenses, profit, and hours logged against the budget. */
-export function projectTable(
-  projects: { id: string; code: string; name: string; status: string; budget_hours: number }[],
-  rev: RevEvent[],
-  costs: CostEvent[],
-  minutes: Map<string, number>,
-) {
+/** Per project, all time: revenue, expenses, profit. */
+export function projectTable(projects: { id: string; code: string; name: string; status: string }[], rev: RevEvent[], costs: CostEvent[]) {
   return projects
     .map((p) => {
       const revenue = round2(rev.filter((e) => e.project_id === p.id).reduce((s, e) => s + e.amount, 0));
       const expenses = round2(costs.filter((c) => c.project_id === p.id).reduce((s, c) => s + c.amount, 0));
-      const hours = round2((minutes.get(p.id) ?? 0) / 60);
       const profit = round2(revenue - expenses);
-      return { ...p, revenue, expenses, hours, profit, margin: revenue > 0 ? round2((profit / revenue) * 100) : null, overBudget: p.budget_hours > 0 && hours > p.budget_hours };
+      return { ...p, revenue, expenses, profit, margin: revenue > 0 ? round2((profit / revenue) * 100) : null };
     })
-    .filter((p) => p.revenue || p.expenses || p.hours)
+    .filter((p) => p.revenue || p.expenses)
     .sort((a, b) => b.revenue - a.revenue);
 }
 

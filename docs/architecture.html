@@ -207,7 +207,7 @@
     <tr><th>Can…</th><th>Admin (team@korakaagaz.co)</th><th>Member</th><th>Viewer</th><th>Freelancer</th><th>Client (share link)</th><th>Anyone else</th></tr>
     <tr><td>Sign in</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>no login</td><td>✗ (trigger rejects the account)</td></tr>
     <tr><td>See projects</td><td>all</td><td>all</td><td>all (read only)</td><td>only projects they're added to</td><td>✗</td><td>✗</td></tr>
-    <tr><td>Create projects, change phases, deliverables, team, budget hours</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Create projects, change phases, deliverables, team</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Add / move / edit tasks, comment, upload files</td><td>✓</td><td>✓</td><td>✗</td><td>on their projects</td><td>✗</td><td>✗</td></tr>
     <tr><td>See a project's fee, retainer amount and money tab (quoted, billed, received, expenses)</td><td>✓</td><td>✗ (hours only)</td><td>✗ (hours only)</td><td>✗ (hours only)</td><td>✗</td><td>✗</td></tr>
     <tr><td>See clients</td><td>✓</td><td>✓ (no ledger or statement)</td><td>✓ (no ledger or statement)</td><td>✗ (only their project's client name)</td><td>✗</td><td>✗</td></tr>
@@ -215,6 +215,7 @@
     <tr><td>Invoices, proformas, receipts, credit notes, payments, client statements, converting a quote to an invoice</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>only that one document</td><td>✗</td></tr>
     <tr><td>Create / edit clients</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Items (price list) page, bank accounts, vendors, GST &amp; TDS, CSV exports, Reports, Home money figures</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
+    <tr><td>Project fee, payments received on a project, team split and payouts</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
     <tr><td>Accept / decline a quote</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td><td>✓</td><td>✗</td></tr>
     <tr><td>Log time (timer, timesheet), submit the week</td><td>✓</td><td>✓</td><td>✗</td><td>on their projects</td><td>✗</td><td>✗</td></tr>
     <tr><td>Approve time, approve leave, holidays</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td><td>✗</td></tr>
@@ -250,7 +251,7 @@
     <tr><td><code>settings</code> (1 row)</td><td>Business, GSTIN, PAN, LUT, signatory, prefixes, defaults, terms, message templates</td><td>Staff read (it prints on quotes); admin-only writes.</td></tr>
     <tr><td><code>bank_accounts</code></td><td>Account, IFSC, SWIFT, UPI ID, default flag</td><td>Admin only. Quotes print the default account via <code>document_bank()</code>.</td></tr>
     <tr><td><code>clients</code>, <code>items</code></td><td>Clients (state, GSTIN, country), services catalog with SAC</td><td>Members write, viewers read. Freelancers can't read them.</td></tr>
-    <tr><td><code>projects</code></td><td>Code (<code>KK-0001</code>), client (optional), type, status, dates, lead, budget hours, template</td><td>Staff read all; freelancers read projects they're on.</td></tr>
+    <tr><td><code>projects</code></td><td>Code (<code>KK-0001</code>), client (optional), type, status, dates, lead, template (the old budget-hour columns are unused since 2026-11-15)</td><td>Staff read all; freelancers read projects they're on.</td></tr>
     <tr><td><code>project_finance</code></td><td>Fee, billing type (fixed fee or monthly retainer), retainer per month</td><td>Admin only. Members creating a project add its row with the amounts zeroed (trigger).</td></tr>
     <tr><td><code>project_members</code></td><td>Who is on each project</td><td>Decides what freelancers can see.</td></tr>
     <tr><td><code>project_templates</code></td><td>Six studio templates: phases, tasks with hours and day offsets, deliverables</td><td>Applied by <code>apply_project_template()</code>.</td></tr>
@@ -275,7 +276,7 @@
     <tr><td><code>bank_accounts</code> (new columns)</td><td><code>kind</code> (bank / petty cash), opening balance and date</td><td>Drives cash in hand and runway in Reports. Petty cash never shows on invoices.</td></tr>
     <tr><td><code>notifications</code></td><td>Assigned, mentioned, commented, status changes, added to project</td><td>Each person reads only their own; can't be forged (actor must be you).</td></tr>
     <tr><td><code>documents</code> + <code>document_items</code></td><td>All five document types, snapshots of client + supplier, totals, share token, status</td><td>Admin sees all; members and viewers see quotes only. New documents start as drafts, and only the admin can issue when approval is on (trigger). Unique <code>(doc_type, fy, number)</code>. Triggers lock issued documents and block deleting them.</td></tr>
-    <tr><td><code>payments</code></td><td>Amount, TDS + section, mode, reference</td><td>Admin only. Feeds the <code>document_balances</code> view (paid / partial / unpaid / overdue).</td></tr>
+    <tr><td><code>payments</code></td><td>Amount, TDS + section, mode, reference; on an invoice (<code>document_id</code>), a project (<code>project_id</code>), or both</td><td>Admin only. Feeds the <code>document_balances</code> view (paid / partial / unpaid / overdue). A trigger copies the invoice's project onto its payments. A project with payments can't be deleted.</td></tr>
     <tr><td><code>doc_counters</code></td><td>Next number per document type + FY</td><td>Used by <code>next_doc_number()</code>; resets with each FY.</td></tr>
     <tr><td><code>email_log</code></td><td>Every send/reminder/invite: sent, failed or skipped</td><td></td></tr>
     <tr><td><code>audit_events</code></td><td>Who did what, with field-level diffs; <code>project_id</code> for the project activity feed</td><td>Append-only for users (no update/delete grants); entries can only be written as yourself. Never stores calendar-feed tokens. Members and viewers see project, sales and quote history; money, settings and HR history are admin-only. Freelancers see only their projects' task/comment/file/deliverable events. Sort-only changes (board reordering) aren't logged.</td></tr>
@@ -354,6 +355,15 @@ vercel deploy --prod
   <h2>Change log</h2>
   <div class="tablewrap"><table>
     <tr><th>Date</th><th>Change</th></tr>
+    <tr><td>2026-11-15</td><td><b>Agency money: payments on projects, team split, a cash dashboard.</b> Home showed nothing because money could only be recorded against an issued invoice, and the studio bills by project fee.
+      <ul>
+        <li>Migration 0020: <code>payments.document_id</code> is optional and <code>payments.project_id</code> is new (one of the two is required; a trigger fills the project from the invoice). New expense category "Freelancer: team split", hidden from members by the existing <code>freelancer%</code> rule.</li>
+        <li>Project <b>Money</b> tab is a P&amp;L: fee (retainer = monthly × months run), received, pending from client, team split (paid / to pay), other costs, your share. Record payments and add splits (₹ or % of fee) right there; a split is a bill on the project, paid with <b>Mark paid</b>.</li>
+        <li>New project form takes the fee and the team split in one go. Projects list shows fee and pending (admin). <b>+ New</b> has "Payment received" and "Team payout", which open a project picker.</li>
+        <li>Home (admin): Received this FY, Pending from clients (project fees + invoices with no project, never counted twice), To pay team, Spent this FY, Net this FY; money in vs out by month; projects with money pending; done projects with money pending in Needs attention.</li>
+        <li>Fixes: advances now count as received on the day of the receipt voucher (they were left out); Reports count project payments as revenue and as collected; a failed invoice-balance lookup now errors instead of showing every invoice as unpaid.</li>
+        <li>Removed hour budgets: budget hours, retainer hours per month, the hours-vs-budget and retainer-burn bars, "Over-budget projects", the Hours column and "Team hours used" in Reports. The timer, timesheets and task estimates stay.</li>
+      </ul></td></tr>
     <tr><td>2026-11-04</td><td><b>What a member can see.</b> Members run projects and sales; the studio's money, pay and private HR data are the admin's. Viewers see what members see, read-only.
       <ul>
         <li>Migrations 0016–0019: invoices, payments, bank accounts, vendors, TDS, project fees, overhead/salary/freelancer-fee expenses, other people's claims, time entries and leave details are admin-only in the database. New helpers: <code>project_minutes()</code> (hours without names), <code>team_away()</code> (who is away, not why), <code>document_bank()</code> (default account for quotes).</li>
@@ -515,6 +525,9 @@ vercel deploy --prod
     <dt>Hash chain</dt><dd>Each signing-log entry includes the fingerprint of the entry before it, so editing or deleting any past entry breaks every later one.</dd>
     <dt>SAC</dt><dd>Services Accounting Code, the services version of HSN. Design work is usually 998391.</dd>
     <dt>LUT</dt><dd>Letter of Undertaking, filed each financial year so exports can be invoiced without IGST.</dd>
+    <dt>Team split</dt><dd>What each team member or freelancer gets from a project, entered as ₹ or % of the fee. Stored as a project bill in "Freelancer: team split", so it counts as a project cost everywhere.</dd>
+    <dt>Your share</dt><dd>What the studio keeps from a project: the fee (or what was received, if more) minus the team split and other project costs.</dd>
+    <dt>Pending from client</dt><dd>Project fee minus every payment recorded on the project or its invoices.</dd>
     <dt>Receipt voucher</dt><dd>The GST document for an advance payment (Rule 50); later adjusted against the final invoice.</dd>
     <dt>Credit note</dt><dd>Reduces or reverses an issued invoice (Section 34).</dd>
     <dt>TDS</dt><dd>Tax a business client deducts before paying you (usually 10% under s.194J). You claim it back; match it with Form 26AS.</dd>
@@ -554,7 +567,7 @@ vercel deploy --prod
       "Work it on the <b>Board</b> (drag cards between To do → In progress → Internal review → With client → Done), the <b>List</b> (grouped by phase), or the <b>Timeline</b>.",
       "Click a task for the side panel: assign people (they're added to the project and notified), set dates and estimate, tick the checklist, comment with @name, attach files or Drive links.",
       "Everyone sees their tasks in <b>My work</b> (overdue, today, next 7 days) and gets notifications in the bell.",
-      "<b>Money</b> tab: quotes, invoices, expenses and agreements tagged to the project, quoted vs billed vs received against the budget, and hours.",
+      "<b>Money</b> tab (admin): the project's P&amp;L (fee, received, pending from client, team split, your share). Record each payment the client makes (no invoice needed) and add the team split as ₹ or % of the fee, then <b>Mark paid</b> when you pay each person.",
       "Mark the project Done when delivered. The <b>Activity</b> tab keeps the history.",
     ],
     "Send and sign an agreement": [
@@ -686,14 +699,15 @@ vercel deploy --prod
     ["src/app/(app)/reports/page.tsx", "Analytics page"],
     ["scripts/e2e-money.mjs · scripts/perf-check.mjs", "25 end-to-end checks of expenses, claims, GST/TDS, re-billing and Reports (safe on real data); page timing on production"],
     ["supabase/migrations/0007_time_calendar.sql · 0008_time_invoicing.sql", "Time entries with approval + locks, rates/capacity/feed token on members, admin cost RPCs, events/crew/kit, leave, holidays; editors can link approved time to invoices"],
-    ["src/lib/time.ts", "Durations, timer rounding, weeks, available days, weekly load, retainer burn, invoice lines from time"],
+    ["src/lib/time.ts", "Durations, timer rounding, weeks, available days, weekly load"],
+    ["src/lib/projects.ts · projects/[id]/ProjectMoney.tsx · components/pm/SplitInput.tsx", "Project P&L (fee, received, pending, split, your share), retainer fee so far, split ₹/% input, payments and split cards"],
     ["src/lib/calendar.ts", "IST conversions, event days, overlap + conflict detection, month grid, iCalendar feed writer"],
     ["src/lib/time-data.ts", "Server reads: timers, entries, approvals, rates, costs, capacity, events, kit, leave, holidays"],
     ["src/app/actions/time.ts · calendar.ts", "Timer, timesheet cells, submit/approve, rates, invoice from time, leave/holidays; events with crew/kit + conflicts, kit, feed token"],
     ["src/app/(app)/time/*", "Weekly timesheet, team week, admin approvals"],
     ["src/app/(app)/calendar/*", "Month/week/crew views, event form, call sheet, kit list, feed link"],
     ["src/app/(app)/team/workload · team/leave · team/CapacityEditor.tsx", "Capacity vs booked hours; leave + holidays; weekly hours per person"],
-    ["src/app/(app)/TimerBar.tsx · projects/[id]/ProjectTime.tsx", "Running timer in the header; project time, retainer burn, margin, invoice from time"],
+    ["src/app/(app)/TimerBar.tsx · projects/[id]/ProjectTime.tsx", "Running timer in the header; hours logged on a project (no budgets)"],
     ["src/app/api/ics/[token]", "Private calendar feed (bookings, task due dates, leave, holidays)"],
     ["scripts/e2e-projects.mjs", "44 end-to-end checks of projects, board drag, task panel, timer, timesheet, approvals, invoice from time, calendar, conflicts, feed, leave, files and freelancer access; safe on real data (cleans up only its own rows)"],
     ["supabase/migrations/0003_v2_team_documents.sql", "v2 schema: members + invite gate, roles, documents, items, payments, projects, bank accounts, counters, balances view, locks, share RPCs, audit log, RLS"],

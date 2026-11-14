@@ -6,10 +6,12 @@ import { TaskDrawer } from "@/components/pm/TaskDrawer";
 import { Card, PageHeader, Section, StatusPill, Tabs, displayStatus } from "@/components/ui";
 import { listClients, listDocuments, requireTeam } from "@/lib/data";
 import { formatInvoiceDate, formatMoney, formatShortDate, todayIso } from "@/lib/money";
-import { displayName, progress, projectHealth } from "@/lib/pm";
+import { displayName, progress, projectHealth, type Person } from "@/lib/pm";
 import { listExpenses } from "@/lib/expense-data";
 import { getProjectBundle, projectActivity, teamDirectory } from "@/lib/pm-data";
-import { projectTotals } from "@/lib/projects";
+import { SPLIT_CATEGORY, projectFee, projectMoney } from "@/lib/projects";
+import { createClient } from "@/lib/supabase/server";
+import { PaymentsCard, SplitCard } from "./ProjectMoney";
 import { DOC_LABELS } from "@/lib/types";
 import { InvoiceFromExpenses } from "./InvoiceFromExpenses";
 import { Overview } from "./Overview";
@@ -104,7 +106,7 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
       )}
       {tab === "money" && (
         <div className="space-y-8">
-          {isAdmin && <Billing projectId={p.id} budget={bundle.finance?.budget ?? 0} canEdit={canEdit} />}
+          {isAdmin && <Billing projectId={p.id} fee={projectFee(bundle.finance, p, today)} people={people} today={today} />}
           {isStaff && <AgreementList filter={{ project: p.id }} newHref={`/agreements/new?project=${p.id}`} canEdit={canEdit} />}
           <Section title="Hours">
             <ProjectTime project={p} people={people} byPerson={isAdmin} />
@@ -118,34 +120,78 @@ export default async function ProjectPage({ params, searchParams }: { params: Pr
   );
 }
 
-async function Billing({ projectId, budget, canEdit }: { projectId: string; budget: number; canEdit: boolean }) {
-  const [docs, expenses] = await Promise.all([listDocuments({ project: projectId }), listExpenses({ project: projectId }, 500)]);
-  const unbilled = expenses.filter((e) => e.billable && !e.invoiced_document_id && (e.kind !== "claim" || e.approval === "approved"));
-  const spent = expenses.filter((e) => e.approval !== "rejected").reduce((s, e) => s + e.total * e.fx_rate, 0);
-  const t = projectTotals(docs);
-  const pct = (n: number) => (budget > 0 ? `${Math.round((n / budget) * 100)}% of budget` : "");
+async function Billing({ projectId, fee, people, today }: { projectId: string; fee: number; people: Person[]; today: string }) {
+  const supabase = await createClient();
+  const [docs, expenses, { data: pays }] = await Promise.all([
+    listDocuments({ project: projectId }),
+    listExpenses({ project: projectId }, 500),
+    supabase.from("payments").select("id, paid_on, amount, tds_amount, mode, note, document_id, documents(number, currency, fx_rate)").eq("project_id", projectId).order("paid_on", { ascending: false }),
+  ]);
+  const payments = ((pays ?? []) as unknown as {
+    id: string;
+    paid_on: string;
+    amount: number;
+    tds_amount: number;
+    mode: string;
+    note: string;
+    document_id: string | null;
+    documents: { number: string; currency: string; fx_rate: number } | null;
+  }[]).map((x) => {
+    const fx = x.documents && x.documents.currency !== "INR" ? Number(x.documents.fx_rate) || 1 : 1;
+    return { ...x, amount: Number(x.amount) * fx, tds_amount: Number(x.tds_amount) * fx };
+  });
+  const live = expenses.filter((e) => e.approval !== "rejected" && !e.is_draft);
+  const isSplit = (e: (typeof expenses)[number]) => e.category === SPLIT_CATEGORY;
+  const m = projectMoney(
+    fee,
+    payments,
+    live.map((e) => ({ split: isSplit(e), cost: e.total * e.fx_rate, paid: e.paid, balance: e.balance })),
+  );
+  const others = expenses.filter((e) => !isSplit(e));
+  const unbilled = others.filter((e) => e.billable && !e.invoiced_document_id && (e.kind !== "claim" || e.approval === "approved"));
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {(
           [
-            ["Quoted", t.quoted],
-            ["Billed", t.billed],
-            ["Received", t.received],
-            ["Outstanding", t.outstanding],
+            ["Fee", m.fee, ""],
+            ["Received", m.received, fee > 0 ? `${Math.round((m.received / fee) * 100)}% of the fee` : ""],
+            ["Pending from client", m.pending, ""],
+            ["Team split", m.split, m.split ? `${formatMoney(m.splitPaid)} paid · ${formatMoney(m.splitDue)} to pay` : ""],
+            ["Your share", m.share, m.other ? `after ${formatMoney(m.other)} other costs` : "fee − split − costs"],
           ] as const
-        ).map(([label, value]) => (
-          <div key={label} className="rounded-xl bg-white px-4 py-3 border border-line">
+        ).map(([label, value, sub]) => (
+          <div key={label} className="rounded-xl border border-line bg-white px-4 py-3">
             <div className="text-xs text-neutral-500">{label}</div>
-            <div className="text-lg font-semibold tabular-nums">{formatMoney(value)}</div>
-            <div className="text-xs text-neutral-500">{label !== "Outstanding" ? pct(value) : ""}</div>
+            <div className={`text-lg font-semibold tabular-nums ${label === "Pending from client" && value > 0 ? "text-warn" : label === "Your share" && value < 0 ? "text-danger" : ""}`}>{formatMoney(value)}</div>
+            <div className="text-xs text-neutral-500">{sub}</div>
           </div>
         ))}
+      </div>
+      {fee === 0 && (
+        <p className="text-sm text-neutral-500">
+          No fee set yet. Add it on the <Link href={`/projects/${projectId}?tab=overview`} className="text-navy hover:underline" prefetch={false}>Overview</Link> tab to see what&apos;s pending.
+        </p>
+      )}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <PaymentsCard
+          projectId={projectId}
+          today={today}
+          pendingAmount={m.pending}
+          rows={payments.map((x) => ({ id: x.id, paid_on: x.paid_on, amount: x.amount + x.tds_amount, mode: x.mode, note: x.note, invoice: x.document_id ? { id: x.document_id, number: x.documents?.number ?? "" } : null }))}
+        />
+        <SplitCard
+          projectId={projectId}
+          fee={fee}
+          people={people}
+          today={today}
+          rows={live.filter(isSplit).map((e) => ({ id: e.id, name: e.vendor, amount: e.total * e.fx_rate, paid: e.paid, balance: e.balance }))}
+        />
       </div>
       <Card
         title="Quotes and invoices"
         actions={
-          canEdit ? (
+          (
             <span className="flex gap-2">
               <Link href={`/documents/new?type=quote&project=${projectId}`} className="text-sm text-navy hover:underline">
                 New quote
@@ -154,7 +200,7 @@ async function Billing({ projectId, budget, canEdit }: { projectId: string; budg
                 New invoice
               </Link>
             </span>
-          ) : undefined
+          )
         }
       >
         {docs.length === 0 ? (
@@ -176,18 +222,18 @@ async function Billing({ projectId, budget, canEdit }: { projectId: string; budg
         )}
       </Card>
       <Card
-        title={`Expenses · ${formatMoney(spent)}`}
+        title={`Other costs · ${formatMoney(m.other)}`}
         actions={
-          canEdit ? (
+          (
             <Link href={`/expenses/new?project=${projectId}`} className="text-sm text-navy hover:underline">
               New expense
             </Link>
-          ) : undefined
+          )
         }
       >
-        {expenses.length ? (
+        {others.length ? (
           <ul className="divide-y divide-line text-sm">
-            {expenses.map((e) => (
+            {others.map((e) => (
               <li key={e.id}>
                 <Link href={`/expenses/${e.id}`} className="flex items-center gap-3 py-2 hover:text-navy">
                   <span className="w-24 text-neutral-500">{formatShortDate(e.expense_date)}</span>
@@ -201,9 +247,9 @@ async function Billing({ projectId, budget, canEdit }: { projectId: string; budg
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-neutral-500">No expenses on this project. Freelancer fees, props and studio hire logged here show up in the project&apos;s margin.</p>
+          <p className="text-sm text-neutral-500">No other costs. Props, studio hire, printing and travel logged here come out of your share.</p>
         )}
-        {canEdit && unbilled.length > 0 && (
+        {unbilled.length > 0 && (
           <div className="mt-3">
             <InvoiceFromExpenses projectId={projectId} count={unbilled.length} />
           </div>

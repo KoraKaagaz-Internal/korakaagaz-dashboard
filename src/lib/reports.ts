@@ -8,21 +8,31 @@ export function inr(doc: Pick<DocumentRecord, "currency" | "fx_rate">, amount: n
 
 const counted = (d: DocumentRecord) => d.status === "issued" || d.status === "accepted";
 
-/** Monthly revenue (taxable value, INR) from issued invoices minus credit notes, oldest first. */
-export function revenueByMonth(docs: DocumentRecord[], today: string, months = 12): { month: string; label: string; value: number }[] {
+/**
+ * Every rupee that came in (INR): payments on invoices and projects, plus advances on the day the
+ * receipt voucher was issued. Advance adjustments (mode "advance") are skipped: that money was
+ * already counted when the receipt came in.
+ */
+export function moneyIn(docs: DocumentRecord[], payments: (Pick<Payment, "paid_on" | "amount" | "tds_amount" | "mode"> & { currency: string; fx_rate: number })[]) {
+  const out: { date: string; amount: number; tds: number }[] = [];
+  for (const p of payments) if (p.mode !== "advance") out.push({ date: p.paid_on, amount: inr(p, p.amount), tds: inr(p, p.tds_amount) });
+  for (const d of docs) if (d.doc_type === "receipt" && d.status === "issued") out.push({ date: d.issue_date, amount: inr(d, d.total), tds: 0 });
+  return out;
+}
+
+/** Money in vs money out per month (INR), oldest first. */
+export function cashByMonth(ins: { date: string; amount: number }[], outs: { date: string; amount: number }[], today: string, months = 12) {
   const [y, m] = today.split("-").map(Number);
-  const buckets: { month: string; label: string; value: number }[] = [];
-  for (let i = months - 1; i >= 0; i--) {
-    const dt = new Date(Date.UTC(y, m - 1 - i, 1));
-    const month = dt.toISOString().slice(0, 7);
-    buckets.push({ month, label: dt.toLocaleString("en-IN", { month: "short", timeZone: "UTC" }), value: 0 });
-  }
+  const buckets = Array.from({ length: months }, (_, k) => {
+    const dt = new Date(Date.UTC(y, m - months + k, 1));
+    return { month: dt.toISOString().slice(0, 7), label: dt.toLocaleString("en-IN", { month: "short", timeZone: "UTC" }), in: 0, out: 0 };
+  });
   const index = new Map(buckets.map((b, i) => [b.month, i]));
-  for (const d of docs) {
-    if (!counted(d) || !["invoice", "credit_note"].includes(d.doc_type)) continue;
-    const i = index.get(d.issue_date.slice(0, 7));
-    if (i === undefined) continue;
-    buckets[i].value = round2(buckets[i].value + (d.doc_type === "credit_note" ? -1 : 1) * inr(d, d.taxable));
+  for (const [list, key] of [[ins, "in"], [outs, "out"]] as const) {
+    for (const x of list) {
+      const i = index.get(x.date.slice(0, 7));
+      if (i !== undefined) buckets[i][key] = round2(buckets[i][key] + x.amount);
+    }
   }
   return buckets;
 }
@@ -85,10 +95,10 @@ export function kpis(docs: DocumentRecord[], payments: (Payment & { currency: st
   }
   let collectedFy = 0,
     tdsFy = 0;
-  for (const p of payments) {
-    if (fyOf(p.paid_on) !== fy || p.mode === "advance") continue;
-    collectedFy += inr(p, p.amount);
-    tdsFy += inr(p, p.tds_amount);
+  for (const m of moneyIn(docs, payments)) {
+    if (fyOf(m.date) !== fy) continue;
+    collectedFy += m.amount;
+    tdsFy += m.tds;
   }
   return {
     outstanding: round2(outstanding),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { availableDays, hhmm, monthRange, parseDuration, retainerBurn, timerMinutes, weekCapacity, weekLoad, weekStart } from "./time";
+import { availableDays, hhmm, monthRange, parseDuration, timerMinutes, weekCapacity, weekLoad, weekStart } from "./time";
 
 describe("durations", () => {
   it("formats minutes", () => {
@@ -70,11 +70,7 @@ describe("weekLoad", () => {
   });
 });
 
-describe("retainer and months", () => {
-  it("reports burn, overage and what's left", () => {
-    expect(retainerBurn(30 * 60, 40)).toEqual({ usedHours: 30, includedHours: 40, pct: 75, overHours: 0, leftHours: 10 });
-    expect(retainerBurn(45 * 60, 40)).toMatchObject({ pct: 113, overHours: 5, leftHours: 0 });
-  });
+describe("months", () => {
   it("finds the month's range", () => {
     expect(monthRange("2027-02-14")).toEqual({ from: "2027-02-01", to: "2027-02-28" });
     expect(monthRange("2026-12-31")).toEqual({ from: "2026-12-01", to: "2026-12-31" });

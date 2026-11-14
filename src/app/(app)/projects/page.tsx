@@ -5,6 +5,9 @@ import { requireTeam } from "@/lib/data";
 import { formatInvoiceDate, formatMoney, todayIso } from "@/lib/money";
 import { PROJECT_STATUS_LABEL, progress, projectHealth } from "@/lib/pm";
 import { listProjectCards, teamDirectory } from "@/lib/pm-data";
+import { projectFee } from "@/lib/projects";
+import { inr } from "@/lib/reports";
+import { createClient } from "@/lib/supabase/server";
 import { ButtonLink, EmptyState, Input, PageHeader, Segmented, button } from "@/components/ui";
 
 const FILTERS = [
@@ -14,10 +17,23 @@ const FILTERS = [
   { key: "all", label: "All" },
 ] as const;
 
-export default async function ProjectsPage({ searchParams }: { searchParams: Promise<{ show?: string; q?: string }> }) {
-  const { canEdit, email, isStaff } = await requireTeam();
-  const { show = "open", q = "" } = await searchParams;
-  const [cards, people] = await Promise.all([listProjectCards(), teamDirectory()]);
+export default async function ProjectsPage({ searchParams }: { searchParams: Promise<{ show?: string; q?: string; pay?: string }> }) {
+  const { canEdit, email, isStaff, isAdmin } = await requireTeam();
+  const { show = "open", q = "", pay } = await searchParams;
+  // "+ New → Payment received / Team payout" lands here to pick the project
+  const picking = isAdmin && pay === "1";
+  const [cards, people, { data: pays }] = await Promise.all([
+    listProjectCards(),
+    teamDirectory(),
+    isAdmin
+      ? (await createClient()).from("payments").select("project_id, amount, tds_amount, documents(currency, fx_rate)").not("project_id", "is", null)
+      : Promise.resolve({ data: [] }),
+  ]);
+  const received = new Map<string, number>();
+  for (const x of (pays ?? []) as unknown as { project_id: string; amount: number; tds_amount: number; documents: { currency: string; fx_rate: number } | null }[]) {
+    const v = inr(x.documents ?? { currency: "INR", fx_rate: 1 }, Number(x.amount) + Number(x.tds_amount));
+    received.set(x.project_id, (received.get(x.project_id) ?? 0) + v);
+  }
   const today = todayIso();
   const term = q.trim().toLowerCase();
   const shown = cards.filter((p) => {
@@ -32,7 +48,7 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
     <div className="space-y-5">
       <PageHeader
         title="Projects"
-        subtitle={isStaff ? "Every job the studio is running." : "Projects you've been added to."}
+        subtitle={picking ? "Pick the project to record a payment or pay the team." : isStaff ? "Every job the studio is running." : "Projects you've been added to."}
         actions={
           <>
             {canEdit && (
@@ -47,9 +63,10 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
       <form className="flex flex-wrap items-center gap-2">
         <Segmented
           label="Show"
-          items={FILTERS.map((f) => ({ href: `/projects?show=${f.key}${q ? `&q=${encodeURIComponent(q)}` : ""}`, label: f.label, active: show === f.key }))}
+          items={FILTERS.map((f) => ({ href: `/projects?show=${f.key}${q ? `&q=${encodeURIComponent(q)}` : ""}${picking ? "&pay=1" : ""}`, label: f.label, active: show === f.key }))}
         />
         <input type="hidden" name="show" value={show} />
+        {picking && <input type="hidden" name="pay" value="1" />}
         <Input name="q" type="search" defaultValue={q} aria-label="Search projects" placeholder="Search projects" className="!h-8 !w-56 !py-1" />
       </form>
 
@@ -72,9 +89,11 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
             const prog = progress(p.tasks);
             const health = projectHealth(p, p.tasks, today);
             const open = p.tasks.filter((t) => t.status !== "done" && !t.parent_id).length;
+            const fee = projectFee(p.finance, p, today);
+            const pending = Math.max(0, fee - (received.get(p.id) ?? 0));
             return (
               <li key={p.id}>
-                <Link href={`/projects/${p.id}`} className="block h-full rounded-xl bg-white p-4 border border-line transition hover:ring-navy/30">
+                <Link href={picking ? `/projects/${p.id}?tab=money` : `/projects/${p.id}`} prefetch={false} className="block h-full rounded-xl bg-white p-4 border border-line transition hover:ring-navy/30">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-mono text-xs text-neutral-400">{p.code}</div>
@@ -93,7 +112,11 @@ export default async function ProjectsPage({ searchParams }: { searchParams: Pro
                     </span>
                     <AvatarStack emails={p.members} people={people} />
                   </div>
-                  {p.finance && p.finance.budget > 0 && <div className="mt-1 text-xs text-neutral-400">Budget {formatMoney(p.finance.budget)}</div>}
+                  {isAdmin && fee > 0 && (
+                    <div className="mt-1 text-xs text-neutral-500">
+                      Fee {formatMoney(fee)} · {pending > 0.5 ? <span className="text-warn">{formatMoney(pending)} pending</span> : <span className="text-ok">fully received</span>}
+                    </div>
+                  )}
                 </Link>
               </li>
             );
