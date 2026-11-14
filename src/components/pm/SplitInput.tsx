@@ -10,7 +10,7 @@ import { splitAmount } from "@/lib/projects";
 /** One team-split row: who, and ₹ or % of the fee. Calls onAdd with the ₹ amount. */
 export function SplitInput({ people, fee, onAdd, pending }: { people: Person[]; fee: number; onAdd: (s: { name: string; amount: number }) => void; pending?: boolean }) {
   const [name, setName] = useState("");
-  const [value, setValue] = useState(0);
+  const [value, setValue] = useState(NaN); // empty field, not a "0" to type around
   const [mode, setMode] = useState<"inr" | "pct">("inr");
   const amount = splitAmount(value, mode, fee);
   return (
@@ -35,7 +35,7 @@ export function SplitInput({ people, fee, onAdd, pending }: { people: Person[]; 
         onClick={() => {
           onAdd({ name: name.trim(), amount });
           setName("");
-          setValue(0);
+          setValue(NaN);
         }}
       >
         Add{mode === "pct" && amount > 0 ? ` ${formatMoney(amount)}` : ""}

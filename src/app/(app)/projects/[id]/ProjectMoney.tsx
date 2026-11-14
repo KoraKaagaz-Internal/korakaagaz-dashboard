@@ -56,7 +56,8 @@ export interface SplitRow {
 
 /** Money received on the project: straight payments, plus payments on its invoices (read-only here). */
 export function PaymentsCard({ projectId, rows, pendingAmount, today }: { projectId: string; rows: PaymentRow[]; pendingAmount: number; today: string }) {
-  const [form, setForm] = useState({ paid_on: today, amount: 0, mode: "upi" as const, note: "" });
+  // NaN shows an empty field: a pre-filled "0" turns a typed 8000 into 80000
+  const [form, setForm] = useState({ paid_on: today, amount: NaN, mode: "upi" as const, note: "" });
   const [file, setFile] = useState<File | null>(null);
   const [record, recording] = useAction(recordProjectPayment, { success: "Payment recorded" });
   const [attach, attaching] = useAction(uploadInvoice, { success: "Invoice attached" });
@@ -130,7 +131,7 @@ export function PaymentsCard({ projectId, rows, pendingAmount, today }: { projec
             const r = await record({ project_id: projectId, ...form });
             if (!r?.ok) return;
             if (file) await attach(r.id, file);
-            setForm({ ...form, amount: 0, note: "" });
+            setForm({ ...form, amount: NaN, note: "" });
             setFile(null);
           }}
         >
