@@ -600,7 +600,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         <Kpi label="Quotes accepted" value={`${funnel.stages[1].count} of ${funnel.stages[0].count}`} sub={compactInr(funnel.stages[1].value)} />
       </section>
       <div className="grid gap-5 lg:grid-cols-2">
-        <div className="lg:col-span-2">
+        <div className="min-w-0 lg:col-span-2">
           <Frame
             title="Project profitability"
             subtitle="All time: revenue − project expenses (team split, freelancers, props…)."
