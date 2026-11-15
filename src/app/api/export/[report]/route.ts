@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { fetchAll } from "@/lib/fetch-all";
 import { getSettings, listDocuments, requireMember } from "@/lib/data";
 import { GSTR1_SECTIONS, gstr1Section, toCsv, type Gstr1Section, type Row } from "@/lib/gstr1";
 import { listExpenses, listVendors } from "@/lib/expense-data";
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   let name = report;
 
   if (report === "documents") {
-    const docs = await listDocuments({ type, from, to, status: sp.get("status") ?? undefined, client: sp.get("client") ?? undefined, q: sp.get("q") ?? undefined });
+    const docs = await listDocuments({ type, from, to, status: sp.get("status") ?? undefined, client: sp.get("client") ?? undefined, q: sp.get("q") ?? undefined }, true);
     rows = docs.map((d) => ({
       Type: DOC_LABELS[d.doc_type].short,
       Number: d.number ?? "",
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   } else if (report === "ledger") {
     const client = sp.get("client");
     if (!client) return NextResponse.json({ error: "client required" }, { status: 400 });
-    const docs = await listDocuments({ client });
+    const docs = await listDocuments({ client }, true);
     const { data: pays } = await supabase.from("payments").select("*, documents!inner(client_id)").eq("documents.client_id", client);
     const ledger = buildLedger(docs, pays ?? [], from, to);
     rows = [
@@ -77,19 +78,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   } else if (report === "gstr1") {
     const section = sp.get("section") as Gstr1Section;
     if (!(section in GSTR1_SECTIONS)) return NextResponse.json({ error: "unknown section" }, { status: 400 });
-    const [settings, docs] = await Promise.all([getSettings(), listDocuments({ from, to })]);
+    const [settings, docs] = await Promise.all([getSettings(), listDocuments({ from, to }, true)]);
     const full = docs.filter((d) => d.status !== "draft");
     // Items are needed for the HSN summary.
     if (section.startsWith("hsn")) {
-      const { data: items } = await supabase
-        .from("document_items")
-        .select("*")
-        .in(
-          "document_id",
-          full.map((d) => d.id),
-        );
+      // in chunks (short URLs), each paged past the 1,000-row cap
+      const ids = full.map((d) => d.id);
+      const items: Record<string, unknown>[] = [];
+      for (let i = 0; i < ids.length; i += 150) {
+        items.push(...(await fetchAll<Record<string, unknown>>((a, b) => supabase.from("document_items").select("*").in("document_id", ids.slice(i, i + 150)).order("id").range(a, b))));
+      }
       const byDoc = new Map<string, Record<string, unknown>[]>();
-      for (const i of items ?? []) byDoc.set(i.document_id, [...(byDoc.get(i.document_id) ?? []), i]);
+      for (const i of items) byDoc.set(i.document_id as string, [...(byDoc.get(i.document_id as string) ?? []), i]);
       for (const d of full)
         d.items = (byDoc.get(d.id) ?? []).map((i) => ({
           title: String(i.title),

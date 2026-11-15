@@ -23,10 +23,11 @@ import {
   formatShortDate,
   todayIso,
 } from "@/lib/money";
+import { fetchAll } from "@/lib/fetch-all";
 import { SPLIT_CATEGORY, projectFee } from "@/lib/projects";
 import { ageing, cashByMonth, inr, kpis, moneyIn } from "@/lib/reports";
 import { listEvents, timeApprovalOn } from "@/lib/time-data";
-import { DOC_LABELS } from "@/lib/types";
+import { DOC_LABELS, type Payment } from "@/lib/types";
 
 type Attention = {
   key: string;
@@ -61,13 +62,9 @@ export default async function Home({
     { data: outPays },
     { data: projectRows },
   ] = await Promise.all([
-    listDocuments(),
+    listDocuments({}, isAdmin),
     isAdmin
-      ? supabase
-          .from("payments")
-          .select("*, documents(currency, fx_rate)")
-          .order("paid_on", { ascending: false })
-          .limit(1000)
+      ? fetchAll<Payment & { documents: { currency: string; fx_rate: number } | null }>((a, b) => supabase.from("payments").select("*, documents(currency, fx_rate)").order("id").range(a, b)).then((data) => ({ data }))
       : Promise.resolve({ data: [] }),
     getSettings(),
     listEvents(today, week),
@@ -97,7 +94,7 @@ export default async function Home({
       .lte("due_date", week)
       .order("due_date")
       .limit(8),
-    isAdmin ? supabase.from("expense_payments").select("paid_on, amount") : Promise.resolve({ data: [] }),
+    isAdmin ? fetchAll<{ paid_on: string; amount: number }>((a, b) => supabase.from("expense_payments").select("paid_on, amount").order("id").range(a, b)).then((data) => ({ data })) : Promise.resolve({ data: [] }),
     isAdmin
       ? supabase.from("projects").select("id, code, name, status, start_date, due_date, project_finance(budget, billing, retainer_amount_month)").neq("status", "cancelled")
       : Promise.resolve({ data: [] }),
@@ -268,10 +265,10 @@ export default async function Home({
 
       {isAdmin ? (
         <StatRow>
-          <StatLink href="/reports?basis=cash">
+          <StatLink href="/payments?tab=history">
             <Stat label="Received this FY" value={formatMoney(k.collectedFy)} sub={k.tdsFy ? `+ ${formatMoney(k.tdsFy)} TDS` : undefined} info="Money that reached you this financial year: payments on projects and invoices, and advances." />
           </StatLink>
-          <StatLink href="#pending">
+          <StatLink href="/payments">
             <Stat
               label="Pending from clients"
               value={formatMoney(pendingTotal)}

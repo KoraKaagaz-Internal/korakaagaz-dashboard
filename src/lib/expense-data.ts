@@ -1,5 +1,6 @@
 import "server-only";
 import { requireTeam } from "./data";
+import { fetchAll } from "./fetch-all";
 import type { ExpenseKind, Gstr2b, ItcStatus } from "./expenses";
 import { financialYear } from "./money";
 
@@ -134,9 +135,11 @@ export interface ExpenseFilters {
   q?: string;
 }
 
+/** Above 1,000 rows the list is paged in (Supabase stops at 1,000 per request). */
 export async function listExpenses(f: ExpenseFilters = {}, limit = 1000): Promise<Expense[]> {
   const { supabase } = await requireTeam();
-  let q = supabase.from("expenses").select(SELECT).order("expense_date", { ascending: false }).order("created_at", { ascending: false }).limit(limit);
+  const build = () => {
+  let q = supabase.from("expenses").select(SELECT).order("expense_date", { ascending: false }).order("created_at", { ascending: false }).order("id");
   if (f.from) q = q.gte("expense_date", f.from);
   if (f.to) q = q.lte("expense_date", f.to);
   if (f.category) q = q.eq("category_id", f.category);
@@ -149,9 +152,14 @@ export async function listExpenses(f: ExpenseFilters = {}, limit = 1000): Promis
     const s = f.q.replace(/[%,()*]/g, " ").trim();
     if (s) q = q.or(`description.ilike.%${s}%,vendor_name.ilike.%${s}%,bill_no.ilike.%${s}%`);
   }
-  const [{ data }, { data: bals }] = await Promise.all([q, supabase.from("expense_balances").select("*")]);
-  const byId = new Map(((bals ?? []) as Row[]).map((b) => [b.expense_id as string, b]));
-  let list = ((data ?? []) as Row[]).map((r) => toExpense(r, byId.get(r.id as string)));
+  return q;
+  };
+  const [data, bals] = await Promise.all([
+    fetchAll<Row>((a, b) => build().range(a, b), limit),
+    fetchAll<Row>((a, b) => supabase.from("expense_balances").select("*").order("expense_id").range(a, b)),
+  ]);
+  const byId = new Map(bals.map((b) => [b.expense_id as string, b]));
+  let list = data.map((r) => toExpense(r, byId.get(r.id as string)));
   if (f.status === "unpaid") list = list.filter((e) => e.balance > 0.005 && e.approval !== "rejected");
   if (f.status === "paid") list = list.filter((e) => e.balance <= 0.005);
   return list;

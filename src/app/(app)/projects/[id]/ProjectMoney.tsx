@@ -25,10 +25,10 @@ export interface PaymentRow {
   file_name: string;
 }
 
-const INVOICE_FILES = "application/pdf,image/*";
+export const INVOICE_FILES = "application/pdf,image/*";
 
 /** Uploads straight to the admin-only "invoices" bucket, then links the file to the payment. */
-async function uploadInvoice(paymentId: string, file: File) {
+export async function uploadInvoice(paymentId: string, file: File) {
   const small = await shrinkImage(file);
   const path = `payments/${paymentId}/${crypto.randomUUID()}-${safeName(small.name)}`;
   const { error } = await createClient().storage.from("invoices").upload(path, small, { contentType: small.type || "application/octet-stream" });

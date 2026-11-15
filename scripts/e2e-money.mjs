@@ -277,6 +277,31 @@ try {
   const home = await A.body();
   check("Home shows received, pending and team money", ["Received this FY", "Pending from clients", "To pay team", "Net this FY", "Money in vs money out"].every((x) => home.includes(x)));
   check("Home lists the project with money pending", home.includes(`E2E money project ${stamp}`));
+
+  // ---------------------------------------------------------------- Payments page: record the rest, no duplicates, history, receipt
+  await A.go(`/payments?for=project:${project.id}`);
+  await admin.waitForNetworkIdle({ idleTime: 500 }).catch(() => {});
+  const prefilled = await admin.$eval("input[aria-label='Amount received']", (e) => e.value);
+  check("Payments page pre-fills what's pending on the project", prefilled === "12000", prefilled);
+  await A.select("Method", "bank");
+  await A.fill("UTR / reference", `UTR${stamp}`);
+  const recBtn = await admin.waitForSelector("::-p-xpath(//button[starts-with(normalize-space(), 'Record ₹') and not(@disabled)])");
+  await recBtn.evaluate((b) => (b.click(), b.click())); // a double-click
+  const rest = await until(async () => {
+    const rows = await api(`/rest/v1/payments?project_id=eq.${project.id}&mode=eq.bank&select=amount,reference`);
+    return rows?.length ? rows : null;
+  });
+  await new Promise((r) => setTimeout(r, 2500));
+  const again = await api(`/rest/v1/payments?project_id=eq.${project.id}&mode=eq.bank&select=id`);
+  check("record from the Payments page; a double-click saves once", rest?.length === 1 && Number(rest[0].amount) === 12000 && again.length === 1, JSON.stringify(again));
+  await A.go(`/payments?tab=history&q=UTR${stamp}`);
+  const hist = await A.body();
+  check("history finds the payment by its UTR", hist.includes(`E2E Money Client ${stamp}`) && /Bank transfer/.test(hist));
+  await A.go(`/payments/${again[0]?.id}`);
+  const receipt = await A.body();
+  check("receipt shows the amount, method and reference", /Payment receipt/i.test(receipt) && receipt.includes(`UTR${stamp}`) && /12,000/.test(receipt));
+  await A.go(`/projects/${project.id}?tab=money`);
+  check("the project is now fully paid", await until(async () => /Pending from client\s*₹\s?0(\.00)?\b/.test(await A.body())));
 } catch (e) {
   check("unexpected error", false, e.message.split("\n")[0]);
   await admin.screenshot({ path: ".visual/e2e-money-error.png" }).catch(() => {});

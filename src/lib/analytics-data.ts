@@ -2,29 +2,39 @@ import "server-only";
 import type { ADoc, AExp, APay } from "./analytics";
 import type { Lead } from "./crm";
 import { requireMember } from "./data";
+import { fetchAll } from "./fetch-all";
 import { addDays } from "./money";
 
 type Row = Record<string, unknown>;
+const all = (page: Parameters<typeof fetchAll<Row>>[0]) => fetchAll<Row>(page).then((data) => ({ data }));
 const n = (v: unknown) => Number(v ?? 0);
 
 /** Everything Reports needs, in one round of parallel queries. */
 export async function loadAnalytics(opts: { since: string; until: string; weeksFrom: string }) {
   const { supabase, isAdmin } = await requireMember();
   const [docs, bals, pays, exps, expBals, expPays, accounts, projects, tasks, time, capacity, leave, holidays, leads] = await Promise.all([
-    supabase
-      .from("documents")
-      .select("id, doc_type, status, client_id, client_snapshot, project_id, issue_date, due_date, currency, fx_rate, taxable, total, source_id, source_relation, recurring")
-      .neq("status", "draft"),
-    supabase.from("document_balances").select("id, balance"),
-    supabase.from("payments").select("document_id, project_id, paid_on, amount, tds_amount"),
-    supabase
-      .from("expenses")
-      .select(
-        "id, expense_date, project_id, taxable, total, itc_status, rcm, fx_rate, kind, approval, is_draft, due_date, recurring, tds_amount, tds_challan_id, expense_categories(name, kind, budget_month)",
-      )
-      .limit(10000),
-    supabase.from("expense_balances").select("expense_id, balance"),
-    supabase.from("expense_payments").select("paid_on, amount"),
+    // money tables are paged in: Supabase stops at 1,000 rows without saying so
+    all((a, b) =>
+      supabase
+        .from("documents")
+        .select("id, doc_type, status, client_id, client_snapshot, project_id, issue_date, due_date, currency, fx_rate, taxable, total, source_id, source_relation, recurring")
+        .neq("status", "draft")
+        .order("id")
+        .range(a, b),
+    ),
+    all((a, b) => supabase.from("document_balances").select("id, balance").order("id").range(a, b)),
+    all((a, b) => supabase.from("payments").select("document_id, project_id, paid_on, amount, tds_amount").order("id").range(a, b)),
+    all((a, b) =>
+      supabase
+        .from("expenses")
+        .select(
+          "id, expense_date, project_id, taxable, total, itc_status, rcm, fx_rate, kind, approval, is_draft, due_date, recurring, tds_amount, tds_challan_id, expense_categories(name, kind, budget_month)",
+        )
+        .order("id")
+        .range(a, b),
+    ),
+    all((a, b) => supabase.from("expense_balances").select("expense_id, balance").order("expense_id").range(a, b)),
+    all((a, b) => supabase.from("expense_payments").select("paid_on, amount").order("id").range(a, b)),
     supabase.from("bank_accounts").select("opening_balance, opening_date"),
     supabase.from("projects").select("id, code, name, status, client_id, clients(name)"),
     supabase.from("tasks").select("due_date, completed_at").not("completed_at", "is", null).gte("completed_at", `${opts.since}T00:00:00Z`),

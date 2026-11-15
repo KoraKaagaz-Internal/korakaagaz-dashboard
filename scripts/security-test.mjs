@@ -189,6 +189,24 @@ try {
   }
   const { error: mEditInv } = await member.from("documents").update({ notes: "x" }).eq("id", inv.id).select("id").single();
   check("member cannot edit invoices", !!mEditInv);
+  // 7c. Payment integrity (0022/0023): no duplicates, no overpaying, credit notes only for issued invoices.
+  const rid = crypto.randomUUID();
+  const { error: pay1 } = await admin.from("payments").insert({ document_id: inv.id, paid_on: "2026-11-01", amount: 1000, request_id: rid });
+  check("admin records a payment on an invoice", !pay1, pay1?.message);
+  const { error: dupPay } = await admin.from("payments").insert({ document_id: inv.id, paid_on: "2026-11-01", amount: 100, request_id: rid });
+  check("the same request id can't save a payment twice", dupPay?.code === "23505", dupPay?.message);
+  const { error: overPay } = await admin.from("payments").insert({ document_id: inv.id, paid_on: "2026-11-01", amount: 181 });
+  check("an invoice can't be paid past its balance", !!overPay && /balance due/.test(overPay.message), overPay?.message);
+  const { error: cardPay } = await admin.from("payments").insert({ document_id: inv.id, paid_on: "2026-11-01", amount: 180, mode: "card" });
+  check("card payments are accepted and can settle the exact balance", !cardPay, cardPay?.message);
+  await admin.from("payments").delete().eq("document_id", inv.id);
+  const { data: cn, error: cnErr } = await admin
+    .from("documents")
+    .insert({ doc_type: "credit_note", status: "issued", source_id: inv.id, client_snapshot: { name: "Security Test Co" }, total: 100, taxable: 100 })
+    .select("id")
+    .maybeSingle();
+  if (cn) created.documents.push(cn.id);
+  check("a credit note needs an issued invoice", !!cnErr && /issued invoice/.test(cnErr.message), cnErr?.message);
   const { data: bankRow, error: bankErr } = await member.rpc("document_bank");
   check("quotes get the default bank account (no balances)", !bankErr && (bankRow ?? []).length <= 1 && !("opening_balance" in (bankRow?.[0] ?? {})), bankErr?.message);
 
@@ -417,6 +435,10 @@ try {
   check("members see project costs", seenIds.includes(bill.id));
   check("members cannot see salaries", !seenIds.includes(salary.id));
   check("members cannot see freelancer fees", !seenIds.includes(fee.id));
+  const { error: feeOver } = await admin.from("expense_payments").insert({ expense_id: fee.id, paid_on: today, amount: 9001 });
+  check("a bill can't be paid past what's owed", !!feeOver && /still owed/.test(feeOver.message), feeOver?.message);
+  const { data: delC } = await member.from("clients").delete().eq("id", client.id).select("id");
+  check("members cannot delete clients", !delC || delC.length === 0);
   // 12a. Project money (0020): payments logged straight on a project and the team split are the admin's.
   const { data: splitCat } = await admin.from("expense_categories").select("id").eq("name", "Freelancer: team split").single();
   check("the team split category exists", !!splitCat);

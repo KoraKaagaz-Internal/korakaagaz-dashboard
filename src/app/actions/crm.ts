@@ -332,12 +332,13 @@ export async function bookCall(input: z.input<typeof bookSchema>): Promise<Resul
   if (!available.days.some((d) => d.slots.includes(slotIso))) return fail("That time was just taken. Please pick another.");
   const db = createAdminClient();
   const hash = await ipHash();
-  const { count } = await db
-    .from("leads")
-    .select("id", { count: "exact", head: true })
-    .eq("ip_hash", hash)
-    .gte("created_at", new Date(Date.now() - 3600000).toISOString());
-  if ((count ?? 0) >= 5) return fail("Too many requests from here. Please email team@korakaagaz.co.");
+  const hourAgo = new Date(Date.now() - 3600000).toISOString();
+  // count bookings as well as new leads: re-using an existing lead's email must not skip the limit
+  const [{ count }, { count: booked }] = await Promise.all([
+    db.from("leads").select("id", { count: "exact", head: true }).eq("ip_hash", hash).gte("created_at", hourAgo),
+    db.from("events").select("id", { count: "exact", head: true }).eq("booked_ip", hash).gte("created_at", hourAgo),
+  ]);
+  if ((count ?? 0) >= 5 || (booked ?? 0) >= 3) return fail("Too many requests from here. Please email team@korakaagaz.co.");
 
   const minutes = available.booking.minutes;
   const end = new Date(Date.parse(slotIso) + minutes * 60000).toISOString();
@@ -379,9 +380,12 @@ export async function bookCall(input: z.input<typeof bookSchema>): Promise<Resul
       status: "confirmed",
       notes: `${b.email}${b.phone ? ` · ${b.phone}` : ""}\n${b.note}`,
       contacts: `${b.name} · ${b.email}${b.phone ? ` · ${b.phone}` : ""}`,
+      booked_ip: hash,
     })
     .select("id")
     .single();
+  // unique index: someone else booked this exact slot a moment ago
+  if (evErr?.code === "23505") return fail("That time was just taken. Please pick another.");
   if (evErr) return fail("Something went wrong. Please email team@korakaagaz.co instead.");
   const people = [{ event_id: ev.id, external_name: b.name, role: "Client", phone: b.phone }, ...(admin ? [{ event_id: ev.id, member_email: admin.email, role: "Host" }] : [])];
   await db.from("event_people").insert(people);

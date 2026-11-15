@@ -15,7 +15,7 @@ const api = async (path, init = {}) => {
 
 const link = await api("/auth/v1/admin/generate_link", { method: "POST", body: JSON.stringify({ type: "magiclink", email: "team@korakaagaz.co" }) });
 const [project] = (await api("/rest/v1/projects?select=id&limit=1")) ?? [];
-const pages = ["/", "/my-work", "/projects", ...(project ? [`/projects/${project.id}`] : []), "/documents", "/clients", "/calendar", "/time", "/reports", "/team/workload", "/settings"];
+const pages = ["/", "/my-work", "/projects", ...(project ? [`/projects/${project.id}`] : []), "/payments", "/documents", "/clients", "/calendar", "/time", "/reports", "/team/workload", "/settings"];
 
 const browser = await puppeteer.launch();
 const page = await browser.newPage();

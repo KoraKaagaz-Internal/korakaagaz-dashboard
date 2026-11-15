@@ -41,7 +41,9 @@ export async function saveClient(input: z.input<typeof clientSchema>): Promise<{
 }
 
 export async function deleteClient(id: string) {
-  const { supabase } = await requireMember("member");
+  const { supabase } = await requireMember("admin");
+  const { count } = await supabase.from("projects").select("id", { count: "exact", head: true }).eq("client_id", id);
+  if (count) return { ok: false as const, message: `This client has ${count} project${count === 1 ? "" : "s"}. Move or delete them first.` };
   const { error } = await supabase.from("clients").delete().eq("id", id);
   if (error) return { ok: false as const, message: error.message };
   revalidatePath("/clients");

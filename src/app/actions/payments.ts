@@ -10,9 +10,11 @@ const paymentSchema = z.object({
   amount: z.coerce.number().min(0),
   tds_amount: z.coerce.number().min(0),
   tds_section: z.string().trim(),
-  mode: z.enum(["upi", "bank", "cash", "cheque", "wire", "advance"]),
+  mode: z.enum(["upi", "bank", "cash", "cheque", "card", "wire", "other", "advance"]),
   reference: z.string().trim(),
   note: z.string().trim(),
+  /** one per "Record" click, so a double-click or retry can't save twice */
+  request_id: z.string().uuid().optional(),
 });
 
 export type PaymentInput = z.input<typeof paymentSchema>;
@@ -33,9 +35,11 @@ export async function recordPayment(input: PaymentInput) {
     return { ok: false as const, message: `That's more than the balance due (${Number(bal.balance).toFixed(2)})` };
   }
   const { error } = await supabase.from("payments").insert(p);
-  if (error) return { ok: false as const, message: error.message };
+  // 23505 on request_id: this exact click was already saved
+  if (error && !(error.code === "23505" && p.request_id)) return { ok: false as const, message: error.message };
   revalidatePath(`/documents/${p.document_id}`);
   revalidatePath("/documents");
+  revalidatePath("/payments");
   return { ok: true as const };
 }
 
@@ -44,6 +48,7 @@ export async function deletePayment(id: string, documentId: string) {
   const { error } = await supabase.from("payments").delete().eq("id", id);
   if (error) return { ok: false as const, message: error.message };
   revalidatePath(`/documents/${documentId}`);
+  revalidatePath("/payments");
   return { ok: true as const };
 }
 

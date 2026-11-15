@@ -45,7 +45,7 @@ export function NewMenu({ isStaff, canEdit, isAdmin }: { isStaff: boolean; canEd
       ? [
           ...(isAdmin
             ? [
-                { href: "/projects?pay=1", label: "Payment received" },
+                { href: "/payments", label: "Payment received" },
                 { href: "/projects?pay=1&for=team", label: "Team payout" },
                 { href: "/documents/new?type=invoice", label: "Invoice" },
               ]

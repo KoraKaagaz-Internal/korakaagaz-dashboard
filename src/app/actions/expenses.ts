@@ -455,14 +455,22 @@ export async function invoiceFromExpenses(projectId: string): Promise<Result<{ i
     items,
   });
   if (!res.ok) return fail(res.message);
-  const { error } = await supabase
+  // claim only the expenses nobody else invoiced meanwhile (a double-click would otherwise bill them twice)
+  const { data: claimed, error } = await supabase
     .from("expenses")
     .update({ invoiced_document_id: res.id })
     .in(
       "id",
       usable.map((r) => r.id as string),
-    );
-  if (error) return fail(`Invoice drafted, but linking the expenses failed: ${error.message}`);
+    )
+    .is("invoiced_document_id", null)
+    .select("id");
+  if (error || (claimed ?? []).length !== usable.length) {
+    if ((claimed ?? []).length) await supabase.from("expenses").update({ invoiced_document_id: null }).eq("invoiced_document_id", res.id);
+    await supabase.from("document_items").delete().eq("document_id", res.id);
+    await supabase.from("documents").delete().eq("id", res.id).eq("status", "draft");
+    return fail(error ? `Couldn't link the expenses: ${error.message}` : "These expenses were just invoiced in another tab. Refresh to see that invoice.");
+  }
   revalidatePath(`/projects/${projectId}`);
   refresh();
   return { ok: true, id: res.id, count: usable.length };
@@ -498,7 +506,9 @@ export async function reconcile2b(
   const m = match2b(ours, portal);
   for (const status of ["matched", "mismatch", "missing"] as const) {
     const ids = m.results.filter((r) => r.status === status).map((r) => r.id);
-    if (ids.length) await supabase.from("expenses").update({ gstr2b: status }).in("id", ids);
+    if (!ids.length) continue;
+    const { error } = await supabase.from("expenses").update({ gstr2b: status }).in("id", ids);
+    if (error) return fail(`Matching stopped part-way: ${error.message}`);
   }
   refresh();
   const count = (s: string) => m.results.filter((r) => r.status === s).length;
@@ -520,7 +530,13 @@ export async function saveChallan(input: { month: string; amount: number; challa
     .select("id")
     .single();
   if (error) return fail(error.message);
-  if (input.expense_ids.length) await supabase.from("expenses").update({ tds_challan_id: data.id }).in("id", input.expense_ids);
+  if (input.expense_ids.length) {
+    const { error: linkErr } = await supabase.from("expenses").update({ tds_challan_id: data.id }).in("id", input.expense_ids);
+    if (linkErr) {
+      await supabase.from("tds_challans").delete().eq("id", data.id); // don't leave a challan that covers nothing
+      return fail(`Couldn't link the deductions: ${linkErr.message}`);
+    }
+  }
   refresh();
   return { ok: true };
 }

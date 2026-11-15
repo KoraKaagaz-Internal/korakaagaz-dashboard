@@ -8,7 +8,7 @@ import { Card, ConfirmButton, Input, btn } from "@/components/ui";
 import { stateLabel } from "@/lib/gst";
 import type { Client } from "@/lib/types";
 
-export function ClientsManager({ initial, canEdit }: { initial: Client[]; canEdit: boolean }) {
+export function ClientsManager({ initial, canEdit, isAdmin }: { initial: Client[]; canEdit: boolean; isAdmin: boolean }) {
   const [clients, setClients] = useState(initial);
   const [editing, setEditing] = useState<string | "new" | null>(null);
   const [q, setQ] = useState("");
@@ -62,6 +62,7 @@ export function ClientsManager({ initial, canEdit }: { initial: Client[]; canEdi
                       <button className={btn.ghost} onClick={() => setEditing(c.id)}>
                         Edit
                       </button>
+                      {isAdmin && (
                       <ConfirmButton
                         disabled={pending}
                         confirm={`Delete ${c.name}? Their documents keep a copy of the client details.`}
@@ -76,6 +77,7 @@ export function ClientsManager({ initial, canEdit }: { initial: Client[]; canEdi
                       >
                         Delete
                       </ConfirmButton>
+                      )}
                     </>
                   )}
                 </div>

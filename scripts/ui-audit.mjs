@@ -53,6 +53,8 @@ const pages = [
   lead && `/crm/${lead}`,
   "/clients",
   client && `/clients/${client}`,
+  "/payments",
+  "/payments?tab=history",
   "/documents",
   "/documents/new?type=invoice",
   doc && `/documents/${doc}`,
@@ -135,7 +137,7 @@ try {
       await mp.waitForNetworkIdle({ idleTime: 300, timeout: 10000 }).catch(() => {});
       return { url: new URL(mp.url()), body: await mp.evaluate(() => document.querySelector("main")?.innerText ?? "") };
     };
-    for (const path of ["/reports", "/vendors", "/expenses/gst", "/settings", "/items", "/team", "/expenses/categories", "/crm/settings"]) {
+    for (const path of ["/payments", "/reports", "/vendors", "/expenses/gst", "/settings", "/items", "/team", "/expenses/categories", "/crm/settings"]) {
       const { url } = await text(path);
       check(`member is turned away from ${path}`, url.pathname === "/" && url.searchParams.get("denied") === "1", url.pathname);
     }

@@ -51,10 +51,11 @@ export function NewProjectForm({
     due_date: "",
     owner_email: me,
   });
+  // NaN = an empty box; a pre-filled 0 turns a typed 36904 into 369040
   const [fin, setFin] = useState({
-    budget: 0,
+    budget: NaN,
     billing: "fixed" as Billing,
-    retainer_amount_month: 0,
+    retainer_amount_month: NaN,
   });
   const [members, setMembers] = useState<string[]>([me]);
   const [splits, setSplits] = useState<{ name: string; amount: number }[]>([]);
@@ -76,7 +77,7 @@ export function NewProjectForm({
       setMsg("");
       const r = await createProject({
         project: { ...p, status: "active" },
-        finance: fin,
+        finance: { ...fin, budget: fin.budget || 0, retainer_amount_month: fin.retainer_amount_month || 0 },
         template_id: tpl || null,
         members,
       });
@@ -260,7 +261,7 @@ export function NewProjectForm({
                 </button>
               </div>
             ))}
-            <SplitInput people={people.filter((x) => x.email !== me)} fee={fin.billing === "retainer" ? fin.retainer_amount_month : fin.budget} onAdd={(s) => setSplits([...splits, s])} />
+            <SplitInput people={people.filter((x) => x.email !== me)} fee={(fin.billing === "retainer" ? fin.retainer_amount_month : fin.budget) || 0} onAdd={(s) => setSplits([...splits, s])} />
             <p className="text-xs text-neutral-500">What you&apos;ll pay each person for this project. Mark it paid later from the project&apos;s Money tab.</p>
           </div>
         )}

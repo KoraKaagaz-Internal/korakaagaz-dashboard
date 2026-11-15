@@ -80,6 +80,7 @@ function groups(role: Role): Group[] {
       ? {
           title: "Money",
           items: [
+            { href: "/payments", label: "Payments", icon: "wallet" },
             { href: "/documents", label: "Invoices", icon: "doc" },
             { href: "/expenses", label: "Expenses", icon: "receipt", match: "/expenses|/vendors" },
             { href: "/reports", label: "Reports", icon: "chart" },

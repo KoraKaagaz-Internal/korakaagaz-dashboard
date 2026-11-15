@@ -6,7 +6,7 @@ import { requireMember, requireTeam } from "@/lib/data";
 import { todayIso } from "@/lib/money";
 import { mentionedEmails, type Person } from "@/lib/pm";
 import { getTaskDetail } from "@/lib/pm-data";
-import { SPLIT_CATEGORY } from "@/lib/projects";
+import { SPLIT_CATEGORY, projectFee, projectMoney } from "@/lib/projects";
 import { saveExpense } from "./expenses";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; message: string };
@@ -124,17 +124,50 @@ const projectPaymentSchema = z.object({
   paid_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a date"),
   amount: z.coerce.number().positive("Enter the amount received"),
   tds_amount: z.coerce.number().min(0).default(0),
-  mode: z.enum(["upi", "bank", "cash", "cheque", "wire"]).default("upi"),
+  mode: z.enum(["upi", "bank", "cash", "cheque", "card", "wire", "other"]).default("upi"),
+  reference: z.string().trim().max(100).default(""),
   note: z.string().trim().max(500).default(""),
+  request_id: z.string().uuid().optional(),
+  /** the client paid more than the fee (extra work): only after the user confirms */
+  allow_over: z.boolean().default(false),
 });
 
-export async function recordProjectPayment(input: z.input<typeof projectPaymentSchema>): Promise<Result<{ id: string }>> {
+export async function recordProjectPayment(input: z.input<typeof projectPaymentSchema>): Promise<Result<{ id: string }> | { ok: false; message: string; over: true }> {
   const { supabase } = await requireMember("admin");
   const parsed = projectPaymentSchema.safeParse(input);
   if (!parsed.success) return fail(issues(parsed.error));
-  const { data, error } = await supabase.from("payments").insert(parsed.data).select("id").single();
-  if (error) return fail(error.message);
-  revalidatePath(`/projects/${parsed.data.project_id}`);
+  const { allow_over, ...row } = parsed.data;
+  if (!allow_over) {
+    const [{ data: p }, { data: fin }, { data: pays }] = await Promise.all([
+      supabase.from("projects").select("start_date, due_date").eq("id", row.project_id).single(),
+      supabase.from("project_finance").select("budget, billing, retainer_amount_month").eq("project_id", row.project_id).maybeSingle(),
+      supabase.from("payments").select("amount, tds_amount, documents(currency, fx_rate)").eq("project_id", row.project_id),
+    ]);
+    if (!p) return fail("Project not found");
+    const fee = projectFee(fin ? { budget: Number(fin.budget), billing: fin.billing, retainer_amount_month: Number(fin.retainer_amount_month) } : null, p, todayIso());
+    const received = projectMoney(
+      fee,
+      ((pays ?? []) as unknown as { amount: number; tds_amount: number; documents: { currency: string; fx_rate: number } | null }[]).map((x) => {
+        const fx = x.documents && x.documents.currency !== "INR" ? Number(x.documents.fx_rate) || 1 : 1;
+        return { amount: Number(x.amount) * fx, tds_amount: Number(x.tds_amount) * fx };
+      }),
+      [],
+    );
+    if (fee > 0 && row.amount > received.pending + 0.5) {
+      return { ok: false as const, message: `That's more than the ₹${received.pending.toLocaleString("en-IN")} pending on this project.`, over: true as const };
+    }
+  }
+  const { data, error } = await supabase.from("payments").insert(row).select("id").single();
+  if (error) {
+    // the same click already saved: hand back that payment
+    if (error.code === "23505" && row.request_id) {
+      const { data: same } = await supabase.from("payments").select("id").eq("request_id", row.request_id).single();
+      if (same) return { ok: true, id: same.id as string };
+    }
+    return fail(error.message);
+  }
+  revalidatePath(`/projects/${row.project_id}`);
+  revalidatePath("/payments");
   revalidatePath("/");
   return { ok: true, id: data.id as string };
 }

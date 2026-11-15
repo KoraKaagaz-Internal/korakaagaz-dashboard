@@ -1,4 +1,5 @@
 import "server-only";
+import { fetchAll } from "./fetch-all";
 import { redirect } from "next/navigation";
 import { DEFAULT_BOOKING } from "./crm";
 import { getUser } from "./supabase/server";
@@ -227,10 +228,14 @@ function toBalance(b: Row): Balance {
 async function balancesFor(ids: string[]) {
   if (!ids.length) return new Map<string, Row>();
   const { supabase } = await requireMember();
-  const { data, error } = await supabase.from("document_balances").select("*").in("id", ids);
-  // without balances every invoice would look fully owed: fail loudly instead
-  if (error) throw error;
-  return new Map((data ?? []).map((b) => [String(b.id), b as Row]));
+  const out = new Map<string, Row>();
+  // 150 ids per request keeps the URL short; a failed lookup throws (every invoice would look fully owed)
+  for (let i = 0; i < ids.length; i += 150) {
+    const { data, error } = await supabase.from("document_balances").select("*").in("id", ids.slice(i, i + 150));
+    if (error) throw error;
+    for (const b of data ?? []) out.set(String(b.id), b as Row);
+  }
+  return out;
 }
 
 export async function getDocument(id: string): Promise<DocumentRecord | null> {
@@ -252,9 +257,11 @@ export interface DocumentFilters {
   project?: string;
 }
 
-export async function listDocuments(filters: DocumentFilters = {}): Promise<DocumentRecord[]> {
+/** `all`: every matching document (for totals and exports); otherwise the latest 500 (for lists). */
+export async function listDocuments(filters: DocumentFilters = {}, all = false): Promise<DocumentRecord[]> {
   const { supabase } = await requireMember();
-  let query = supabase.from("documents").select("*").order("issue_date", { ascending: false }).order("created_at", { ascending: false }).limit(500);
+  const build = () => {
+  let query = supabase.from("documents").select("*").order("issue_date", { ascending: false }).order("created_at", { ascending: false }).order("id");
   if (filters.type) query = query.eq("doc_type", filters.type);
   if (filters.client) query = query.eq("client_id", filters.client);
   if (filters.project) query = query.eq("project_id", filters.project);
@@ -267,9 +274,16 @@ export async function listDocuments(filters: DocumentFilters = {}): Promise<Docu
     const q = filters.q.replace(/[%,()*]/g, " ").trim();
     if (q) query = query.or(`number.ilike.%${q}%,client_snapshot->>name.ilike.%${q}%`);
   }
-  const { data, error } = await query;
-  if (error) throw error;
-  const rows = data ?? [];
+  return query;
+  };
+  const rows = all
+    ? await fetchAll<Record<string, unknown>>((a, b) => build().range(a, b))
+    : await build()
+        .limit(500)
+        .then(({ data, error }) => {
+          if (error) throw error;
+          return data ?? [];
+        });
   const balances = await balancesFor(rows.map((r) => String(r.id)));
   let docs = rows.map((r) => toDocument(r, balances.get(String(r.id))));
   // payment-status filters are derived, so they're applied after the query

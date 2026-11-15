@@ -189,6 +189,8 @@ export async function cancelDocument(id: string): Promise<Result> {
   }
   const { count } = await supabase.from("payments").select("id", { count: "exact", head: true }).eq("document_id", id);
   if (count) return { ok: false, message: "This document has payments. Delete them first, or issue a credit note instead." };
+  const { count: linked } = await supabase.from("documents").select("id", { count: "exact", head: true }).eq("source_id", id).in("doc_type", ["credit_note", "receipt"]).eq("status", "issued");
+  if (linked) return { ok: false, message: "This invoice has issued credit notes or receipt vouchers. Cancel those first." };
   const { error } = await supabase.from("documents").update({ status: "cancelled", reminders_enabled: false, recurring: null }).eq("id", id);
   if (error) return { ok: false, message: friendly(error) };
   revalidatePath(`/documents/${id}`);
